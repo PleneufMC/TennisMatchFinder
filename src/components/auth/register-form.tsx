@@ -1,0 +1,231 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { toast } from 'sonner';
+import { Mail, User, Lock, ArrowRight, Loader2, CheckCircle } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { getClient } from '@/lib/supabase/client';
+import { registerSchema, type RegisterInput } from '@/lib/validations/auth';
+
+interface RegisterFormProps {
+  clubSlug?: string;
+  clubName?: string;
+}
+
+export function RegisterForm({ clubSlug = 'mccc', clubName = 'MCCC' }: RegisterFormProps) {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [registrationComplete, setRegistrationComplete] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState('');
+
+  const form = useForm<RegisterInput>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      email: '',
+      fullName: '',
+      password: '',
+      clubSlug,
+      selfAssessedLevel: 'intermédiaire',
+    },
+  });
+
+  const supabase = getClient();
+
+  const handleSubmit = async (data: RegisterInput) => {
+    setIsLoading(true);
+    try {
+      // 1. Créer l'utilisateur dans Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password || Math.random().toString(36).slice(-12) + 'A1!',
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          data: {
+            full_name: data.fullName,
+            club_slug: data.clubSlug,
+            self_assessed_level: data.selfAssessedLevel,
+          },
+        },
+      });
+
+      if (authError) throw authError;
+
+      if (!authData.user) {
+        throw new Error('Erreur lors de la création du compte');
+      }
+
+      setRegisteredEmail(data.email);
+      setRegistrationComplete(true);
+      toast.success('Inscription réussie !', {
+        description: 'Vérifiez votre email pour confirmer votre compte.',
+      });
+    } catch (error) {
+      console.error('Registration error:', error);
+      toast.error('Erreur lors de l\'inscription', {
+        description: error instanceof Error ? error.message : 'Une erreur est survenue',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Affichage après inscription réussie
+  if (registrationComplete) {
+    return (
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+            <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+          </div>
+          <CardTitle>Inscription réussie !</CardTitle>
+          <CardDescription>
+            Un email de confirmation a été envoyé à{' '}
+            <strong>{registeredEmail}</strong>
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4 text-center text-sm text-muted-foreground">
+          <p>
+            Cliquez sur le lien dans l&apos;email pour confirmer votre compte et accéder
+            à TennisMatchFinder.
+          </p>
+          <p>
+            Vous rejoindrez automatiquement le club <strong>{clubName}</strong>.
+          </p>
+        </CardContent>
+        <CardFooter className="flex flex-col gap-2">
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => router.push('/login')}
+          >
+            Aller à la page de connexion
+          </Button>
+        </CardFooter>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="w-full max-w-md">
+      <CardHeader className="text-center">
+        <CardTitle className="text-2xl">Inscription</CardTitle>
+        <CardDescription>
+          Rejoignez le club <strong>{clubName}</strong> sur TennisMatchFinder
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="fullName">Nom complet</Label>
+            <div className="relative">
+              <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="fullName"
+                type="text"
+                placeholder="Jean Dupont"
+                className="pl-10"
+                {...form.register('fullName')}
+                error={form.formState.errors.fullName?.message}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="email"
+                type="email"
+                placeholder="votre@email.com"
+                className="pl-10"
+                {...form.register('email')}
+                error={form.formState.errors.email?.message}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="password">Mot de passe (optionnel)</Label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                className="pl-10"
+                {...form.register('password')}
+                error={form.formState.errors.password?.message}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Laissez vide pour utiliser uniquement la connexion par email (Magic Link)
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="level">Votre niveau estimé</Label>
+            <select
+              id="level"
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              {...form.register('selfAssessedLevel')}
+            >
+              <option value="débutant">Débutant</option>
+              <option value="intermédiaire">Intermédiaire</option>
+              <option value="avancé">Avancé</option>
+              <option value="expert">Expert</option>
+            </select>
+            <p className="text-xs text-muted-foreground">
+              Cela nous aide à vous suggérer des adversaires adaptés
+            </p>
+          </div>
+
+          {/* Club slug caché */}
+          <input type="hidden" {...form.register('clubSlug')} />
+
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Inscription en cours...
+              </>
+            ) : (
+              <>
+                S&apos;inscrire
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </>
+            )}
+          </Button>
+        </form>
+
+        <p className="mt-4 text-center text-xs text-muted-foreground">
+          En vous inscrivant, vous acceptez nos{' '}
+          <Link href="/terms" className="text-primary hover:underline">
+            conditions d&apos;utilisation
+          </Link>{' '}
+          et notre{' '}
+          <Link href="/privacy" className="text-primary hover:underline">
+            politique de confidentialité
+          </Link>
+          .
+        </p>
+      </CardContent>
+      <CardFooter className="flex justify-center">
+        <p className="text-sm text-muted-foreground">
+          Déjà un compte ?{' '}
+          <Link href="/login" className="text-primary hover:underline">
+            Se connecter
+          </Link>
+        </p>
+      </CardFooter>
+    </Card>
+  );
+}
