@@ -515,6 +515,210 @@ export async function isPlayerInChatRoom(roomId: string, playerId: string): Prom
 }
 
 // ============================================
+// CLUB SECTION QUERIES
+// ============================================
+
+export async function getClubSections(
+  clubId: string
+): Promise<(ChatRoom & { lastMessage?: ChatMessage; unreadCount: number; memberCount: number })[]> {
+  // Get all section rooms for the club
+  const sections = await db
+    .select()
+    .from(chatRooms)
+    .where(and(eq(chatRooms.clubId, clubId), eq(chatRooms.isSection, true)))
+    .orderBy(chatRooms.sectionOrder);
+
+  if (sections.length === 0) return [];
+
+  // Get last message and unread count for each section
+  const result: (ChatRoom & { lastMessage?: ChatMessage; unreadCount: number; memberCount: number })[] = [];
+  
+  for (const section of sections) {
+    // Get last message
+    const lastMsg = await db
+      .select()
+      .from(chatMessages)
+      .where(eq(chatMessages.roomId, section.id))
+      .orderBy(desc(chatMessages.createdAt))
+      .limit(1);
+
+    // Count members
+    const memberCountResult = await db
+      .select({ count: count() })
+      .from(chatRoomMembers)
+      .where(eq(chatRoomMembers.roomId, section.id));
+
+    result.push({
+      ...section,
+      lastMessage: lastMsg[0],
+      unreadCount: 0, // Sections don't track unread per user by default
+      memberCount: memberCountResult[0]?.count ?? 0,
+    });
+  }
+
+  return result;
+}
+
+export async function getClubSectionsWithUnread(
+  clubId: string,
+  playerId: string
+): Promise<(ChatRoom & { lastMessage?: ChatMessage; unreadCount: number; memberCount: number })[]> {
+  // Get all section rooms for the club
+  const sections = await db
+    .select()
+    .from(chatRooms)
+    .where(and(eq(chatRooms.clubId, clubId), eq(chatRooms.isSection, true)))
+    .orderBy(chatRooms.sectionOrder);
+
+  if (sections.length === 0) return [];
+
+  const result: (ChatRoom & { lastMessage?: ChatMessage; unreadCount: number; memberCount: number })[] = [];
+  
+  for (const section of sections) {
+    // Get last message
+    const lastMsg = await db
+      .select()
+      .from(chatMessages)
+      .where(eq(chatMessages.roomId, section.id))
+      .orderBy(desc(chatMessages.createdAt))
+      .limit(1);
+
+    // Get player's last read timestamp for this section
+    const memberInfo = await db
+      .select({ lastReadAt: chatRoomMembers.lastReadAt })
+      .from(chatRoomMembers)
+      .where(and(eq(chatRoomMembers.roomId, section.id), eq(chatRoomMembers.playerId, playerId)))
+      .limit(1);
+
+    const lastRead = memberInfo[0]?.lastReadAt;
+
+    // Count unread messages
+    let unreadCount = 0;
+    if (lastRead) {
+      const unreadResult = await db
+        .select({ count: count() })
+        .from(chatMessages)
+        .where(and(eq(chatMessages.roomId, section.id), sql`${chatMessages.createdAt} > ${lastRead}`));
+      unreadCount = unreadResult[0]?.count ?? 0;
+    } else {
+      // If player hasn't joined the section yet, count all messages as unread
+      const totalResult = await db
+        .select({ count: count() })
+        .from(chatMessages)
+        .where(eq(chatMessages.roomId, section.id));
+      unreadCount = totalResult[0]?.count ?? 0;
+    }
+
+    // Count members
+    const memberCountResult = await db
+      .select({ count: count() })
+      .from(chatRoomMembers)
+      .where(eq(chatRoomMembers.roomId, section.id));
+
+    result.push({
+      ...section,
+      lastMessage: lastMsg[0],
+      unreadCount,
+      memberCount: memberCountResult[0]?.count ?? 0,
+    });
+  }
+
+  return result;
+}
+
+export async function joinClubSection(roomId: string, playerId: string): Promise<void> {
+  // Check if already a member
+  const existing = await db
+    .select()
+    .from(chatRoomMembers)
+    .where(and(eq(chatRoomMembers.roomId, roomId), eq(chatRoomMembers.playerId, playerId)))
+    .limit(1);
+
+  if (existing.length === 0) {
+    await db.insert(chatRoomMembers).values({
+      roomId,
+      playerId,
+      lastReadAt: new Date(),
+    });
+  }
+}
+
+export async function createClubSection(
+  clubId: string,
+  name: string,
+  description?: string,
+  icon?: string,
+  order?: number
+): Promise<ChatRoom> {
+  // Get the max order if not provided
+  let sectionOrder = order;
+  if (sectionOrder === undefined) {
+    const maxOrderResult = await db
+      .select({ maxOrder: sql<number>`COALESCE(MAX(${chatRooms.sectionOrder}), 0)` })
+      .from(chatRooms)
+      .where(and(eq(chatRooms.clubId, clubId), eq(chatRooms.isSection, true)));
+    sectionOrder = (maxOrderResult[0]?.maxOrder ?? 0) + 1;
+  }
+
+  const [newSection] = await db
+    .insert(chatRooms)
+    .values({
+      clubId,
+      name,
+      description,
+      icon,
+      isSection: true,
+      isGroup: true,
+      sectionOrder,
+    })
+    .returning();
+
+  if (!newSection) {
+    throw new Error('Failed to create club section');
+  }
+
+  return newSection;
+}
+
+export async function createDefaultClubSections(clubId: string): Promise<ChatRoom[]> {
+  const defaultSections = [
+    { name: 'Général', description: 'Discussions générales du club', icon: '💬', order: 1 },
+    { name: 'Annonces', description: 'Annonces officielles du club', icon: '📢', order: 2 },
+    { name: 'Recherche partenaires', description: 'Trouvez un partenaire pour jouer', icon: '🎾', order: 3 },
+    { name: 'Résultats', description: 'Partagez vos résultats de matchs', icon: '🏆', order: 4 },
+    { name: 'Équipement', description: 'Discussions sur le matériel et équipement', icon: '🏸', order: 5 },
+  ];
+
+  const createdSections: ChatRoom[] = [];
+
+  for (const section of defaultSections) {
+    // Check if section already exists
+    const existing = await db
+      .select()
+      .from(chatRooms)
+      .where(and(
+        eq(chatRooms.clubId, clubId),
+        eq(chatRooms.isSection, true),
+        eq(chatRooms.name, section.name)
+      ))
+      .limit(1);
+
+    if (existing.length === 0) {
+      const newSection = await createClubSection(
+        clubId,
+        section.name,
+        section.description,
+        section.icon,
+        section.order
+      );
+      createdSections.push(newSection);
+    }
+  }
+
+  return createdSections;
+}
+
+// ============================================
 // CLUB JOIN REQUEST QUERIES
 // ============================================
 

@@ -5,11 +5,11 @@ import { redirect } from 'next/navigation';
 export const dynamic = 'force-dynamic';
 
 import Link from 'next/link';
-import { Settings, UserPlus, Users, BarChart3, Bell, Shield } from 'lucide-react';
+import { Settings, UserPlus, Users, BarChart3, Bell, Shield, Hash } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { getServerPlayer } from '@/lib/auth-helpers';
-import { countPendingJoinRequests, getPlayersByClub } from '@/lib/db/queries';
+import { countPendingJoinRequests, getPlayersByClub, getClubSections } from '@/lib/db/queries';
 
 export const metadata: Metadata = {
   title: 'Administration',
@@ -29,8 +29,11 @@ export default async function AdminPage() {
   }
 
   // Récupérer les statistiques
-  const pendingRequests = await countPendingJoinRequests(player.clubId);
-  const allPlayers = await getPlayersByClub(player.clubId);
+  const [pendingRequests, allPlayers, sections] = await Promise.all([
+    countPendingJoinRequests(player.clubId),
+    getPlayersByClub(player.clubId),
+    getClubSections(player.clubId),
+  ]);
   const activePlayers = allPlayers.filter(p => p.isActive).length;
 
   const adminLinks = [
@@ -61,6 +64,14 @@ export default async function AdminPage() {
       title: 'Notifications',
       description: 'Envoyer des messages aux membres',
       icon: Bell,
+    },
+    {
+      href: '/admin/sections',
+      title: 'Salons de discussion',
+      description: 'Gérer les salons du club',
+      icon: Hash,
+      badge: sections.length,
+      badgeVariant: 'secondary' as const,
     },
     {
       href: '/admin/parametres',

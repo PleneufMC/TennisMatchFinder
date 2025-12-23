@@ -450,14 +450,19 @@ export const chatRooms = pgTable(
       .notNull()
       .references(() => clubs.id, { onDelete: 'cascade' }),
     name: varchar('name', { length: 100 }),
+    description: text('description'), // Description du salon
+    icon: varchar('icon', { length: 50 }), // Emoji ou nom d'icône pour le salon
     isDirect: boolean('is_direct').default(false).notNull(), // true = conversation privée
     isGroup: boolean('is_group').default(false).notNull(),   // true = conversation de groupe
+    isSection: boolean('is_section').default(false).notNull(), // true = salon de section du club (visible par tous les membres)
+    sectionOrder: integer('section_order').default(0).notNull(), // Ordre d'affichage des sections
     createdBy: uuid('created_by').references(() => players.id, { onDelete: 'set null' }),
     createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
   },
   (table) => ({
     clubIdIdx: index('chat_rooms_club_id_idx').on(table.clubId),
+    sectionIdx: index('chat_rooms_section_idx').on(table.clubId, table.isSection),
   })
 );
 

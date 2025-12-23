@@ -5,20 +5,23 @@ import { redirect, notFound } from 'next/navigation';
 export const dynamic = 'force-dynamic';
 
 import { getServerPlayer } from '@/lib/auth-helpers';
-import { getChatMessages, getChatRoomById, isPlayerInChatRoom, markChatAsRead, getPlayerById } from '@/lib/db/queries';
+import { getChatMessages, getChatRoomById, isPlayerInChatRoom, markChatAsRead, joinClubSection } from '@/lib/db/queries';
 import { ChatRoom } from '@/components/chat/chat-room';
 import { db } from '@/lib/db';
 import { chatRoomMembers, players } from '@/lib/db/schema';
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ roomId: string }>;
 }): Promise<Metadata> {
+  const { roomId } = await params;
+  const room = await getChatRoomById(roomId);
+  
   return {
-    title: 'Conversation',
-    description: 'Discussion en temps réel',
+    title: room?.isSection ? `# ${room.name}` : 'Conversation',
+    description: room?.description || 'Discussion en temps réel',
   };
 }
 
@@ -41,10 +44,25 @@ export default async function ChatRoomPage({
     notFound();
   }
 
-  // Vérifier que le joueur est membre de la conversation
-  const isMember = await isPlayerInChatRoom(roomId, player.id);
-  if (!isMember) {
-    redirect('/chat');
+  // Pour les sections de club, vérifier que le joueur appartient au même club
+  // et l'ajouter automatiquement comme membre s'il ne l'est pas déjà
+  if (room.isSection) {
+    if (room.clubId !== player.clubId) {
+      // Le joueur n'appartient pas au club de cette section
+      redirect('/chat');
+    }
+    
+    // Rejoindre automatiquement la section si pas encore membre
+    const isMember = await isPlayerInChatRoom(roomId, player.id);
+    if (!isMember) {
+      await joinClubSection(roomId, player.id);
+    }
+  } else {
+    // Pour les conversations privées, vérifier que le joueur est membre
+    const isMember = await isPlayerInChatRoom(roomId, player.id);
+    if (!isMember) {
+      redirect('/chat');
+    }
   }
 
   // Marquer les messages comme lus
@@ -64,11 +82,16 @@ export default async function ChatRoomPage({
     ? await db.select().from(players).where(inArray(players.id, memberIds))
     : [];
 
-  // Trouver l'autre membre pour les conversations directes
-  const otherMembers = membersPlayers.filter(m => m.id !== player.id);
-  const chatTitle = room.isDirect
-    ? otherMembers[0]?.fullName || 'Conversation'
-    : room.name || `Groupe (${membersPlayers.length})`;
+  // Déterminer le titre de la conversation
+  let chatTitle: string;
+  if (room.isSection) {
+    chatTitle = `# ${room.name}`;
+  } else if (room.isDirect) {
+    const otherMembers = membersPlayers.filter(m => m.id !== player.id);
+    chatTitle = otherMembers[0]?.fullName || 'Conversation';
+  } else {
+    chatTitle = room.name || `Groupe (${membersPlayers.length})`;
+  }
 
   return (
     <ChatRoom
