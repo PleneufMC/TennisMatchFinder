@@ -20,7 +20,7 @@ interface RegisterFormProps {
   clubName?: string;
 }
 
-export function RegisterForm({ clubSlug = 'tc-pleneuf', clubName = 'TC Pleneuf Val-André' }: RegisterFormProps) {
+export function RegisterForm({ clubSlug = 'mccc', clubName = 'MCCC' }: RegisterFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [registrationComplete, setRegistrationComplete] = useState(false);

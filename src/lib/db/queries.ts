@@ -288,6 +288,89 @@ export async function getClubById(id: string) {
   return result[0] ?? null;
 }
 
+export async function getAllClubs(options?: { activeOnly?: boolean }) {
+  if (options?.activeOnly) {
+    return db
+      .select()
+      .from(clubs)
+      .where(eq(clubs.isActive, true))
+      .orderBy(clubs.name);
+  }
+  return db.select().from(clubs).orderBy(clubs.name);
+}
+
+export async function createClub(data: {
+  name: string;
+  slug: string;
+  description?: string;
+  contactEmail?: string;
+  websiteUrl?: string;
+  address?: string;
+}) {
+  const [newClub] = await db
+    .insert(clubs)
+    .values({
+      name: data.name,
+      slug: data.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
+      description: data.description,
+      contactEmail: data.contactEmail,
+      websiteUrl: data.websiteUrl,
+      address: data.address,
+      isActive: true,
+    })
+    .returning();
+
+  if (!newClub) {
+    throw new Error('Failed to create club');
+  }
+
+  return newClub;
+}
+
+export async function updateClub(
+  clubId: string,
+  data: {
+    name?: string;
+    description?: string;
+    contactEmail?: string;
+    websiteUrl?: string;
+    address?: string;
+    isActive?: boolean;
+  }
+) {
+  const [updatedClub] = await db
+    .update(clubs)
+    .set({
+      ...data,
+      updatedAt: new Date(),
+    })
+    .where(eq(clubs.id, clubId))
+    .returning();
+
+  if (!updatedClub) {
+    throw new Error('Failed to update club');
+  }
+
+  return updatedClub;
+}
+
+export async function getClubStats(clubId: string) {
+  const playersCount = await db
+    .select({ count: count() })
+    .from(players)
+    .where(and(eq(players.clubId, clubId), eq(players.isActive, true)));
+
+  const matchesCount = await db
+    .select({ count: count() })
+    .from(matches)
+    .where(eq(matches.clubId, clubId));
+
+  return {
+    playersCount: playersCount[0]?.count ?? 0,
+    matchesCount: matchesCount[0]?.count ?? 0,
+  };
+}
+
 // ============================================
 // CHAT QUERIES
 // ============================================
