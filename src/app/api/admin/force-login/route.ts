@@ -33,18 +33,44 @@ export async function GET(request: NextRequest) {
       maxAge: 30 * 24 * 60 * 60,
     });
     
-    // Créer la réponse de redirection
-    const baseUrl = request.nextUrl.origin;
-    const response = NextResponse.redirect(`${baseUrl}/dashboard`);
+    // Au lieu de rediriger, retourner une page HTML qui set le cookie côté client
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Connexion en cours...</title>
+  <meta charset="utf-8">
+</head>
+<body style="font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f0f0f0;">
+  <div style="text-align: center; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+    <h1 style="color: #16a34a;">🎾 TennisMatchFinder</h1>
+    <p id="status">Connexion en cours...</p>
+    <script>
+      // Set cookies
+      document.cookie = "next-auth.session-token=${token}; path=/; max-age=${30 * 24 * 60 * 60}; secure; samesite=lax";
+      document.cookie = "__Secure-next-auth.session-token=${token}; path=/; max-age=${30 * 24 * 60 * 60}; secure; samesite=lax";
+      
+      document.getElementById('status').innerHTML = '✅ Cookie créé ! Redirection...';
+      
+      // Redirect after a short delay
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 1000);
+    </script>
+    <noscript>
+      <p>JavaScript requis. <a href="/dashboard">Cliquez ici</a> pour continuer.</p>
+    </noscript>
+  </div>
+</body>
+</html>
+    `;
     
-    // Définir les cookies avec Set-Cookie header
-    const cookieOptions = `Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${30 * 24 * 60 * 60}`;
-    
-    // Définir les deux variantes du cookie
-    response.headers.append('Set-Cookie', `next-auth.session-token=${token}; ${cookieOptions}`);
-    response.headers.append('Set-Cookie', `__Secure-next-auth.session-token=${token}; ${cookieOptions}`);
-    
-    return response;
+    return new NextResponse(html, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/html',
+      },
+    });
   } catch (error) {
     console.error('Force login error:', error);
     return NextResponse.json({ 
