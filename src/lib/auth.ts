@@ -2,7 +2,7 @@ import type { NextAuthOptions } from 'next-auth';
 import type { Adapter, AdapterUser, AdapterAccount, AdapterSession, VerificationToken } from 'next-auth/adapters';
 import EmailProvider from 'next-auth/providers/email';
 import { db } from '@/lib/db';
-import { users, accounts, sessions, verificationTokens } from '@/lib/db/schema';
+import { users, accounts, sessions, verificationTokens, players, clubs } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 
 /**
@@ -354,6 +354,52 @@ export const authOptions: NextAuthOptions = {
       // Add user id from JWT to session
       if (session.user && token) {
         session.user.id = token.id as string;
+        
+        // Fetch player data from database
+        try {
+          const playerResult = await db
+            .select({
+              id: players.id,
+              fullName: players.fullName,
+              avatarUrl: players.avatarUrl,
+              currentElo: players.currentElo,
+              clubId: players.clubId,
+              isAdmin: players.isAdmin,
+              isVerified: players.isVerified,
+            })
+            .from(players)
+            .where(eq(players.id, token.id as string))
+            .limit(1);
+          
+          if (playerResult[0]) {
+            const player = playerResult[0];
+            // Fetch club info
+            const clubResult = await db
+              .select({
+                name: clubs.name,
+                slug: clubs.slug,
+              })
+              .from(clubs)
+              .where(eq(clubs.id, player.clubId))
+              .limit(1);
+            
+            const club = clubResult[0];
+            
+            (session.user as any).player = {
+              id: player.id,
+              fullName: player.fullName,
+              avatarUrl: player.avatarUrl,
+              currentElo: player.currentElo,
+              clubId: player.clubId,
+              clubName: club?.name || '',
+              clubSlug: club?.slug || '',
+              isAdmin: player.isAdmin,
+              isVerified: player.isVerified,
+            };
+          }
+        } catch (error) {
+          console.error('Failed to fetch player data:', error);
+        }
       }
       return session;
     },
