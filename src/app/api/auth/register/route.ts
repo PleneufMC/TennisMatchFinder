@@ -32,15 +32,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Vérifier si l'utilisateur existe déjà
-    let [existingUser] = await db
+    const [foundUser] = await db
       .select()
       .from(users)
       .where(eq(users.email, email.toLowerCase()))
       .limit(1);
 
+    let userId: string;
+
     // Si l'utilisateur existe, vérifier s'il a déjà un profil joueur
-    if (existingUser) {
-      const existingPlayer = await getPlayerById(existingUser.id);
+    if (foundUser) {
+      const existingPlayer = await getPlayerById(foundUser.id);
       if (existingPlayer) {
         return NextResponse.json(
           { error: 'Vous avez déjà un profil joueur. Connectez-vous à la place.' },
@@ -49,13 +51,15 @@ export async function POST(request: NextRequest) {
       }
 
       // Vérifier s'il a déjà une demande en attente
-      const hasPending = await hasUserPendingRequest(existingUser.id, club.id);
+      const hasPending = await hasUserPendingRequest(foundUser.id, club.id);
       if (hasPending) {
         return NextResponse.json(
           { error: 'Vous avez déjà une demande d\'adhésion en attente pour ce club.' },
           { status: 400 }
         );
       }
+      
+      userId = foundUser.id;
     } else {
       // Créer l'utilisateur
       const [newUser] = await db
@@ -65,13 +69,21 @@ export async function POST(request: NextRequest) {
           name: fullName,
         })
         .returning();
-      existingUser = newUser;
+      
+      if (!newUser) {
+        return NextResponse.json(
+          { error: 'Erreur lors de la création du compte' },
+          { status: 500 }
+        );
+      }
+      
+      userId = newUser.id;
     }
 
     // Créer la demande d'adhésion
     const joinRequest = await createJoinRequest({
       clubId: club.id,
-      userId: existingUser.id,
+      userId,
       fullName,
       email: email.toLowerCase(),
       phone,
