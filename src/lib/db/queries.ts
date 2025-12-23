@@ -445,6 +445,10 @@ export async function getOrCreateDirectChat(
     })
     .returning();
 
+  if (!newRoom) {
+    throw new Error('Failed to create chat room');
+  }
+
   // Add both players as members
   await db.insert(chatRoomMembers).values([
     { roomId: newRoom.id, playerId: player1Id },
@@ -469,6 +473,10 @@ export async function sendChatMessage(
       messageType,
     })
     .returning();
+
+  if (!message) {
+    throw new Error('Failed to send message');
+  }
 
   // Update room's updatedAt
   await db
@@ -537,6 +545,10 @@ export async function createJoinRequest(data: {
       selfAssessedLevel: data.selfAssessedLevel || 'intermédiaire',
     })
     .returning();
+
+  if (!request) {
+    throw new Error('Failed to create join request');
+  }
 
   return request;
 }
@@ -640,6 +652,10 @@ export async function approveJoinRequest(
     .where(eq(clubJoinRequests.id, requestId))
     .returning();
 
+  if (!updatedRequest) {
+    throw new Error('Failed to update join request');
+  }
+
   // Create player profile
   const [player] = await db
     .insert(players)
@@ -653,6 +669,10 @@ export async function approveJoinRequest(
       isActive: true,
     })
     .returning();
+
+  if (!player) {
+    throw new Error('Failed to create player profile');
+  }
 
   return { request: updatedRequest, player };
 }
@@ -673,6 +693,10 @@ export async function rejectJoinRequest(
     })
     .where(eq(clubJoinRequests.id, requestId))
     .returning();
+
+  if (!updatedRequest) {
+    throw new Error('Failed to reject join request');
+  }
 
   return updatedRequest;
 }
