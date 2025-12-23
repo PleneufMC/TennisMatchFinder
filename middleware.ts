@@ -16,9 +16,6 @@ export default withAuth(
           '/register',
           '/join',
           '/api/auth',
-          '/api/admin/force-login',
-          '/dashboard', // TEMPORAIRE - à supprimer après connexion admin
-          '/admin', // TEMPORAIRE - à supprimer après connexion admin
         ];
 
         const isPublicPath = publicPaths.some(path => 
