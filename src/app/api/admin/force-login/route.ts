@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { encode } from 'next-auth/jwt';
 
 // Route temporaire pour connexion admin initiale
@@ -19,46 +18,38 @@ export async function GET(request: NextRequest) {
   
   try {
     // Créer un JWT token
+    const jwtSecret = process.env.NEXTAUTH_SECRET || 'k8s2mP9xR4wQ7vN3jL6yT1uZ5cB0aE8fHgJkLmNpQrStUvWx';
+    
     const token = await encode({
       token: {
         id: userId,
         email: userEmail,
         name: userName,
         sub: userId,
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor(Date.now() / 1000) + (30 * 24 * 60 * 60),
       },
-      secret: process.env.NEXTAUTH_SECRET || 'k8s2mP9xR4wQ7vN3jL6yT1uZ5cB0aE8fHgJkLmNpQrStUvWx',
-      maxAge: 30 * 24 * 60 * 60, // 30 days
-    });
-    
-    // Définir le cookie de session
-    const cookieStore = await cookies();
-    
-    // NextAuth utilise différents noms selon l'environnement
-    const cookieName = process.env.NODE_ENV === 'production' 
-      ? '__Secure-next-auth.session-token'
-      : 'next-auth.session-token';
-    
-    cookieStore.set(cookieName, token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 30 * 24 * 60 * 60, // 30 days
-    });
-    
-    // Aussi définir sans le préfixe __Secure- au cas où
-    cookieStore.set('next-auth.session-token', token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'lax',
-      path: '/',
+      secret: jwtSecret,
       maxAge: 30 * 24 * 60 * 60,
     });
     
-    // Rediriger vers le dashboard
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    // Créer la réponse de redirection
+    const baseUrl = request.nextUrl.origin;
+    const response = NextResponse.redirect(`${baseUrl}/dashboard`);
+    
+    // Définir les cookies avec Set-Cookie header
+    const cookieOptions = `Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${30 * 24 * 60 * 60}`;
+    
+    // Définir les deux variantes du cookie
+    response.headers.append('Set-Cookie', `next-auth.session-token=${token}; ${cookieOptions}`);
+    response.headers.append('Set-Cookie', `__Secure-next-auth.session-token=${token}; ${cookieOptions}`);
+    
+    return response;
   } catch (error) {
     console.error('Force login error:', error);
-    return NextResponse.json({ error: 'Failed to create session' }, { status: 500 });
+    return NextResponse.json({ 
+      error: 'Failed to create session', 
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }
