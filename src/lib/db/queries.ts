@@ -505,3 +505,197 @@ export async function isPlayerInChatRoom(roomId: string, playerId: string): Prom
   
   return result.length > 0;
 }
+
+// ============================================
+// CLUB JOIN REQUEST QUERIES
+// ============================================
+
+import {
+  clubJoinRequests,
+  type ClubJoinRequest,
+  type User,
+} from './schema';
+
+export async function createJoinRequest(data: {
+  clubId: string;
+  userId: string;
+  fullName: string;
+  email: string;
+  phone?: string;
+  message?: string;
+  selfAssessedLevel?: 'débutant' | 'intermédiaire' | 'avancé' | 'expert';
+}): Promise<ClubJoinRequest> {
+  const [request] = await db
+    .insert(clubJoinRequests)
+    .values({
+      clubId: data.clubId,
+      userId: data.userId,
+      fullName: data.fullName,
+      email: data.email,
+      phone: data.phone,
+      message: data.message,
+      selfAssessedLevel: data.selfAssessedLevel || 'intermédiaire',
+    })
+    .returning();
+
+  return request;
+}
+
+export async function getPendingJoinRequests(
+  clubId: string
+): Promise<(ClubJoinRequest & { user: User })[]> {
+  const result = await db
+    .select()
+    .from(clubJoinRequests)
+    .where(and(eq(clubJoinRequests.clubId, clubId), eq(clubJoinRequests.status, 'pending')))
+    .orderBy(desc(clubJoinRequests.createdAt));
+
+  // Fetch user details
+  const userIds = result.map(r => r.userId);
+  const usersData = userIds.length > 0
+    ? await db.select().from(users).where(inArray(users.id, userIds))
+    : [];
+  
+  const usersMap = new Map(usersData.map(u => [u.id, u]));
+
+  return result.map(request => ({
+    ...request,
+    user: usersMap.get(request.userId)!,
+  }));
+}
+
+export async function getAllJoinRequests(
+  clubId: string,
+  options?: { status?: 'pending' | 'approved' | 'rejected'; limit?: number }
+): Promise<(ClubJoinRequest & { user: User })[]> {
+  let whereClause = eq(clubJoinRequests.clubId, clubId);
+  
+  if (options?.status) {
+    whereClause = and(whereClause, eq(clubJoinRequests.status, options.status))!;
+  }
+
+  const result = await db
+    .select()
+    .from(clubJoinRequests)
+    .where(whereClause)
+    .orderBy(desc(clubJoinRequests.createdAt))
+    .limit(options?.limit ?? 100);
+
+  // Fetch user details
+  const userIds = result.map(r => r.userId);
+  const usersData = userIds.length > 0
+    ? await db.select().from(users).where(inArray(users.id, userIds))
+    : [];
+  
+  const usersMap = new Map(usersData.map(u => [u.id, u]));
+
+  return result.map(request => ({
+    ...request,
+    user: usersMap.get(request.userId)!,
+  }));
+}
+
+export async function getJoinRequestByUserAndClub(
+  userId: string,
+  clubId: string
+): Promise<ClubJoinRequest | null> {
+  const result = await db
+    .select()
+    .from(clubJoinRequests)
+    .where(and(eq(clubJoinRequests.userId, userId), eq(clubJoinRequests.clubId, clubId)))
+    .orderBy(desc(clubJoinRequests.createdAt))
+    .limit(1);
+  
+  return result[0] ?? null;
+}
+
+export async function approveJoinRequest(
+  requestId: string,
+  reviewerId: string
+): Promise<{ request: ClubJoinRequest; player: Player }> {
+  // Get the request
+  const [request] = await db
+    .select()
+    .from(clubJoinRequests)
+    .where(eq(clubJoinRequests.id, requestId))
+    .limit(1);
+
+  if (!request) {
+    throw new Error('Demande non trouvée');
+  }
+
+  if (request.status !== 'pending') {
+    throw new Error('Cette demande a déjà été traitée');
+  }
+
+  // Update request status
+  const [updatedRequest] = await db
+    .update(clubJoinRequests)
+    .set({
+      status: 'approved',
+      reviewedBy: reviewerId,
+      reviewedAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .where(eq(clubJoinRequests.id, requestId))
+    .returning();
+
+  // Create player profile
+  const [player] = await db
+    .insert(players)
+    .values({
+      id: request.userId,
+      clubId: request.clubId,
+      fullName: request.fullName,
+      phone: request.phone,
+      selfAssessedLevel: request.selfAssessedLevel,
+      isVerified: true,
+      isActive: true,
+    })
+    .returning();
+
+  return { request: updatedRequest, player };
+}
+
+export async function rejectJoinRequest(
+  requestId: string,
+  reviewerId: string,
+  reason?: string
+): Promise<ClubJoinRequest> {
+  const [updatedRequest] = await db
+    .update(clubJoinRequests)
+    .set({
+      status: 'rejected',
+      reviewedBy: reviewerId,
+      reviewedAt: new Date(),
+      rejectionReason: reason,
+      updatedAt: new Date(),
+    })
+    .where(eq(clubJoinRequests.id, requestId))
+    .returning();
+
+  return updatedRequest;
+}
+
+export async function countPendingJoinRequests(clubId: string): Promise<number> {
+  const result = await db
+    .select({ count: count() })
+    .from(clubJoinRequests)
+    .where(and(eq(clubJoinRequests.clubId, clubId), eq(clubJoinRequests.status, 'pending')));
+  
+  return result[0]?.count ?? 0;
+}
+
+export async function hasUserPendingRequest(userId: string, clubId: string): Promise<boolean> {
+  const result = await db
+    .select()
+    .from(clubJoinRequests)
+    .where(and(
+      eq(clubJoinRequests.userId, userId),
+      eq(clubJoinRequests.clubId, clubId),
+      eq(clubJoinRequests.status, 'pending')
+    ))
+    .limit(1);
+  
+  return result.length > 0;
+}

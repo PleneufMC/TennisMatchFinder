@@ -7,7 +7,7 @@ import { signIn } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
-import { Mail, User, ArrowRight, Loader2, CheckCircle } from 'lucide-react';
+import { Mail, User, ArrowRight, Loader2, CheckCircle, Phone, MessageSquare, Clock } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,7 +39,7 @@ export function RegisterForm({ clubSlug = 'mccc', clubName = 'MCCC' }: RegisterF
   const handleSubmit = async (data: RegisterInput) => {
     setIsLoading(true);
     try {
-      // Enregistrer via l'API puis envoyer un magic link
+      // Enregistrer via l'API (crée une demande d'adhésion)
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -52,21 +52,10 @@ export function RegisterForm({ clubSlug = 'mccc', clubName = 'MCCC' }: RegisterF
         throw new Error(result.error || 'Erreur lors de l\'inscription');
       }
 
-      // Envoyer le magic link via NextAuth
-      const signInResult = await signIn('email', {
-        email: data.email,
-        redirect: false,
-        callbackUrl: '/dashboard',
-      });
-
-      if (signInResult?.error) {
-        throw new Error(signInResult.error);
-      }
-
       setRegisteredEmail(data.email);
       setRegistrationComplete(true);
-      toast.success('Inscription réussie !', {
-        description: 'Vérifiez votre email pour confirmer votre compte.',
+      toast.success('Demande envoyée !', {
+        description: 'Un administrateur va valider votre inscription.',
       });
     } catch (error) {
       console.error('Registration error:', error);
@@ -83,31 +72,37 @@ export function RegisterForm({ clubSlug = 'mccc', clubName = 'MCCC' }: RegisterF
     return (
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
-            <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
+            <Clock className="h-6 w-6 text-amber-600 dark:text-amber-400" />
           </div>
-          <CardTitle>Inscription réussie !</CardTitle>
+          <CardTitle>Demande envoyée !</CardTitle>
           <CardDescription>
-            Un email de confirmation a été envoyé à{' '}
-            <strong>{registeredEmail}</strong>
+            Votre demande d&apos;adhésion a été transmise aux administrateurs du club.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 text-center text-sm text-muted-foreground">
           <p>
-            Cliquez sur le lien dans l&apos;email pour confirmer votre compte et accéder
-            à TennisMatchFinder.
+            Un administrateur de <strong>{clubName}</strong> va examiner votre demande
+            et vous recevrez un email à <strong>{registeredEmail}</strong> une fois votre
+            inscription validée.
           </p>
-          <p>
-            Vous rejoindrez automatiquement le club <strong>{clubName}</strong>.
-          </p>
+          <div className="rounded-lg bg-muted/50 p-4 text-left">
+            <h4 className="font-medium mb-2">Prochaines étapes :</h4>
+            <ol className="list-decimal list-inside space-y-1 text-xs">
+              <li>Un admin valide votre demande</li>
+              <li>Vous recevez un email de confirmation</li>
+              <li>Cliquez sur le lien pour vous connecter</li>
+              <li>Accédez à votre espace joueur !</li>
+            </ol>
+          </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-2">
           <Button
             variant="outline"
             className="w-full"
-            onClick={() => router.push('/login')}
+            onClick={() => router.push('/')}
           >
-            Aller à la page de connexion
+            Retour à l&apos;accueil
           </Button>
         </CardFooter>
       </Card>

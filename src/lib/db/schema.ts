@@ -73,6 +73,12 @@ export const eloChangeReasonEnum = pgEnum('elo_change_reason', [
   'manual_adjustment',
 ]);
 
+export const joinRequestStatusEnum = pgEnum('join_request_status', [
+  'pending',
+  'approved',
+  'rejected',
+]);
+
 // ============================================
 // NEXT-AUTH TABLES
 // ============================================
@@ -399,6 +405,39 @@ export const notifications = pgTable(
 );
 
 // ============================================
+// CLUB JOIN REQUESTS (Demandes d'adhésion)
+// ============================================
+
+export const clubJoinRequests = pgTable(
+  'club_join_requests',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    clubId: uuid('club_id')
+      .notNull()
+      .references(() => clubs.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    fullName: varchar('full_name', { length: 100 }).notNull(),
+    email: varchar('email', { length: 255 }).notNull(),
+    phone: varchar('phone', { length: 20 }),
+    message: text('message'), // Message de présentation du joueur
+    selfAssessedLevel: playerLevelEnum('self_assessed_level').default('intermédiaire').notNull(),
+    status: joinRequestStatusEnum('status').default('pending').notNull(),
+    reviewedBy: uuid('reviewed_by').references(() => players.id, { onDelete: 'set null' }),
+    reviewedAt: timestamp('reviewed_at', { mode: 'date' }),
+    rejectionReason: text('rejection_reason'),
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (table) => ({
+    clubIdIdx: index('club_join_requests_club_id_idx').on(table.clubId),
+    userIdIdx: index('club_join_requests_user_id_idx').on(table.userId),
+    statusIdx: index('club_join_requests_status_idx').on(table.status),
+  })
+);
+
+// ============================================
 // CHAT TABLES
 // ============================================
 
@@ -486,6 +525,7 @@ export const clubsRelations = relations(clubs, ({ many }) => ({
   forumThreads: many(forumThreads),
   matchProposals: many(matchProposals),
   chatRooms: many(chatRooms),
+  joinRequests: many(clubJoinRequests),
 }));
 
 export const playersRelations = relations(players, ({ one, many }) => ({
@@ -615,6 +655,21 @@ export const chatMessagesRelations = relations(chatMessages, ({ one }) => ({
   }),
 }));
 
+export const clubJoinRequestsRelations = relations(clubJoinRequests, ({ one }) => ({
+  club: one(clubs, {
+    fields: [clubJoinRequests.clubId],
+    references: [clubs.id],
+  }),
+  user: one(users, {
+    fields: [clubJoinRequests.userId],
+    references: [users.id],
+  }),
+  reviewer: one(players, {
+    fields: [clubJoinRequests.reviewedBy],
+    references: [players.id],
+  }),
+}));
+
 // ============================================
 // TYPE EXPORTS
 // ============================================
@@ -654,3 +709,6 @@ export type NewChatRoomMember = typeof chatRoomMembers.$inferInsert;
 
 export type ChatMessage = typeof chatMessages.$inferSelect;
 export type NewChatMessage = typeof chatMessages.$inferInsert;
+
+export type ClubJoinRequest = typeof clubJoinRequests.$inferSelect;
+export type NewClubJoinRequest = typeof clubJoinRequests.$inferInsert;
