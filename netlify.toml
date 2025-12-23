@@ -35,7 +35,7 @@
     X-XSS-Protection = "1; mode=block"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
-    Content-Security-Policy = "frame-ancestors 'none'; default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.supabase.co https://avatars.githubusercontent.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self';"
+    Content-Security-Policy = "frame-ancestors 'none'; default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://avatars.githubusercontent.com https://lh3.googleusercontent.com; connect-src 'self' https://*.neon.tech wss://*.neon.tech; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self';"
 
 # Cache statique optimisé pour les assets
 [[headers]]
@@ -90,7 +90,7 @@
   node_bundler = "esbuild"
   
 [functions."api/*"]
-  external_node_modules = ["@supabase/supabase-js", "@supabase/ssr"]
+  external_node_modules = ["@neondatabase/serverless", "drizzle-orm"]
 
 # Configuration du contexte de déploiement
 [context.production]
