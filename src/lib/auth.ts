@@ -258,21 +258,73 @@ function CustomDrizzleAdapter(): Adapter {
   };
 }
 
+// Check if email configuration is valid (not placeholder values)
+const isEmailConfigValid = () => {
+  const host = process.env.EMAIL_SERVER_HOST || '';
+  const password = process.env.EMAIL_SERVER_PASSWORD || '';
+  // Check for placeholder values
+  if (host.includes('(') || host.includes('votre') || host.includes('your')) return false;
+  if (password.includes('(') || password.includes('votre') || password.includes('your')) return false;
+  if (!host || !password) return false;
+  return true;
+};
+
 export const authOptions: NextAuthOptions = {
   adapter: CustomDrizzleAdapter(),
   
   providers: [
     // Magic Link Email Provider
     EmailProvider({
-      server: {
+      server: isEmailConfigValid() ? {
         host: process.env.EMAIL_SERVER_HOST,
-        port: Number(process.env.EMAIL_SERVER_PORT),
+        port: Number(process.env.EMAIL_SERVER_PORT) || 587,
         auth: {
           user: process.env.EMAIL_SERVER_USER,
           pass: process.env.EMAIL_SERVER_PASSWORD,
         },
+      } : {
+        // Fallback to prevent crash - emails won't be sent but auth won't crash
+        host: 'localhost',
+        port: 25,
+        auth: {
+          user: '',
+          pass: '',
+        },
       },
       from: process.env.EMAIL_FROM || 'TennisMatchFinder <noreply@tennismatchfinder.net>',
+      // Custom sendVerificationRequest to handle invalid email config gracefully
+      async sendVerificationRequest({ identifier, url, provider }) {
+        if (!isEmailConfigValid()) {
+          console.error('⚠️ Email configuration is invalid. Magic link cannot be sent.');
+          console.log('📧 Magic link URL (for development):', url);
+          // In development/misconfigured env, we log the URL but don't crash
+          throw new Error('Email non configuré. Contactez l\'administrateur.');
+        }
+        // Use default email sending
+        const { createTransport } = await import('nodemailer');
+        const transport = createTransport(provider.server);
+        const result = await transport.sendMail({
+          to: identifier,
+          from: provider.from,
+          subject: 'Connexion à TennisMatchFinder',
+          text: `Cliquez sur ce lien pour vous connecter : ${url}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #16a34a;">🎾 TennisMatchFinder</h2>
+              <p>Cliquez sur le bouton ci-dessous pour vous connecter :</p>
+              <a href="${url}" style="display: inline-block; background-color: #16a34a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 16px 0;">
+                Se connecter
+              </a>
+              <p style="color: #666; font-size: 14px;">Ce lien expire dans 24 heures.</p>
+              <p style="color: #999; font-size: 12px;">Si vous n'avez pas demandé ce lien, ignorez cet email.</p>
+            </div>
+          `,
+        });
+        const failed = result.rejected.concat(result.pending).filter(Boolean);
+        if (failed.length) {
+          throw new Error(`Email non envoyé à ${failed.join(', ')}`);
+        }
+      },
     }),
   ],
 
