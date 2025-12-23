@@ -73,7 +73,7 @@ export default async function DashboardPage() {
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-bold">{player.currentElo}</span>
               {trend !== 'stable' && (
-                <Badge variant={trend === 'up' ? 'success' : 'destructive'}>
+                <Badge variant={trend === 'up' ? 'default' : 'destructive'}>
                   {trend === 'up' ? '↑' : '↓'} {formatEloDelta(recentDelta)}
                 </Badge>
               )}
@@ -121,180 +121,113 @@ export default async function DashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Série en cours
+              Série actuelle
             </CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              {player.winStreak > 0 ? `${player.winStreak} 🔥` : '0'}
+              {player.winStreak > 0 ? `🔥 ${player.winStreak}` : '-'}
             </div>
             <p className="text-sm text-muted-foreground">
-              {player.winStreak > 0 ? 'victoires consécutives' : 'Prêt pour la prochaine !'}
+              Record: {player.bestWinStreak} victoires
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Section principale */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Propositions en attente */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Propositions de match
-            </CardTitle>
-            <CardDescription>
-              {pendingProposals.length} proposition(s) en attente
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {pendingProposals.length > 0 ? (
-              <div className="space-y-4">
-                {pendingProposals.map((proposal) => (
-                  <div
-                    key={proposal.id}
-                    className="flex items-center justify-between p-3 rounded-lg border"
-                  >
-                    <div>
-                      <p className="font-medium">
-                        {proposal.fromPlayer?.fullName}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {proposal.proposedDate
-                          ? formatRelativeDate(proposal.proposedDate.toISOString())
-                          : 'Date flexible'}
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline">
-                        Décliner
-                      </Button>
-                      <Button size="sm">Accepter</Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">
-                  Aucune proposition en attente
-                </p>
-                <Button asChild className="mt-4">
-                  <Link href="/suggestions">Trouver un adversaire</Link>
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Derniers matchs */}
+      {/* Actions rapides */}
+      <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Swords className="h-5 w-5" />
-              Derniers matchs
+              Jouer un match
             </CardTitle>
             <CardDescription>
-              Vos 5 dernières rencontres
+              Enregistrez un nouveau résultat ou proposez un match
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex gap-2">
+            <Button asChild>
+              <Link href="/matchs/nouveau">Enregistrer un résultat</Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/suggestions">Trouver un adversaire</Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Propositions ({pendingProposals.length})
+            </CardTitle>
+            <CardDescription>
+              Demandes de match en attente
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {recentMatches.length > 0 ? (
-              <div className="space-y-3">
-                {recentMatches.map((match) => {
-                  const isPlayer1 = match.player1Id === player.id;
-                  const isWinner = match.winnerId === player.id;
-                  const opponent = isPlayer1
-                    ? match.player2?.fullName
-                    : match.player1?.fullName;
-                  const eloDelta = isPlayer1
-                    ? match.player1EloAfter - match.player1EloBefore
-                    : match.player2EloAfter - match.player2EloBefore;
-
-                  return (
-                    <div
-                      key={match.id}
-                      className="flex items-center justify-between p-3 rounded-lg border"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`w-2 h-2 rounded-full ${
-                            isWinner ? 'bg-green-500' : 'bg-red-500'
-                          }`}
-                        />
-                        <div>
-                          <p className="font-medium">
-                            {isWinner ? 'Victoire' : 'Défaite'} vs {opponent}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {match.score} • {formatRelativeDate(match.playedAt.toISOString())}
-                          </p>
-                        </div>
-                      </div>
-                      <Badge variant={isWinner ? 'success' : 'destructive'}>
-                        {formatEloDelta(eloDelta)}
-                      </Badge>
-                    </div>
-                  );
-                })}
+            {pendingProposals.length > 0 ? (
+              <div className="space-y-2">
+                {pendingProposals.slice(0, 3).map((proposal) => (
+                  <div key={proposal.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
+                    <span className="text-sm">{proposal.fromPlayer.fullName}</span>
+                    <Button size="sm" variant="outline" asChild>
+                      <Link href={`/matchs/propositions/${proposal.id}`}>Voir</Link>
+                    </Button>
+                  </div>
+                ))}
               </div>
             ) : (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">
-                  Aucun match enregistré
-                </p>
-                <Button asChild className="mt-4">
-                  <Link href="/matchs/nouveau">Enregistrer un match</Link>
-                </Button>
-              </div>
-            )}
-
-            {recentMatches.length > 0 && (
-              <Button asChild variant="outline" className="w-full mt-4">
-                <Link href="/matchs">Voir tous les matchs</Link>
-              </Button>
+              <p className="text-sm text-muted-foreground">Aucune proposition en attente</p>
             )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Actions rapides */}
+      {/* Derniers matchs */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Star className="h-5 w-5" />
-            Actions rapides
+            Derniers matchs
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
-            <Button asChild variant="outline" className="h-auto py-4 flex-col gap-2">
-              <Link href="/matchs/nouveau">
-                <Swords className="h-6 w-6" />
-                <span>Enregistrer un match</span>
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="h-auto py-4 flex-col gap-2">
-              <Link href="/suggestions">
-                <Users className="h-6 w-6" />
-                <span>Trouver un adversaire</span>
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="h-auto py-4 flex-col gap-2">
-              <Link href="/classement">
-                <Trophy className="h-6 w-6" />
-                <span>Voir le classement</span>
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="h-auto py-4 flex-col gap-2">
-              <Link href="/forum">
-                <TrendingUp className="h-6 w-6" />
-                <span>Aller au forum</span>
-              </Link>
-            </Button>
-          </div>
+          {recentMatches.length > 0 ? (
+            <div className="space-y-3">
+              {recentMatches.map((match) => {
+                const isWinner = match.winnerId === player.id;
+                const opponent = match.player1Id === player.id ? match.player2 : match.player1;
+                const eloDelta = match.player1Id === player.id
+                  ? match.player1EloAfter - match.player1EloBefore
+                  : match.player2EloAfter - match.player2EloBefore;
+
+                return (
+                  <div key={match.id} className="flex items-center justify-between p-3 rounded-lg border">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-2 h-2 rounded-full ${isWinner ? 'bg-green-500' : 'bg-red-500'}`} />
+                      <div>
+                        <p className="font-medium">vs {opponent.fullName}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {match.score} • {formatRelativeDate(match.playedAt.toISOString())}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge variant={isWinner ? 'default' : 'secondary'}>
+                      {formatEloDelta(eloDelta)}
+                    </Badge>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              Aucun match enregistré. <Link href="/matchs/nouveau" className="text-primary hover:underline">Enregistrez votre premier match !</Link>
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -31,7 +31,7 @@ export default async function SuggestionsPage() {
 
   // Récupérer tous les joueurs actifs du club et l'historique des matchs
   const [allPlayers, matchHistory] = await Promise.all([
-    getPlayersByClub(player.clubId, { onlyActive: true }),
+    getPlayersByClub(player.clubId, { activeOnly: true }),
     getMatchesByPlayer(player.id),
   ]);
 

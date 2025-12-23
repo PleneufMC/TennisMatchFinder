@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { db } from '@/lib/db';
+import { matches, players, eloHistory, forumThreads } from '@/lib/db/schema';
+import { eq, and, gte, desc, inArray } from 'drizzle-orm';
 
 /**
  * Interface pour les événements du club
@@ -40,60 +42,37 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const adminClient = createAdminClient();
     const events: ClubEvent[] = [];
     const sinceDate = since ? new Date(since) : new Date(Date.now() - 24 * 60 * 60 * 1000); // Default: 24h
 
     // Récupérer les matchs récents
-    const { data: recentMatchesData } = await adminClient
-      .from('matches')
-      .select(`
-        id,
-        score,
-        played_at,
-        player1_id,
-        player2_id,
-        player1_elo_before,
-        player1_elo_after,
-        player2_elo_before,
-        player2_elo_after,
-        winner_id
-      `)
-      .eq('club_id', clubId)
-      .gte('created_at', sinceDate.toISOString())
-      .order('created_at', { ascending: false });
+    const recentMatches = await db
+      .select()
+      .from(matches)
+      .where(
+        and(
+          eq(matches.clubId, clubId),
+          gte(matches.createdAt, sinceDate)
+        )
+      )
+      .orderBy(desc(matches.createdAt));
 
-    // Récupérer les noms des joueurs séparément pour éviter les ambiguïtés
-    interface MatchData {
-      id: string;
-      score: string | null;
-      played_at: string;
-      player1_id: string;
-      player2_id: string;
-      player1_elo_before: number;
-      player1_elo_after: number;
-      player2_elo_before: number;
-      player2_elo_after: number;
-      winner_id: string | null;
-    }
-    const recentMatches = recentMatchesData as MatchData[] | null;
-
-    if (recentMatches) {
-      // Récupérer tous les IDs uniques de joueurs
-      const playerIds = Array.from(new Set(recentMatches.flatMap(m => [m.player1_id, m.player2_id])));
-      const { data: playersData } = await adminClient
-        .from('players')
-        .select('id, full_name')
-        .in('id', playerIds);
+    if (recentMatches.length > 0) {
+      // Récupérer les noms des joueurs
+      const playerIds = [...new Set(recentMatches.flatMap(m => [m.player1Id, m.player2Id]))];
+      const playersData = await db
+        .select()
+        .from(players)
+        .where(inArray(players.id, playerIds));
       
-      const playersMap = new Map((playersData || []).map(p => [p.id, p.full_name]));
+      const playersMap = new Map(playersData.map(p => [p.id, p.fullName]));
 
       for (const match of recentMatches) {
-        const player1Name = playersMap.get(match.player1_id) || 'Inconnu';
-        const player2Name = playersMap.get(match.player2_id) || 'Inconnu';
-        const isUpset = match.winner_id === match.player1_id
-          ? match.player1_elo_before < match.player2_elo_before - 100
-          : match.player2_elo_before < match.player1_elo_before - 100;
+        const player1Name = playersMap.get(match.player1Id) || 'Inconnu';
+        const player2Name = playersMap.get(match.player2Id) || 'Inconnu';
+        const isUpset = match.winnerId === match.player1Id
+          ? match.player1EloBefore < match.player2EloBefore - 100
+          : match.player2EloBefore < match.player1EloBefore - 100;
 
         events.push({
           id: match.id,
@@ -101,107 +80,120 @@ export async function GET(request: NextRequest) {
           type: 'match_recorded',
           data: {
             player1: {
-              id: match.player1_id,
+              id: match.player1Id,
               name: player1Name,
-              newElo: match.player1_elo_after,
-              delta: match.player1_elo_after - match.player1_elo_before,
+              newElo: match.player1EloAfter,
+              delta: match.player1EloAfter - match.player1EloBefore,
             },
             player2: {
-              id: match.player2_id,
+              id: match.player2Id,
               name: player2Name,
-              newElo: match.player2_elo_after,
-              delta: match.player2_elo_after - match.player2_elo_before,
+              newElo: match.player2EloAfter,
+              delta: match.player2EloAfter - match.player2EloBefore,
             },
             score: match.score,
             wasUpset: isUpset,
-            winnerId: match.winner_id,
+            winnerId: match.winnerId,
           },
-          timestamp: match.played_at,
+          timestamp: match.playedAt.toISOString(),
         });
       }
     }
 
     // Récupérer les nouveaux membres
-    const { data: newPlayers } = await adminClient
-      .from('players')
-      .select('id, full_name, created_at')
-      .eq('club_id', clubId)
-      .gte('created_at', sinceDate.toISOString())
-      .order('created_at', { ascending: false });
+    const newPlayers = await db
+      .select()
+      .from(players)
+      .where(
+        and(
+          eq(players.clubId, clubId),
+          gte(players.createdAt, sinceDate)
+        )
+      )
+      .orderBy(desc(players.createdAt));
 
-    if (newPlayers) {
-      for (const player of newPlayers) {
-        events.push({
-          id: `new_member_${player.id}`,
-          clubId,
-          type: 'new_member',
-          data: {
-            playerId: player.id,
-            playerName: player.full_name,
-          },
-          timestamp: player.created_at,
-        });
-      }
+    for (const player of newPlayers) {
+      events.push({
+        id: `new_member_${player.id}`,
+        clubId,
+        type: 'new_member',
+        data: {
+          playerId: player.id,
+          playerName: player.fullName,
+        },
+        timestamp: player.createdAt.toISOString(),
+      });
     }
 
-    // Récupérer les milestones (joueurs ayant atteint certains seuils)
-    const { data: eloMilestones } = await adminClient
-      .from('elo_history')
-      .select(`
-        id,
-        player_id,
-        elo,
-        recorded_at,
-        player:player_id(full_name)
-      `)
-      .gte('recorded_at', sinceDate.toISOString())
-      .in('elo', [1500, 1600, 1700, 1800, 1900, 2000])
-      .order('recorded_at', { ascending: false });
+    // Récupérer les milestones ELO
+    const milestones = [1500, 1600, 1700, 1800, 1900, 2000];
+    const eloMilestones = await db
+      .select()
+      .from(eloHistory)
+      .where(
+        and(
+          gte(eloHistory.recordedAt, sinceDate),
+          inArray(eloHistory.elo, milestones)
+        )
+      )
+      .orderBy(desc(eloHistory.recordedAt));
 
-    if (eloMilestones) {
+    if (eloMilestones.length > 0) {
+      const milestonePlayerIds = [...new Set(eloMilestones.map(m => m.playerId))];
+      const milestonePlayers = await db
+        .select()
+        .from(players)
+        .where(inArray(players.id, milestonePlayerIds));
+      
+      const playerNameMap = new Map(milestonePlayers.map(p => [p.id, p.fullName]));
+
       for (const milestone of eloMilestones) {
-        const playerData = milestone.player as { full_name: string } | null;
         events.push({
           id: milestone.id,
           clubId,
           type: 'milestone',
           data: {
-            playerId: milestone.player_id,
-            playerName: playerData?.full_name,
+            playerId: milestone.playerId,
+            playerName: playerNameMap.get(milestone.playerId),
             achievement: `${milestone.elo} ELO`,
           },
-          timestamp: milestone.recorded_at,
+          timestamp: milestone.recordedAt.toISOString(),
         });
       }
     }
 
     // Récupérer les nouveaux threads du forum
-    const { data: newThreads } = await adminClient
-      .from('forum_threads')
-      .select(`
-        id,
-        title,
-        created_at,
-        author:author_id(full_name)
-      `)
-      .eq('club_id', clubId)
-      .eq('is_bot', false)
-      .gte('created_at', sinceDate.toISOString())
-      .order('created_at', { ascending: false });
+    const newThreads = await db
+      .select()
+      .from(forumThreads)
+      .where(
+        and(
+          eq(forumThreads.clubId, clubId),
+          eq(forumThreads.isBot, false),
+          gte(forumThreads.createdAt, sinceDate)
+        )
+      )
+      .orderBy(desc(forumThreads.createdAt));
 
-    if (newThreads) {
+    if (newThreads.length > 0) {
+      const authorIds = [...new Set(newThreads.map(t => t.authorId).filter(Boolean))] as string[];
+      const authors = authorIds.length > 0
+        ? await db.select().from(players).where(inArray(players.id, authorIds))
+        : [];
+      
+      const authorMap = new Map(authors.map(a => [a.id, a.fullName]));
+
       for (const thread of newThreads) {
-        const authorData = thread.author as { full_name: string } | null;
         events.push({
           id: thread.id,
           clubId,
           type: 'new_thread',
           data: {
             threadId: thread.id,
-            authorName: authorData?.full_name || 'Anonyme',
+            authorName: thread.authorId ? authorMap.get(thread.authorId) || 'Anonyme' : 'Anonyme',
             title: thread.title,
           },
-          timestamp: thread.created_at,
+          timestamp: thread.createdAt.toISOString(),
         });
       }
     }

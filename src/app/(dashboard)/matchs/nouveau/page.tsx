@@ -25,7 +25,7 @@ export default async function NouveauMatchPage() {
   }
 
   // Récupérer la liste des adversaires potentiels (autres joueurs du club)
-  const allPlayers = await getPlayersByClub(player.clubId, { onlyActive: true });
+  const allPlayers = await getPlayersByClub(player.clubId, { activeOnly: true });
   const opponents = allPlayers.filter((p) => p.id !== player.id);
 
   return (

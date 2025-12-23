@@ -29,6 +29,14 @@ export const ELO_CONSTANTS = {
   ELO_DIVISOR: 400, // Pour le calcul de l'expectation
 } as const;
 
+// Configuration ELO pour les cron jobs et autres services
+export const ELO_CONFIG = {
+  ...ELO_CONSTANTS,
+  INACTIVITY_DAYS_THRESHOLD: 14, // Jours avant décroissance
+  INACTIVITY_DECAY_PER_DAY: 5,   // Points perdus par jour d'inactivité
+  MAX_INACTIVITY_DECAY: 100,     // Maximum de points perdus pour inactivité
+} as const;
+
 // Types de modificateurs
 export type ModifierType =
   | 'new_opponent'      // Nouvel adversaire

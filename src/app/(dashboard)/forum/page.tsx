@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PlayerAvatar } from '@/components/ui/avatar';
 import { getServerPlayer } from '@/lib/auth-helpers';
-import { getThreadsByClub, countThreadsByCategory } from '@/lib/db/queries';
+import { getForumThreadsByClub, getThreadCategoryCount } from '@/lib/db/queries';
 import { formatTimeAgo } from '@/lib/utils/dates';
 import { FORUM_CATEGORIES } from '@/types/forum';
 import { cn } from '@/lib/utils';
@@ -36,18 +36,13 @@ export default async function ForumPage({
   const selectedCategory = params.category;
 
   // Récupérer les threads du forum
-  const threads = await getThreadsByClub(player.clubId, {
+  const threads = await getForumThreadsByClub(player.clubId, {
     category: selectedCategory,
     limit: 50,
   });
 
   // Compter les threads par catégorie
-  const categoryCounts = await countThreadsByCategory(player.clubId);
-
-  const countByCategory: Record<string, number> = {};
-  categoryCounts.forEach((t) => {
-    countByCategory[t.category] = t.count;
-  });
+  const countByCategory = await getThreadCategoryCount(player.clubId);
 
   return (
     <div className="space-y-6">
