@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { RegisterForm } from '@/components/auth/register-form';
-import { createClient } from '@/lib/supabase/server';
+import { getClubBySlug } from '@/lib/db/queries';
 
 interface JoinPageProps {
   params: Promise<{
@@ -11,13 +11,7 @@ interface JoinPageProps {
 
 export async function generateMetadata({ params }: JoinPageProps): Promise<Metadata> {
   const { clubSlug } = await params;
-  const supabase = await createClient();
-  
-  const { data: club } = await supabase
-    .from('clubs')
-    .select('name')
-    .eq('slug', clubSlug)
-    .single() as { data: { name: string } | null };
+  const club = await getClubBySlug(clubSlug);
 
   if (!club) {
     return { title: 'Club non trouvé' };
@@ -29,30 +23,15 @@ export async function generateMetadata({ params }: JoinPageProps): Promise<Metad
   };
 }
 
-interface ClubData {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-}
-
 export default async function JoinClubPage({ params }: JoinPageProps) {
   const { clubSlug } = await params;
-  const supabase = await createClient();
 
-  // Vérifier que le club existe
-  const { data, error } = await supabase
-    .from('clubs')
-    .select('id, name, slug, description')
-    .eq('slug', clubSlug)
-    .eq('is_active', true)
-    .single();
+  // Vérifier que le club existe et est actif
+  const club = await getClubBySlug(clubSlug);
 
-  if (error || !data) {
+  if (!club || !club.isActive) {
     notFound();
   }
-
-  const club = data as ClubData;
 
   return (
     <div className="space-y-6">

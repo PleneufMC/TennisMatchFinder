@@ -1,28 +1,19 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
-// Force dynamic rendering - this page requires Supabase data
+// Force dynamic rendering - this page requires database data
 export const dynamic = 'force-dynamic';
+
 import { Trophy } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { PlayerAvatar } from '@/components/ui/avatar';
-import { getPlayerProfile, createClient, type PlayerProfileData } from '@/lib/supabase/server';
+import { getServerPlayer } from '@/lib/auth-helpers';
+import { getClubRanking } from '@/lib/db/queries';
 import { cn } from '@/lib/utils';
 import { getEloRankTitle } from '@/lib/elo';
 import { formatWinRate } from '@/lib/utils/format';
 import Link from 'next/link';
-
-interface RankedPlayerRow {
-  id: string;
-  full_name: string;
-  avatar_url: string | null;
-  current_elo: number;
-  matches_played: number;
-  wins: number;
-  losses: number;
-  win_streak: number;
-}
 
 export const metadata: Metadata = {
   title: 'Classement',
@@ -30,31 +21,17 @@ export const metadata: Metadata = {
 };
 
 export default async function ClassementPage() {
-  const playerData = await getPlayerProfile();
+  const player = await getServerPlayer();
 
-  if (!playerData) {
+  if (!player) {
     redirect('/login');
   }
 
-  const player: PlayerProfileData = playerData;
-  const supabase = await createClient();
-
   // Récupérer tous les joueurs du club triés par ELO
-  const { data, error } = await supabase
-    .from('players')
-    .select('id, full_name, avatar_url, current_elo, matches_played, wins, losses, win_streak')
-    .eq('club_id', player.club_id)
-    .eq('is_active', true)
-    .order('current_elo', { ascending: false });
-  
-  const players = data as RankedPlayerRow[] | null;
-
-  if (error) {
-    console.error('Error fetching players:', error);
-  }
+  const players = await getClubRanking(player.clubId);
 
   // Trouver le rang du joueur actuel
-  const currentPlayerRank = players?.findIndex((p) => p.id === player.id) ?? -1;
+  const currentPlayerRank = players.findIndex((p) => p.id === player.id);
 
   return (
     <div className="space-y-6">
@@ -83,13 +60,13 @@ export default async function ClassementPage() {
                 <div>
                   <p className="font-medium">Votre position</p>
                   <p className="text-sm text-muted-foreground">
-                    {player.current_elo} ELO
+                    {player.currentElo} ELO
                   </p>
                 </div>
               </div>
               <div className="text-right">
                 <p className="text-sm text-muted-foreground">
-                  {player.matches_played} matchs • {formatWinRate(player.wins, player.matches_played)} de victoires
+                  {player.matchesPlayed} matchs • {formatWinRate(player.wins, player.matchesPlayed)} de victoires
                 </p>
               </div>
             </div>
@@ -102,15 +79,14 @@ export default async function ClassementPage() {
         <CardHeader>
           <CardTitle>Classement complet</CardTitle>
           <CardDescription>
-            {players?.length || 0} joueurs actifs
+            {players.length} joueurs actifs
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {players?.map((rankedPlayer, index) => {
-              const rank = index + 1;
+            {players.map((rankedPlayer) => {
               const isCurrentUser = rankedPlayer.id === player.id;
-              const rankInfo = getEloRankTitle(rankedPlayer.current_elo);
+              const rankInfo = getEloRankTitle(rankedPlayer.currentElo);
 
               return (
                 <Link
@@ -123,30 +99,30 @@ export default async function ClassementPage() {
                 >
                   {/* Rang */}
                   <div className="flex-shrink-0 w-10">
-                    {rank === 1 && (
+                    {rankedPlayer.rank === 1 && (
                       <div className="rank-gold">🥇</div>
                     )}
-                    {rank === 2 && (
+                    {rankedPlayer.rank === 2 && (
                       <div className="rank-silver">🥈</div>
                     )}
-                    {rank === 3 && (
+                    {rankedPlayer.rank === 3 && (
                       <div className="rank-bronze">🥉</div>
                     )}
-                    {rank > 3 && (
-                      <div className="rank-default">{rank}</div>
+                    {rankedPlayer.rank > 3 && (
+                      <div className="rank-default">{rankedPlayer.rank}</div>
                     )}
                   </div>
 
                   {/* Avatar et nom */}
                   <PlayerAvatar
-                    src={rankedPlayer.avatar_url}
-                    name={rankedPlayer.full_name}
+                    src={rankedPlayer.avatarUrl}
+                    name={rankedPlayer.fullName}
                     size="md"
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="font-medium truncate">
-                        {rankedPlayer.full_name}
+                        {rankedPlayer.fullName}
                       </p>
                       {isCurrentUser && (
                         <Badge variant="secondary" className="text-xs">
@@ -159,14 +135,14 @@ export default async function ClassementPage() {
                         {rankInfo.icon} {rankInfo.title}
                       </span>
                       <span>•</span>
-                      <span>{rankedPlayer.matches_played} matchs</span>
+                      <span>{rankedPlayer.matchesPlayed} matchs</span>
                     </div>
                   </div>
 
                   {/* Stats */}
                   <div className="text-right">
                     <div className="text-xl font-bold">
-                      {rankedPlayer.current_elo}
+                      {rankedPlayer.currentElo}
                     </div>
                     <div className="text-sm text-muted-foreground">
                       {rankedPlayer.wins}V - {rankedPlayer.losses}D
@@ -174,16 +150,16 @@ export default async function ClassementPage() {
                   </div>
 
                   {/* Série */}
-                  {rankedPlayer.win_streak >= 3 && (
+                  {rankedPlayer.winStreak >= 3 && (
                     <Badge variant="success" className="hidden sm:flex">
-                      🔥 {rankedPlayer.win_streak}
+                      🔥 {rankedPlayer.winStreak}
                     </Badge>
                   )}
                 </Link>
               );
             })}
 
-            {(!players || players.length === 0) && (
+            {players.length === 0 && (
               <div className="text-center py-12 text-muted-foreground">
                 <Trophy className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>Aucun joueur actif dans le club</p>

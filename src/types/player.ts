@@ -61,18 +61,17 @@ export interface RankedPlayer {
   rankChange: number;
 }
 
-// Joueur pour les suggestions
+// Joueur pour les suggestions (format simplifié)
 export interface SuggestedPlayer {
-  player: Pick<
-    Player,
-    | 'id'
-    | 'full_name'
-    | 'avatar_url'
-    | 'current_elo'
-    | 'self_assessed_level'
-    | 'availability'
-    | 'preferences'
-  >;
+  player: {
+    id: string;
+    full_name: string;
+    avatar_url: string | null;
+    current_elo: number;
+    self_assessed_level: 'débutant' | 'intermédiaire' | 'avancé' | 'expert';
+    availability?: unknown;
+    preferences?: unknown;
+  };
   compatibilityScore: number;
   factors: {
     eloProximity: number;

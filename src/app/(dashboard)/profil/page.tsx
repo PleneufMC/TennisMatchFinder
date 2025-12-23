@@ -1,35 +1,21 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
-// Force dynamic rendering - this page requires Supabase data
+// Force dynamic rendering - this page requires database data
 export const dynamic = 'force-dynamic';
+
 import Link from 'next/link';
 import { User, Trophy, Swords, Users, Calendar, TrendingUp, Edit } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PlayerAvatar } from '@/components/ui/avatar';
-import { getPlayerProfile, createClient, type PlayerProfileData } from '@/lib/supabase/server';
+import { getServerPlayer } from '@/lib/auth-helpers';
+import { getBadgesByPlayer, getEloHistoryByPlayer } from '@/lib/db/queries';
 import { formatFullDate, formatRelativeDate } from '@/lib/utils/dates';
 import { formatWinRate, formatEloDelta } from '@/lib/utils/format';
 import { getEloRankTitle } from '@/lib/elo';
 import { levelLabels, weekdayLabels, timeSlotLabels, surfaceLabels } from '@/lib/validations/profile';
-
-interface BadgeRow {
-  id: string;
-  badge_type: string;
-  badge_name: string;
-  badge_description: string | null;
-  badge_icon: string | null;
-  earned_at: string;
-}
-
-interface EloHistoryEntry {
-  elo: number;
-  delta: number;
-  recorded_at: string;
-  reason: string;
-}
 
 export const metadata: Metadata = {
   title: 'Mon profil',
@@ -37,37 +23,21 @@ export const metadata: Metadata = {
 };
 
 export default async function ProfilPage() {
-  const playerData = await getPlayerProfile();
+  const player = await getServerPlayer();
 
-  if (!playerData) {
+  if (!player) {
     redirect('/login');
   }
 
-  const player: PlayerProfileData = playerData;
-  const supabase = await createClient();
+  // Récupérer les badges et l'historique ELO
+  const [badges, eloHistory] = await Promise.all([
+    getBadgesByPlayer(player.id),
+    getEloHistoryByPlayer(player.id, { limit: 10 }),
+  ]);
 
-  // Récupérer les badges du joueur
-  const { data: badgesData } = await supabase
-    .from('player_badges')
-    .select('*')
-    .eq('player_id', player.id)
-    .order('earned_at', { ascending: false });
-  
-  const badges = badgesData as BadgeRow[] | null;
-
-  // Récupérer l'historique ELO récent
-  const { data: eloHistoryData } = await supabase
-    .from('elo_history')
-    .select('elo, delta, recorded_at, reason')
-    .eq('player_id', player.id)
-    .order('recorded_at', { ascending: false })
-    .limit(10);
-  
-  const eloHistory = eloHistoryData as EloHistoryEntry[] | null;
-
-  const rankInfo = getEloRankTitle(player.current_elo);
-  const winRate = player.matches_played > 0
-    ? Math.round((player.wins / player.matches_played) * 100)
+  const rankInfo = getEloRankTitle(player.currentElo);
+  const winRate = player.matchesPlayed > 0
+    ? Math.round((player.wins / player.matchesPlayed) * 100)
     : 0;
 
   const availability = player.availability as { days?: string[]; timeSlots?: string[] } | null;
@@ -79,21 +49,21 @@ export default async function ProfilPage() {
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-4">
           <PlayerAvatar
-            src={player.avatar_url}
-            name={player.full_name}
+            src={player.avatarUrl}
+            name={player.fullName}
             size="xl"
           />
           <div>
-            <h1 className="text-3xl font-bold">{player.full_name}</h1>
+            <h1 className="text-3xl font-bold">{player.fullName}</h1>
             <div className="flex items-center gap-2 mt-1">
               <span className={rankInfo.color}>
                 {rankInfo.icon} {rankInfo.title}
               </span>
               <span className="text-muted-foreground">•</span>
-              <span className="text-muted-foreground">{player.current_elo} ELO</span>
+              <span className="text-muted-foreground">{player.currentElo} ELO</span>
             </div>
             <p className="text-sm text-muted-foreground mt-1">
-              Membre depuis {formatFullDate(player.created_at)}
+              Membre depuis {formatFullDate(player.createdAt.toISOString())}
             </p>
           </div>
         </div>
@@ -119,7 +89,7 @@ export default async function ProfilPage() {
             <CardContent>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="p-4 rounded-lg bg-muted/50 text-center">
-                  <p className="text-3xl font-bold">{player.matches_played}</p>
+                  <p className="text-3xl font-bold">{player.matchesPlayed}</p>
                   <p className="text-sm text-muted-foreground">Matchs joués</p>
                 </div>
                 <div className="p-4 rounded-lg bg-green-50 dark:bg-green-900/20 text-center">
@@ -142,7 +112,7 @@ export default async function ProfilPage() {
                     <Users className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <p className="font-semibold">{player.unique_opponents}</p>
+                    <p className="font-semibold">{player.uniqueOpponents}</p>
                     <p className="text-xs text-muted-foreground">Adversaires uniques</p>
                   </div>
                 </div>
@@ -151,7 +121,7 @@ export default async function ProfilPage() {
                     <TrendingUp className="h-5 w-5 text-orange-600" />
                   </div>
                   <div>
-                    <p className="font-semibold">{player.best_win_streak}</p>
+                    <p className="font-semibold">{player.bestWinStreak}</p>
                     <p className="text-xs text-muted-foreground">Meilleure série</p>
                   </div>
                 </div>
@@ -160,7 +130,7 @@ export default async function ProfilPage() {
                     <Trophy className="h-5 w-5 text-purple-600" />
                   </div>
                   <div>
-                    <p className="font-semibold">{player.best_elo}</p>
+                    <p className="font-semibold">{player.bestElo}</p>
                     <p className="text-xs text-muted-foreground">Meilleur ELO</p>
                   </div>
                 </div>
@@ -180,7 +150,7 @@ export default async function ProfilPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {eloHistory && eloHistory.length > 0 ? (
+              {eloHistory.length > 0 ? (
                 <div className="space-y-2">
                   {eloHistory.map((entry, index) => (
                     <div
@@ -199,7 +169,7 @@ export default async function ProfilPage() {
                           {entry.reason === 'inactivity_decay' && 'Inactivité'}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          {formatRelativeDate(entry.recorded_at)}
+                          {formatRelativeDate(entry.recordedAt.toISOString())}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -229,7 +199,7 @@ export default async function ProfilPage() {
             </CardHeader>
             <CardContent>
               <Badge variant="secondary" className="text-sm">
-                {levelLabels[player.self_assessed_level as keyof typeof levelLabels]}
+                {levelLabels[player.selfAssessedLevel as keyof typeof levelLabels]}
               </Badge>
             </CardContent>
           </Card>
@@ -319,21 +289,21 @@ export default async function ProfilPage() {
             <CardHeader>
               <CardTitle className="text-lg">Badges</CardTitle>
               <CardDescription>
-                {badges?.length || 0} badge{badges && badges.length > 1 ? 's' : ''} obtenu{badges && badges.length > 1 ? 's' : ''}
+                {badges.length} badge{badges.length > 1 ? 's' : ''} obtenu{badges.length > 1 ? 's' : ''}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {badges && badges.length > 0 ? (
+              {badges.length > 0 ? (
                 <div className="grid grid-cols-2 gap-2">
                   {badges.map((badge) => (
                     <div
                       key={badge.id}
                       className="flex items-center gap-2 p-2 rounded-lg border"
-                      title={badge.badge_description || ''}
+                      title={badge.badgeDescription || ''}
                     >
-                      <span className="text-xl">{badge.badge_icon}</span>
+                      <span className="text-xl">{badge.badgeIcon}</span>
                       <span className="text-xs font-medium truncate">
-                        {badge.badge_name}
+                        {badge.badgeName}
                       </span>
                     </div>
                   ))}

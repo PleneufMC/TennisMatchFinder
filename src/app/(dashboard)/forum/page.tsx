@@ -1,37 +1,20 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
-// Force dynamic rendering - this page requires Supabase data
+// Force dynamic rendering - this page requires database data
 export const dynamic = 'force-dynamic';
+
 import Link from 'next/link';
 import { MessageSquare, Plus, Pin, Lock, Bot, MessageCircle, Eye } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PlayerAvatar } from '@/components/ui/avatar';
-import { getPlayerProfile, createClient, type PlayerProfileData } from '@/lib/supabase/server';
+import { getServerPlayer } from '@/lib/auth-helpers';
+import { getThreadsByClub, countThreadsByCategory } from '@/lib/db/queries';
 import { formatTimeAgo } from '@/lib/utils/dates';
 import { FORUM_CATEGORIES } from '@/types/forum';
 import { cn } from '@/lib/utils';
-
-interface ThreadRow {
-  id: string;
-  title: string;
-  category: string;
-  content: string;
-  is_pinned: boolean;
-  is_locked: boolean;
-  is_bot: boolean;
-  reply_count: number;
-  view_count: number;
-  created_at: string;
-  updated_at: string;
-  author: { id: string; full_name: string; avatar_url: string | null } | null;
-}
-
-interface CategoryCountRow {
-  category: string;
-}
 
 export const metadata: Metadata = {
   title: 'Forum',
@@ -43,52 +26,27 @@ export default async function ForumPage({
 }: {
   searchParams: Promise<{ category?: string }>;
 }) {
-  const playerData = await getPlayerProfile();
+  const player = await getServerPlayer();
 
-  if (!playerData) {
+  if (!player) {
     redirect('/login');
   }
 
-  const player: PlayerProfileData = playerData;
   const params = await searchParams;
   const selectedCategory = params.category;
 
-  const supabase = await createClient();
-
   // Récupérer les threads du forum
-  let query = supabase
-    .from('forum_threads')
-    .select(`
-      *,
-      author:author_id(id, full_name, avatar_url)
-    `)
-    .eq('club_id', player.club_id)
-    .order('is_pinned', { ascending: false })
-    .order('created_at', { ascending: false })
-    .limit(50);
-
-  if (selectedCategory) {
-    query = query.eq('category', selectedCategory);
-  }
-
-  const { data: threadsData, error } = await query;
-  const threads = threadsData as ThreadRow[] | null;
-
-  if (error) {
-    console.error('Error fetching threads:', error);
-  }
+  const threads = await getThreadsByClub(player.clubId, {
+    category: selectedCategory,
+    limit: 50,
+  });
 
   // Compter les threads par catégorie
-  const { data: categoryCountsData } = await supabase
-    .from('forum_threads')
-    .select('category')
-    .eq('club_id', player.club_id);
-  
-  const categoryCounts = categoryCountsData as CategoryCountRow[] | null;
+  const categoryCounts = await countThreadsByCategory(player.clubId);
 
   const countByCategory: Record<string, number> = {};
-  categoryCounts?.forEach((t) => {
-    countByCategory[t.category] = (countByCategory[t.category] || 0) + 1;
+  categoryCounts.forEach((t) => {
+    countByCategory[t.category] = t.count;
   });
 
   return (
@@ -132,7 +90,7 @@ export default async function ForumPage({
                 >
                   <span>Toutes les discussions</span>
                   <Badge variant={!selectedCategory ? 'secondary' : 'outline'}>
-                    {threads?.length || 0}
+                    {threads.length}
                   </Badge>
                 </Link>
                 {FORUM_CATEGORIES.map((cat) => (
@@ -172,14 +130,14 @@ export default async function ForumPage({
                   : 'Toutes les discussions'}
               </CardTitle>
               <CardDescription>
-                {threads?.length || 0} discussion{threads && threads.length > 1 ? 's' : ''}
+                {threads.length} discussion{threads.length > 1 ? 's' : ''}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {threads && threads.length > 0 ? (
+              {threads.length > 0 ? (
                 <div className="space-y-2">
                   {threads.map((thread) => {
-                    const author = thread.author as { id: string; full_name: string; avatar_url: string | null } | null;
+                    const author = thread.author;
                     const category = FORUM_CATEGORIES.find((c) => c.value === thread.category);
 
                     return (
@@ -190,14 +148,14 @@ export default async function ForumPage({
                       >
                         <div className="flex items-start gap-4">
                           {/* Avatar */}
-                          {thread.is_bot ? (
+                          {thread.isBot ? (
                             <div className="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
                               <Bot className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                             </div>
                           ) : (
                             <PlayerAvatar
-                              src={author?.avatar_url}
-                              name={author?.full_name || 'Anonyme'}
+                              src={author?.avatarUrl}
+                              name={author?.fullName || 'Anonyme'}
                               size="md"
                             />
                           )}
@@ -206,19 +164,19 @@ export default async function ForumPage({
                           <div className="flex-1 min-w-0">
                             {/* Badges */}
                             <div className="flex items-center gap-2 mb-1 flex-wrap">
-                              {thread.is_pinned && (
+                              {thread.isPinned && (
                                 <Badge variant="warning" className="text-xs">
                                   <Pin className="h-3 w-3 mr-1" />
                                   Épinglé
                                 </Badge>
                               )}
-                              {thread.is_locked && (
+                              {thread.isLocked && (
                                 <Badge variant="secondary" className="text-xs">
                                   <Lock className="h-3 w-3 mr-1" />
                                   Verrouillé
                                 </Badge>
                               )}
-                              {thread.is_bot && (
+                              {thread.isBot && (
                                 <Badge variant="bot" className="text-xs">
                                   <Bot className="h-3 w-3 mr-1" />
                                   Bot
@@ -235,10 +193,10 @@ export default async function ForumPage({
                             {/* Meta */}
                             <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
                               <span>
-                                {thread.is_bot ? 'TennisBot' : author?.full_name || 'Anonyme'}
+                                {thread.isBot ? 'TennisBot' : author?.fullName || 'Anonyme'}
                               </span>
                               <span>•</span>
-                              <span>{formatTimeAgo(thread.created_at)}</span>
+                              <span>{formatTimeAgo(thread.createdAt.toISOString())}</span>
                             </div>
                           </div>
 
@@ -246,11 +204,11 @@ export default async function ForumPage({
                           <div className="hidden sm:flex items-center gap-4 text-sm text-muted-foreground">
                             <div className="flex items-center gap-1">
                               <MessageCircle className="h-4 w-4" />
-                              <span>{thread.reply_count}</span>
+                              <span>{thread.replyCount}</span>
                             </div>
                             <div className="flex items-center gap-1">
                               <Eye className="h-4 w-4" />
-                              <span>{thread.view_count}</span>
+                              <span>{thread.viewCount}</span>
                             </div>
                           </div>
                         </div>

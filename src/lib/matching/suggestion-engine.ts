@@ -3,10 +3,22 @@
  * Algorithme intelligent pour trouver les meilleurs adversaires
  */
 
-import type { Player, SuggestedPlayer, SuggestionTag } from '@/types';
+import type { SuggestedPlayer, SuggestionTag } from '@/types';
 import { SUGGESTION_CONFIG } from '@/constants/elo';
 
-export interface PlayerWithHistory extends Player {
+// Type simplifié pour le moteur de suggestions
+export interface SuggestionPlayer {
+  id: string;
+  full_name: string;
+  avatar_url: string | null;
+  current_elo: number;
+  self_assessed_level?: string;
+  availability?: unknown;
+  preferences?: unknown;
+  last_active_at?: string;
+}
+
+export interface PlayerWithHistory extends SuggestionPlayer {
   matchHistory?: {
     opponentId: string;
     playedAt: string;
@@ -78,8 +90,8 @@ function calculateNoveltyScore(
  * Calcule le score de compatibilité des disponibilités
  */
 function calculateScheduleMatchScore(
-  playerAvailability: Player['availability'],
-  opponentAvailability: Player['availability']
+  playerAvailability: unknown,
+  opponentAvailability: unknown
 ): number {
   if (!playerAvailability || !opponentAvailability) {
     return 50; // Pas d'info = score neutre
@@ -106,8 +118,8 @@ function calculateScheduleMatchScore(
  * Calcule le score de compatibilité des préférences
  */
 function calculatePreferenceMatchScore(
-  playerPreferences: Player['preferences'],
-  opponentPreferences: Player['preferences']
+  playerPreferences: unknown,
+  opponentPreferences: unknown
 ): number {
   if (!playerPreferences || !opponentPreferences) {
     return 50;
@@ -249,7 +261,7 @@ export function generateSuggestions(
         full_name: opponent.full_name,
         avatar_url: opponent.avatar_url,
         current_elo: opponent.current_elo,
-        self_assessed_level: opponent.self_assessed_level,
+        self_assessed_level: (opponent.self_assessed_level || 'intermédiaire') as 'débutant' | 'intermédiaire' | 'avancé' | 'expert',
         availability: opponent.availability,
         preferences: opponent.preferences,
       },

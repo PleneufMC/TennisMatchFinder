@@ -3,16 +3,16 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { signIn } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
-import { Mail, User, Lock, ArrowRight, Loader2, CheckCircle } from 'lucide-react';
+import { Mail, User, ArrowRight, Loader2, CheckCircle } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { getClient } from '@/lib/supabase/client';
 import { registerSchema, type RegisterInput } from '@/lib/validations/auth';
 
 interface RegisterFormProps {
@@ -31,35 +31,36 @@ export function RegisterForm({ clubSlug = 'mccc', clubName = 'MCCC' }: RegisterF
     defaultValues: {
       email: '',
       fullName: '',
-      password: '',
       clubSlug,
       selfAssessedLevel: 'intermédiaire',
     },
   });
 
-  const supabase = getClient();
-
   const handleSubmit = async (data: RegisterInput) => {
     setIsLoading(true);
     try {
-      // 1. Créer l'utilisateur dans Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password || Math.random().toString(36).slice(-12) + 'A1!',
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-          data: {
-            full_name: data.fullName,
-            club_slug: data.clubSlug,
-            self_assessed_level: data.selfAssessedLevel,
-          },
-        },
+      // Enregistrer via l'API puis envoyer un magic link
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
       });
 
-      if (authError) throw authError;
+      const result = await response.json();
 
-      if (!authData.user) {
-        throw new Error('Erreur lors de la création du compte');
+      if (!response.ok) {
+        throw new Error(result.error || 'Erreur lors de l\'inscription');
+      }
+
+      // Envoyer le magic link via NextAuth
+      const signInResult = await signIn('email', {
+        email: data.email,
+        redirect: false,
+        callbackUrl: '/dashboard',
+      });
+
+      if (signInResult?.error) {
+        throw new Error(signInResult.error);
       }
 
       setRegisteredEmail(data.email);
@@ -154,24 +155,6 @@ export function RegisterForm({ clubSlug = 'mccc', clubName = 'MCCC' }: RegisterF
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Mot de passe (optionnel)</Label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                className="pl-10"
-                {...form.register('password')}
-                error={form.formState.errors.password?.message}
-              />
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Laissez vide pour utiliser uniquement la connexion par email (Magic Link)
-            </p>
-          </div>
-
-          <div className="space-y-2">
             <Label htmlFor="level">Votre niveau estimé</Label>
             <select
               id="level"
@@ -205,6 +188,18 @@ export function RegisterForm({ clubSlug = 'mccc', clubName = 'MCCC' }: RegisterF
             )}
           </Button>
         </form>
+
+        <div className="mt-4 rounded-lg bg-muted/50 p-4">
+          <div className="flex items-start gap-3">
+            <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+            <div className="text-sm">
+              <p className="font-medium">Connexion sans mot de passe</p>
+              <p className="text-muted-foreground mt-1">
+                Recevez un lien magique par email pour vous connecter instantanément.
+              </p>
+            </div>
+          </div>
+        </div>
 
         <p className="mt-4 text-center text-xs text-muted-foreground">
           En vous inscrivant, vous acceptez nos{' '}

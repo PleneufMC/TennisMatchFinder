@@ -1,21 +1,16 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
-// Force dynamic rendering - this page requires Supabase data
+// Force dynamic rendering - this page requires database data
 export const dynamic = 'force-dynamic';
+
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { getPlayerProfile, createClient, type PlayerProfileData } from '@/lib/supabase/server';
+import { getServerPlayer } from '@/lib/auth-helpers';
+import { getPlayersByClub } from '@/lib/db/queries';
 import { MatchForm } from '@/components/matches/match-form';
-
-interface OpponentRow {
-  id: string;
-  full_name: string;
-  avatar_url: string | null;
-  current_elo: number;
-}
 
 export const metadata: Metadata = {
   title: 'Enregistrer un match',
@@ -23,29 +18,15 @@ export const metadata: Metadata = {
 };
 
 export default async function NouveauMatchPage() {
-  const playerData = await getPlayerProfile();
+  const player = await getServerPlayer();
 
-  if (!playerData) {
+  if (!player) {
     redirect('/login');
   }
 
-  const player: PlayerProfileData = playerData;
-  const supabase = await createClient();
-
   // Récupérer la liste des adversaires potentiels (autres joueurs du club)
-  const { data: opponentsData, error } = await supabase
-    .from('players')
-    .select('id, full_name, avatar_url, current_elo')
-    .eq('club_id', player.club_id)
-    .eq('is_active', true)
-    .neq('id', player.id)
-    .order('full_name');
-
-  const opponents = opponentsData as OpponentRow[] | null;
-
-  if (error) {
-    console.error('Error fetching opponents:', error);
-  }
+  const allPlayers = await getPlayersByClub(player.clubId, { onlyActive: true });
+  const opponents = allPlayers.filter((p) => p.id !== player.id);
 
   return (
     <div className="space-y-6">
@@ -78,18 +59,18 @@ export default async function NouveauMatchPage() {
               <MatchForm
                 currentPlayer={{
                   id: player.id,
-                  fullName: player.full_name,
-                  currentElo: player.current_elo,
+                  fullName: player.fullName,
+                  currentElo: player.currentElo,
                 }}
                 opponents={
-                  opponents?.map((o) => ({
+                  opponents.map((o) => ({
                     id: o.id,
-                    fullName: o.full_name,
-                    avatarUrl: o.avatar_url,
-                    currentElo: o.current_elo,
-                  })) || []
+                    fullName: o.fullName,
+                    avatarUrl: o.avatarUrl,
+                    currentElo: o.currentElo,
+                  }))
                 }
-                clubId={player.club_id}
+                clubId={player.clubId}
               />
             </CardContent>
           </Card>

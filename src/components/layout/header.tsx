@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
+import { signOut } from 'next-auth/react';
 import {
   Bell,
   LogOut,
@@ -19,11 +20,21 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { PlayerAvatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { getClient } from '@/lib/supabase/client';
-import type { Player, Club } from '@/types';
+
+interface PlayerData {
+  id: string;
+  fullName: string;
+  avatarUrl: string | null;
+  currentElo: number;
+  clubId: string;
+  clubName: string;
+  clubSlug: string;
+  isAdmin: boolean;
+  isVerified: boolean;
+}
 
 interface HeaderProps {
-  player: Player & { clubs: Club };
+  player: PlayerData;
   notificationCount?: number;
   onMenuClick?: () => void;
 }
@@ -32,11 +43,10 @@ export function Header({ player, notificationCount = 0, onMenuClick }: HeaderPro
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const supabase = getClient();
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
+      await signOut({ redirect: false });
       toast.success('Déconnexion réussie');
       router.push('/');
       router.refresh();
@@ -61,7 +71,7 @@ export function Header({ player, notificationCount = 0, onMenuClick }: HeaderPro
 
         <div className="hidden md:flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Club :</span>
-          <Badge variant="secondary">{player.clubs.name}</Badge>
+          <Badge variant="secondary">{player.clubName}</Badge>
         </div>
       </div>
 
@@ -99,13 +109,13 @@ export function Header({ player, notificationCount = 0, onMenuClick }: HeaderPro
             onClick={() => setIsProfileOpen(!isProfileOpen)}
           >
             <PlayerAvatar
-              src={player.avatar_url}
-              name={player.full_name}
+              src={player.avatarUrl}
+              name={player.fullName}
               size="sm"
             />
             <div className="hidden md:block text-left">
-              <p className="text-sm font-medium">{player.full_name}</p>
-              <p className="text-xs text-muted-foreground">{player.current_elo} ELO</p>
+              <p className="text-sm font-medium">{player.fullName}</p>
+              <p className="text-xs text-muted-foreground">{player.currentElo} ELO</p>
             </div>
           </Button>
 
@@ -121,9 +131,9 @@ export function Header({ player, notificationCount = 0, onMenuClick }: HeaderPro
                 <div className="p-2">
                   {/* Info mobile */}
                   <div className="md:hidden px-2 py-1.5 mb-2 border-b">
-                    <p className="font-medium">{player.full_name}</p>
+                    <p className="font-medium">{player.fullName}</p>
                     <p className="text-sm text-muted-foreground">
-                      {player.current_elo} ELO • {player.clubs.name}
+                      {player.currentElo} ELO • {player.clubName}
                     </p>
                   </div>
 

@@ -1,26 +1,21 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
-// Force dynamic rendering - this page requires Supabase data
+// Force dynamic rendering - this page requires database data
 export const dynamic = 'force-dynamic';
+
 import Link from 'next/link';
 import { Users, Star, Calendar, TrendingUp, MessageSquare } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PlayerAvatar } from '@/components/ui/avatar';
-import { getPlayerProfile, createClient, type PlayerProfileData } from '@/lib/supabase/server';
+import { getServerPlayer } from '@/lib/auth-helpers';
+import { getPlayersByClub, getMatchesByPlayer } from '@/lib/db/queries';
 import { generateSuggestions } from '@/lib/matching';
 import { formatTimeAgo } from '@/lib/utils/dates';
 import { getEloRankTitle } from '@/lib/elo';
 import { cn } from '@/lib/utils';
-
-interface MatchHistoryRow {
-  player1_id: string;
-  player2_id: string;
-  winner_id: string | null;
-  played_at: string;
-}
 
 export const metadata: Metadata = {
   title: 'Trouver un adversaire',
@@ -28,45 +23,49 @@ export const metadata: Metadata = {
 };
 
 export default async function SuggestionsPage() {
-  const playerData = await getPlayerProfile();
+  const player = await getServerPlayer();
 
-  if (!playerData) {
+  if (!player) {
     redirect('/login');
   }
 
-  const player: PlayerProfileData = playerData;
-  const supabase = await createClient();
-
-  // Récupérer tous les joueurs actifs du club
-  const { data: allPlayers } = await supabase
-    .from('players')
-    .select('*')
-    .eq('club_id', player.club_id)
-    .eq('is_active', true);
-
-  // Récupérer l'historique des matchs du joueur
-  const { data: matchHistoryData } = await supabase
-    .from('matches')
-    .select('player1_id, player2_id, winner_id, played_at')
-    .or(`player1_id.eq.${player.id},player2_id.eq.${player.id}`)
-    .order('played_at', { ascending: false });
-
-  const matchHistory = matchHistoryData as MatchHistoryRow[] | null;
+  // Récupérer tous les joueurs actifs du club et l'historique des matchs
+  const [allPlayers, matchHistory] = await Promise.all([
+    getPlayersByClub(player.clubId, { onlyActive: true }),
+    getMatchesByPlayer(player.id),
+  ]);
 
   // Préparer les données pour le moteur de suggestions
+  // Adapter les noms de champs pour correspondre au format attendu par generateSuggestions
   const currentPlayerWithHistory = {
-    ...player,
-    matchHistory: matchHistory?.map((m) => ({
-      opponentId: m.player1_id === player.id ? m.player2_id : m.player1_id,
-      playedAt: m.played_at,
-      winnerId: m.winner_id,
+    id: player.id,
+    full_name: player.fullName,
+    avatar_url: player.avatarUrl,
+    current_elo: player.currentElo,
+    availability: player.availability,
+    preferences: player.preferences,
+    matchHistory: matchHistory.map((m) => ({
+      opponentId: m.player1Id === player.id ? m.player2Id : m.player1Id,
+      playedAt: m.playedAt.toISOString(),
+      winnerId: m.winnerId,
     })),
   };
+
+  // Convertir les joueurs au format attendu
+  const allPlayersFormatted = allPlayers.map(p => ({
+    id: p.id,
+    full_name: p.fullName,
+    avatar_url: p.avatarUrl,
+    current_elo: p.currentElo,
+    availability: p.availability,
+    preferences: p.preferences,
+    last_active_at: p.lastActiveAt?.toISOString(),
+  }));
 
   // Générer les suggestions
   const suggestions = generateSuggestions(
     currentPlayerWithHistory,
-    allPlayers || []
+    allPlayersFormatted
   );
 
   return (
@@ -233,7 +232,7 @@ export default async function SuggestionsPage() {
             <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
             <h3 className="text-lg font-semibold mb-2">Aucune suggestion disponible</h3>
             <p className="text-muted-foreground mb-4">
-              {allPlayers && allPlayers.length <= 1
+              {allPlayers.length <= 1
                 ? 'Invitez d\'autres joueurs à rejoindre le club !'
                 : 'Ajustez vos disponibilités dans votre profil pour trouver des adversaires.'}
             </p>

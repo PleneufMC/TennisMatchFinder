@@ -1,102 +1,50 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
-// Force dynamic rendering - this page requires Supabase data
+// Force dynamic rendering - this page requires database data
 export const dynamic = 'force-dynamic';
+
 import Link from 'next/link';
 import { Trophy, Swords, Users, TrendingUp, Calendar, Star } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { getPlayerProfile, createClient, type PlayerProfileData } from '@/lib/supabase/server';
+import { getServerPlayer } from '@/lib/auth-helpers';
+import { 
+  getMatchesByPlayer, 
+  getEloHistoryByPlayer, 
+  getPendingProposalsForPlayer 
+} from '@/lib/db/queries';
 import { formatRelativeDate } from '@/lib/utils/dates';
-import { formatEloDelta, pluralize } from '@/lib/utils/format';
+import { formatEloDelta } from '@/lib/utils/format';
 import { getEloRankTitle, calculateEloTrend } from '@/lib/elo';
-
-interface EloHistoryRow {
-  delta: number;
-  recorded_at: string;
-}
-
-interface MatchRow {
-  id: string;
-  played_at: string;
-  player1_id: string;
-  player2_id: string;
-  winner_id: string | null;
-  score: string | null;
-  player1_elo_before: number;
-  player1_elo_after: number;
-  player2_elo_before: number;
-  player2_elo_after: number;
-  player1: { full_name: string } | null;
-  player2: { full_name: string } | null;
-}
-
-interface ProposalRow {
-  id: string;
-  from_player_id: string;
-  proposed_date: string | null;
-  proposed_time: string | null;
-  message: string | null;
-  from_player: { full_name: string; avatar_url: string | null } | null;
-}
 
 export const metadata: Metadata = {
   title: 'Tableau de bord',
 };
 
 export default async function DashboardPage() {
-  const playerData = await getPlayerProfile();
+  const player = await getServerPlayer();
 
-  if (!playerData) {
+  if (!player) {
     redirect('/login');
   }
 
-  const player: PlayerProfileData = playerData;
-  const supabase = await createClient();
-
-  // Récupérer les statistiques
-  const [
-    { data: matchesData },
-    { data: historyData },
-    { data: proposalsData },
-  ] = await Promise.all([
-    // Derniers matchs
-    supabase
-      .from('matches')
-      .select('*, player1:player1_id(full_name), player2:player2_id(full_name)')
-      .or(`player1_id.eq.${player.id},player2_id.eq.${player.id}`)
-      .order('played_at', { ascending: false })
-      .limit(5),
-    // Historique ELO récent
-    supabase
-      .from('elo_history')
-      .select('delta, recorded_at')
-      .eq('player_id', player.id)
-      .order('recorded_at', { ascending: false })
-      .limit(10),
-    // Propositions en attente
-    supabase
-      .from('match_proposals')
-      .select('*, from_player:from_player_id(full_name, avatar_url)')
-      .eq('to_player_id', player.id)
-      .eq('status', 'pending')
-      .limit(5),
+  // Récupérer les statistiques avec Drizzle
+  const [recentMatches, eloHistory, pendingProposals] = await Promise.all([
+    getMatchesByPlayer(player.id, { limit: 5 }),
+    getEloHistoryByPlayer(player.id, { limit: 10 }),
+    getPendingProposalsForPlayer(player.id, { limit: 5 }),
   ]);
 
-  const recentMatches = matchesData as MatchRow[] | null;
-  const eloHistory = historyData as EloHistoryRow[] | null;
-  const pendingProposals = proposalsData as ProposalRow[] | null;
-
   // Calculer la tendance
-  const trend = calculateEloTrend(eloHistory || []);
-  const recentDelta = eloHistory?.slice(0, 5).reduce((sum, h) => sum + h.delta, 0) || 0;
-  const rankInfo = getEloRankTitle(player.current_elo);
+  const trend = calculateEloTrend(eloHistory.map(h => ({ delta: h.delta, recorded_at: h.recordedAt.toISOString() })));
+  const recentDelta = eloHistory.slice(0, 5).reduce((sum, h) => sum + h.delta, 0);
+  const rankInfo = getEloRankTitle(player.currentElo);
 
   // Calculer le taux de victoire
-  const winRate = player.matches_played > 0
-    ? Math.round((player.wins / player.matches_played) * 100)
+  const winRate = player.matchesPlayed > 0
+    ? Math.round((player.wins / player.matchesPlayed) * 100)
     : 0;
 
   return (
@@ -104,7 +52,7 @@ export default async function DashboardPage() {
       {/* Titre avec salutation */}
       <div>
         <h1 className="text-3xl font-bold">
-          Bonjour, {player.full_name.split(' ')[0]} ! 👋
+          Bonjour, {player.fullName.split(' ')[0]} ! 👋
         </h1>
         <p className="text-muted-foreground">
           Voici un aperçu de votre activité tennis
@@ -123,7 +71,7 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold">{player.current_elo}</span>
+              <span className="text-3xl font-bold">{player.currentElo}</span>
               {trend !== 'stable' && (
                 <Badge variant={trend === 'up' ? 'success' : 'destructive'}>
                   {trend === 'up' ? '↑' : '↓'} {formatEloDelta(recentDelta)}
@@ -146,7 +94,7 @@ export default async function DashboardPage() {
             <Swords className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{player.matches_played}</div>
+            <div className="text-3xl font-bold">{player.matchesPlayed}</div>
             <p className="text-sm text-muted-foreground">
               {player.wins}V - {player.losses}D ({winRate}%)
             </p>
@@ -162,7 +110,7 @@ export default async function DashboardPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{player.unique_opponents}</div>
+            <div className="text-3xl font-bold">{player.uniqueOpponents}</div>
             <p className="text-sm text-muted-foreground">
               joueurs différents affrontés
             </p>
@@ -179,10 +127,10 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              {player.win_streak > 0 ? `${player.win_streak} 🔥` : '0'}
+              {player.winStreak > 0 ? `${player.winStreak} 🔥` : '0'}
             </div>
             <p className="text-sm text-muted-foreground">
-              {player.win_streak > 0 ? 'victoires consécutives' : 'Prêt pour la prochaine !'}
+              {player.winStreak > 0 ? 'victoires consécutives' : 'Prêt pour la prochaine !'}
             </p>
           </CardContent>
         </Card>
@@ -198,11 +146,11 @@ export default async function DashboardPage() {
               Propositions de match
             </CardTitle>
             <CardDescription>
-              {pendingProposals?.length || 0} proposition(s) en attente
+              {pendingProposals.length} proposition(s) en attente
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {pendingProposals && pendingProposals.length > 0 ? (
+            {pendingProposals.length > 0 ? (
               <div className="space-y-4">
                 {pendingProposals.map((proposal) => (
                   <div
@@ -211,11 +159,11 @@ export default async function DashboardPage() {
                   >
                     <div>
                       <p className="font-medium">
-                        {(proposal.from_player as { full_name: string })?.full_name}
+                        {proposal.fromPlayer?.fullName}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {proposal.proposed_date
-                          ? formatRelativeDate(proposal.proposed_date)
+                        {proposal.proposedDate
+                          ? formatRelativeDate(proposal.proposedDate.toISOString())
                           : 'Date flexible'}
                       </p>
                     </div>
@@ -253,17 +201,17 @@ export default async function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {recentMatches && recentMatches.length > 0 ? (
+            {recentMatches.length > 0 ? (
               <div className="space-y-3">
                 {recentMatches.map((match) => {
-                  const isPlayer1 = match.player1_id === player.id;
-                  const isWinner = match.winner_id === player.id;
+                  const isPlayer1 = match.player1Id === player.id;
+                  const isWinner = match.winnerId === player.id;
                   const opponent = isPlayer1
-                    ? (match.player2 as { full_name: string })?.full_name
-                    : (match.player1 as { full_name: string })?.full_name;
+                    ? match.player2?.fullName
+                    : match.player1?.fullName;
                   const eloDelta = isPlayer1
-                    ? match.player1_elo_after - match.player1_elo_before
-                    : match.player2_elo_after - match.player2_elo_before;
+                    ? match.player1EloAfter - match.player1EloBefore
+                    : match.player2EloAfter - match.player2EloBefore;
 
                   return (
                     <div
@@ -281,7 +229,7 @@ export default async function DashboardPage() {
                             {isWinner ? 'Victoire' : 'Défaite'} vs {opponent}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            {match.score} • {formatRelativeDate(match.played_at)}
+                            {match.score} • {formatRelativeDate(match.playedAt.toISOString())}
                           </p>
                         </div>
                       </div>
@@ -303,7 +251,7 @@ export default async function DashboardPage() {
               </div>
             )}
 
-            {recentMatches && recentMatches.length > 0 && (
+            {recentMatches.length > 0 && (
               <Button asChild variant="outline" className="w-full mt-4">
                 <Link href="/matchs">Voir tous les matchs</Link>
               </Button>

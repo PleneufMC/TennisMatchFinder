@@ -1,9 +1,42 @@
-import { updateSession } from '@/lib/supabase/middleware';
-import { type NextRequest } from 'next/server';
+import { withAuth } from 'next-auth/middleware';
+import { NextResponse } from 'next/server';
 
-export async function middleware(request: NextRequest) {
-  return await updateSession(request);
-}
+export default withAuth(
+  function middleware(request) {
+    // You can add custom logic here
+    return NextResponse.next();
+  },
+  {
+    callbacks: {
+      authorized: ({ token, req }) => {
+        // Public routes that don't require authentication
+        const publicPaths = [
+          '/',
+          '/login',
+          '/register',
+          '/join',
+          '/api/auth',
+        ];
+
+        const isPublicPath = publicPaths.some(path => 
+          req.nextUrl.pathname === path || 
+          req.nextUrl.pathname.startsWith(`${path}/`)
+        );
+
+        // Allow public paths and API routes that handle their own auth
+        if (isPublicPath) {
+          return true;
+        }
+
+        // Require authentication for dashboard routes
+        return !!token;
+      },
+    },
+    pages: {
+      signIn: '/login',
+    },
+  }
+);
 
 export const config = {
   matcher: [
@@ -13,7 +46,6 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - public folder
-     * Feel free to modify this pattern to include more paths.
      */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],

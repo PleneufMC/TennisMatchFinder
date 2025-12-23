@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
-import { Loader2, Trophy, User } from 'lucide-react';
+import { Loader2, Trophy } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,7 +13,6 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { PlayerAvatar } from '@/components/ui/avatar';
 import { createMatchSchema, type CreateMatchInput } from '@/lib/validations/match';
-import { getClient } from '@/lib/supabase/client';
 import { calculateMatchElo, formatEloDelta } from '@/lib/elo';
 import { cn } from '@/lib/utils';
 
@@ -73,7 +72,7 @@ export function MatchForm({ currentPlayer, opponents, clubId }: MatchFormProps) 
         {
           id: winnerId === currentPlayer.id ? currentPlayer.id : selectedOpponent.id,
           currentElo: winnerId === currentPlayer.id ? currentPlayer.currentElo : selectedOpponent.currentElo,
-          matchesPlayed: 0, // Simplifié
+          matchesPlayed: 0,
         },
         {
           id: winnerId === currentPlayer.id ? selectedOpponent.id : currentPlayer.id,
@@ -93,55 +92,27 @@ export function MatchForm({ currentPlayer, opponents, clubId }: MatchFormProps) 
 
     startTransition(async () => {
       try {
-        const supabase = getClient();
-
-        // Calculer les nouveaux ELO
-        const eloResult = calculateMatchElo(
-          {
-            id: data.winnerId === currentPlayer.id ? currentPlayer.id : selectedOpponent.id,
-            currentElo: data.winnerId === currentPlayer.id ? currentPlayer.currentElo : selectedOpponent.currentElo,
-            matchesPlayed: 0,
+        const response = await fetch('/api/matches', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
           },
-          {
-            id: data.winnerId === currentPlayer.id ? selectedOpponent.id : currentPlayer.id,
-            currentElo: data.winnerId === currentPlayer.id ? selectedOpponent.currentElo : currentPlayer.currentElo,
-            matchesPlayed: 0,
-          },
-          [],
-          []
-        );
+          body: JSON.stringify({
+            ...data,
+            playedAt: data.playedAt.toISOString(),
+          }),
+        });
 
-        // Déterminer player1 et player2 (player1 est le joueur courant)
-        const isCurrentPlayerWinner = data.winnerId === currentPlayer.id;
+        const result = await response.json();
 
-        const matchData = {
-          club_id: clubId,
-          player1_id: currentPlayer.id,
-          player2_id: selectedOpponent.id,
-          winner_id: data.winnerId,
-          score: data.score,
-          game_type: data.gameType,
-          surface: data.surface || null,
-          location: data.location || null,
-          played_at: data.playedAt.toISOString(),
-          reported_by: currentPlayer.id,
-          player1_elo_before: currentPlayer.currentElo,
-          player2_elo_before: selectedOpponent.currentElo,
-          player1_elo_after: isCurrentPlayerWinner ? eloResult.winner.eloAfter : eloResult.loser.eloAfter,
-          player2_elo_after: isCurrentPlayerWinner ? eloResult.loser.eloAfter : eloResult.winner.eloAfter,
-          modifiers_applied: {
-            player1: isCurrentPlayerWinner ? eloResult.winner.modifiers : eloResult.loser.modifiers,
-            player2: isCurrentPlayerWinner ? eloResult.loser.modifiers : eloResult.winner.modifiers,
-          },
-        };
-        
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error } = await supabase.from('matches').insert(matchData as any);
+        if (!response.ok) {
+          throw new Error(result.error || 'Erreur lors de l\'enregistrement');
+        }
 
-        if (error) throw error;
+        const newElo = result.eloChanges.currentPlayer.after;
 
         toast.success('Match enregistré !', {
-          description: `Votre ELO passe à ${isCurrentPlayerWinner ? eloResult.winner.eloAfter : eloResult.loser.eloAfter}`,
+          description: `Votre ELO passe à ${newElo}`,
         });
 
         router.push('/matchs');

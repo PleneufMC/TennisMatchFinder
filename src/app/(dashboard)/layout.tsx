@@ -40,7 +40,7 @@ export default function DashboardLayout({
     <div className="flex h-screen overflow-hidden">
       {/* Sidebar desktop */}
       <div className="hidden md:flex">
-        <Sidebar isAdmin={player.is_admin} />
+        <Sidebar isAdmin={player.isAdmin} />
       </div>
 
       {/* Contenu principal */}
