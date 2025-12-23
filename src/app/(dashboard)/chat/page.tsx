@@ -5,19 +5,16 @@ import { redirect } from 'next/navigation';
 export const dynamic = 'force-dynamic';
 
 import Link from 'next/link';
-import { MessageCircle, Plus, Users, Hash } from 'lucide-react';
+import { MessageCircle, Hash, Bot, Users } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { PlayerAvatar } from '@/components/ui/avatar';
 import { getServerPlayer } from '@/lib/auth-helpers';
-import { getChatRoomsForPlayer, getClubSectionsWithUnread } from '@/lib/db/queries';
-import { formatTimeAgo } from '@/lib/utils/dates';
+import { getClubSectionsWithUnread } from '@/lib/db/queries';
 import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
-  title: 'Messages',
-  description: 'Discutez avec les autres membres du club',
+  title: 'Chat du club',
+  description: 'Discutez en temps réel avec les membres du club',
 };
 
 export default async function ChatPage() {
@@ -27,78 +24,73 @@ export default async function ChatPage() {
     redirect('/login');
   }
 
-  // Récupérer les sections du club et les conversations privées
-  const [sections, chatRooms] = await Promise.all([
-    getClubSectionsWithUnread(player.clubId, player.id),
-    getChatRoomsForPlayer(player.id),
-  ]);
-
-  // Filtrer les conversations privées (exclure les sections)
-  const privateChats = chatRooms.filter(room => !room.isSection);
+  // Récupérer les salons du club
+  const sections = await getClubSectionsWithUnread(player.clubId, player.id);
 
   // Calculer le total des messages non lus
-  const sectionsUnread = sections.reduce((sum, section) => sum + section.unreadCount, 0);
-  const privateUnread = privateChats.reduce((sum, room) => sum + room.unreadCount, 0);
-  const totalUnread = sectionsUnread + privateUnread;
+  const totalUnread = sections.reduce((sum, section) => sum + section.unreadCount, 0);
 
   return (
     <div className="space-y-6">
       {/* En-tête */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <MessageCircle className="h-8 w-8" />
-            Messages
-            {totalUnread > 0 && (
-              <Badge variant="destructive" className="ml-2">
-                {totalUnread} non lu{totalUnread > 1 ? 's' : ''}
-              </Badge>
-            )}
-          </h1>
-          <p className="text-muted-foreground">
-            Discutez avec les autres membres du club
-          </p>
-        </div>
-        <Button asChild>
-          <Link href="/chat/nouveau">
-            <Plus className="h-4 w-4 mr-2" />
-            Nouvelle conversation
-          </Link>
-        </Button>
+      <div>
+        <h1 className="text-3xl font-bold flex items-center gap-2">
+          <MessageCircle className="h-8 w-8" />
+          Chat du club
+          {totalUnread > 0 && (
+            <Badge variant="destructive" className="ml-2">
+              {totalUnread} non lu{totalUnread > 1 ? 's' : ''}
+            </Badge>
+          )}
+        </h1>
+        <p className="text-muted-foreground">
+          Discutez en temps réel avec les autres membres
+        </p>
       </div>
 
-      {/* Salons du club (Sections) */}
+      {/* Info Agent IA */}
+      <Card className="border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/20">
+        <CardContent className="flex items-start gap-4 pt-6">
+          <div className="h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center flex-shrink-0">
+            <Bot className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-blue-900 dark:text-blue-100">Assistant IA</h3>
+            <p className="text-sm text-blue-700 dark:text-blue-300">
+              Un assistant IA est présent dans les salons pour vous aider à trouver des partenaires, 
+              répondre à vos questions sur le tennis et animer les discussions.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Salons du club */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Hash className="h-5 w-5" />
-            Salons du club
-            {sectionsUnread > 0 && (
-              <Badge variant="destructive" className="ml-2">
-                {sectionsUnread}
-              </Badge>
-            )}
+            Salons de discussion
           </CardTitle>
           <CardDescription>
-            Discussions ouvertes à tous les membres
+            Choisissez un salon pour rejoindre la conversation
           </CardDescription>
         </CardHeader>
         <CardContent>
           {sections.length > 0 ? (
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2">
               {sections.map((section) => (
                 <Link
                   key={section.id}
                   href={`/chat/${section.id}`}
                   className={cn(
-                    'flex items-center gap-3 p-4 rounded-lg border transition-colors',
+                    'flex items-start gap-4 p-4 rounded-lg border transition-all hover:shadow-md',
                     section.unreadCount > 0
-                      ? 'bg-primary/5 border-primary/20 hover:bg-primary/10'
-                      : 'hover:bg-muted/50'
+                      ? 'bg-primary/5 border-primary/30 hover:bg-primary/10'
+                      : 'hover:bg-muted/50 hover:border-muted-foreground/20'
                   )}
                 >
                   {/* Icône */}
-                  <div className="text-2xl flex-shrink-0">
+                  <div className="text-3xl flex-shrink-0">
                     {section.icon || '💬'}
                   </div>
 
@@ -106,163 +98,68 @@ export default async function ChatPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className={cn(
-                        'font-medium truncate',
-                        section.unreadCount > 0 && 'font-bold'
+                        'font-semibold',
+                        section.unreadCount > 0 && 'text-primary'
                       )}>
                         {section.name}
                       </span>
                       {section.unreadCount > 0 && (
                         <Badge variant="destructive" className="text-xs">
-                          {section.unreadCount}
+                          {section.unreadCount} nouveau{section.unreadCount > 1 ? 'x' : ''}
                         </Badge>
                       )}
                     </div>
                     
                     {section.description && (
-                      <p className="text-xs text-muted-foreground truncate mt-0.5">
+                      <p className="text-sm text-muted-foreground mt-1">
                         {section.description}
                       </p>
                     )}
 
                     {section.lastMessage && (
-                      <p className={cn(
-                        'text-sm truncate mt-1',
-                        section.unreadCount > 0
-                          ? 'text-foreground'
-                          : 'text-muted-foreground'
+                      <div className={cn(
+                        'text-sm mt-2 p-2 rounded bg-muted/50 truncate',
+                        section.unreadCount > 0 && 'bg-primary/10'
                       )}>
+                        <span className="font-medium">{section.lastMessage.senderName}: </span>
                         {section.lastMessage.content}
-                      </p>
+                      </div>
                     )}
                   </div>
                 </Link>
               ))}
             </div>
           ) : (
-            <div className="text-center py-8">
-              <Hash className="h-10 w-10 mx-auto mb-3 text-muted-foreground/50" />
-              <p className="text-muted-foreground">
-                Aucun salon disponible pour le moment
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Conversations privées */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Conversations privées
-            {privateUnread > 0 && (
-              <Badge variant="destructive" className="ml-2">
-                {privateUnread}
-              </Badge>
-            )}
-          </CardTitle>
-          <CardDescription>
-            {privateChats.length} conversation{privateChats.length !== 1 ? 's' : ''}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {privateChats.length > 0 ? (
-            <div className="space-y-2">
-              {privateChats.map((room) => {
-                // Pour les conversations directes, afficher l'autre membre
-                const otherMembers = room.members.filter(m => m.id !== player.id);
-                const displayName = room.isDirect
-                  ? otherMembers[0]?.fullName || 'Conversation'
-                  : room.name || `Groupe (${room.members.length})`;
-                const displayAvatar = room.isDirect
-                  ? otherMembers[0]?.avatarUrl
-                  : undefined;
-
-                return (
-                  <Link
-                    key={room.id}
-                    href={`/chat/${room.id}`}
-                    className={cn(
-                      'flex items-center gap-4 p-4 rounded-lg border transition-colors',
-                      room.unreadCount > 0
-                        ? 'bg-primary/5 border-primary/20 hover:bg-primary/10'
-                        : 'hover:bg-muted/50'
-                    )}
-                  >
-                    {/* Avatar */}
-                    {room.isDirect ? (
-                      <PlayerAvatar
-                        src={displayAvatar}
-                        name={displayName}
-                        size="lg"
-                      />
-                    ) : (
-                      <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-                        <Users className="h-6 w-6 text-muted-foreground" />
-                      </div>
-                    )}
-
-                    {/* Contenu */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className={cn(
-                          'font-medium truncate',
-                          room.unreadCount > 0 && 'font-bold'
-                        )}>
-                          {displayName}
-                        </span>
-                        {room.unreadCount > 0 && (
-                          <Badge variant="destructive" className="text-xs">
-                            {room.unreadCount}
-                          </Badge>
-                        )}
-                      </div>
-                      
-                      {room.lastMessage && (
-                        <p className={cn(
-                          'text-sm truncate mt-1',
-                          room.unreadCount > 0
-                            ? 'text-foreground'
-                            : 'text-muted-foreground'
-                        )}>
-                          {room.lastMessage.content}
-                        </p>
-                      )}
-
-                      {!room.isDirect && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {room.members.length} membre{room.members.length !== 1 ? 's' : ''}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Timestamp */}
-                    {room.lastMessage && (
-                      <div className="text-xs text-muted-foreground">
-                        {formatTimeAgo(room.lastMessage.createdAt.toISOString())}
-                      </div>
-                    )}
-                  </Link>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <MessageCircle className="h-10 w-10 mx-auto mb-3 text-muted-foreground/50" />
-              <h3 className="text-lg font-semibold mb-2">Aucune conversation</h3>
+            <div className="text-center py-12">
+              <Hash className="h-12 w-12 mx-auto mb-4 text-muted-foreground/30" />
+              <h3 className="text-lg font-semibold mb-2">Aucun salon disponible</h3>
               <p className="text-muted-foreground mb-4">
-                Commencez à discuter avec d&apos;autres membres !
+                Les salons de discussion n&apos;ont pas encore été créés.
               </p>
-              <Button asChild>
-                <Link href="/chat/nouveau">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nouvelle conversation
-                </Link>
-              </Button>
+              {player.isAdmin && (
+                <p className="text-sm text-muted-foreground">
+                  En tant qu&apos;admin, vous pouvez créer les salons depuis{' '}
+                  <Link href="/admin/sections" className="text-primary hover:underline">
+                    Administration → Salons
+                  </Link>
+                </p>
+              )}
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Légende */}
+      <div className="flex items-center gap-6 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2">
+          <Users className="h-4 w-4" />
+          <span>Discussion publique</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Bot className="h-4 w-4" />
+          <span>Assistant IA disponible</span>
+        </div>
+      </div>
     </div>
   );
 }
