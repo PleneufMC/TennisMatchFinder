@@ -7,6 +7,7 @@
 [build.environment]
   NODE_VERSION = "20"
   NEXT_TELEMETRY_DISABLED = "1"
+  NPM_FLAGS = "--include=dev"
 
 # Plugin Next.js obligatoire pour App Router
 [[plugins]]
