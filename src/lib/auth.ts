@@ -1,5 +1,5 @@
 import type { NextAuthOptions } from 'next-auth';
-import type { Adapter, AdapterUser, AdapterSession, VerificationToken } from 'next-auth/adapters';
+import type { Adapter, AdapterUser, AdapterAccount, AdapterSession, VerificationToken } from 'next-auth/adapters';
 import EmailProvider from 'next-auth/providers/email';
 import { db } from '@/lib/db';
 import { users, accounts, sessions, verificationTokens } from '@/lib/db/schema';
@@ -11,7 +11,7 @@ import { eq, and } from 'drizzle-orm';
  */
 function CustomDrizzleAdapter(): Adapter {
   return {
-    async createUser(data) {
+    async createUser(data: Omit<AdapterUser, 'id'>): Promise<AdapterUser> {
       const result = await db.insert(users).values({
         email: data.email,
         name: data.name,
@@ -31,7 +31,7 @@ function CustomDrizzleAdapter(): Adapter {
       };
     },
 
-    async getUser(id) {
+    async getUser(id: string): Promise<AdapterUser | null> {
       const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
       const user = result[0];
       if (!user) return null;
@@ -45,7 +45,7 @@ function CustomDrizzleAdapter(): Adapter {
       };
     },
 
-    async getUserByEmail(email) {
+    async getUserByEmail(email: string): Promise<AdapterUser | null> {
       const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
       const user = result[0];
       if (!user) return null;
@@ -59,7 +59,7 @@ function CustomDrizzleAdapter(): Adapter {
       };
     },
 
-    async getUserByAccount({ providerAccountId, provider }) {
+    async getUserByAccount({ providerAccountId, provider }: Pick<AdapterAccount, 'provider' | 'providerAccountId'>): Promise<AdapterUser | null> {
       const result = await db
         .select({ user: users })
         .from(accounts)
@@ -84,9 +84,7 @@ function CustomDrizzleAdapter(): Adapter {
       };
     },
 
-    async updateUser(data) {
-      if (!data.id) throw new Error('User ID is required');
-      
+    async updateUser(data: Partial<AdapterUser> & Pick<AdapterUser, 'id'>): Promise<AdapterUser> {
       const result = await db
         .update(users)
         .set({
@@ -111,11 +109,11 @@ function CustomDrizzleAdapter(): Adapter {
       };
     },
 
-    async deleteUser(userId) {
+    async deleteUser(userId: string): Promise<void> {
       await db.delete(users).where(eq(users.id, userId));
     },
 
-    async linkAccount(data) {
+    async linkAccount(data: AdapterAccount): Promise<void> {
       await db.insert(accounts).values({
         userId: data.userId,
         type: data.type,
@@ -127,11 +125,11 @@ function CustomDrizzleAdapter(): Adapter {
         token_type: data.token_type,
         scope: data.scope,
         id_token: data.id_token,
-        session_state: data.session_state,
+        session_state: data.session_state as string | undefined,
       });
     },
 
-    async unlinkAccount({ providerAccountId, provider }) {
+    async unlinkAccount({ providerAccountId, provider }: Pick<AdapterAccount, 'provider' | 'providerAccountId'>): Promise<void> {
       await db
         .delete(accounts)
         .where(
@@ -142,7 +140,7 @@ function CustomDrizzleAdapter(): Adapter {
         );
     },
 
-    async createSession(data) {
+    async createSession(data: { sessionToken: string; userId: string; expires: Date }): Promise<AdapterSession> {
       const result = await db.insert(sessions).values({
         userId: data.userId,
         sessionToken: data.sessionToken,
@@ -159,7 +157,7 @@ function CustomDrizzleAdapter(): Adapter {
       };
     },
 
-    async getSessionAndUser(sessionToken) {
+    async getSessionAndUser(sessionToken: string): Promise<{ session: AdapterSession; user: AdapterUser } | null> {
       const result = await db
         .select({ session: sessions, user: users })
         .from(sessions)
@@ -186,7 +184,7 @@ function CustomDrizzleAdapter(): Adapter {
       };
     },
 
-    async updateSession(data) {
+    async updateSession(data: Partial<AdapterSession> & Pick<AdapterSession, 'sessionToken'>): Promise<AdapterSession | null> {
       const result = await db
         .update(sessions)
         .set({
@@ -205,11 +203,11 @@ function CustomDrizzleAdapter(): Adapter {
       };
     },
 
-    async deleteSession(sessionToken) {
+    async deleteSession(sessionToken: string): Promise<void> {
       await db.delete(sessions).where(eq(sessions.sessionToken, sessionToken));
     },
 
-    async createVerificationToken(data) {
+    async createVerificationToken(data: VerificationToken): Promise<VerificationToken> {
       const result = await db.insert(verificationTokens).values({
         identifier: data.identifier,
         token: data.token,
@@ -226,7 +224,7 @@ function CustomDrizzleAdapter(): Adapter {
       };
     },
 
-    async useVerificationToken({ identifier, token }) {
+    async useVerificationToken({ identifier, token }: { identifier: string; token: string }): Promise<VerificationToken | null> {
       const result = await db
         .select()
         .from(verificationTokens)
@@ -299,7 +297,7 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
 
-    async signIn({ user, account, profile }) {
+    async signIn() {
       // Allow sign in
       return true;
     },
