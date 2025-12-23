@@ -287,3 +287,221 @@ export async function getClubById(id: string) {
   
   return result[0] ?? null;
 }
+
+// ============================================
+// CHAT QUERIES
+// ============================================
+
+import {
+  chatRooms,
+  chatRoomMembers,
+  chatMessages,
+  type ChatRoom,
+  type ChatMessage,
+} from './schema';
+
+export async function getChatRoomsForPlayer(
+  playerId: string
+): Promise<(ChatRoom & { lastMessage?: ChatMessage; unreadCount: number; members: Player[] })[]> {
+  // Get all chat rooms where the player is a member
+  const memberRooms = await db
+    .select({ roomId: chatRoomMembers.roomId, lastReadAt: chatRoomMembers.lastReadAt })
+    .from(chatRoomMembers)
+    .where(eq(chatRoomMembers.playerId, playerId));
+
+  if (memberRooms.length === 0) return [];
+
+  const roomIds = memberRooms.map(m => m.roomId);
+  const lastReadMap = new Map(memberRooms.map(m => [m.roomId, m.lastReadAt]));
+
+  // Get room details
+  const rooms = await db
+    .select()
+    .from(chatRooms)
+    .where(inArray(chatRooms.id, roomIds))
+    .orderBy(desc(chatRooms.updatedAt));
+
+  // Get all members for these rooms
+  const allMembers = await db
+    .select()
+    .from(chatRoomMembers)
+    .where(inArray(chatRoomMembers.roomId, roomIds));
+
+  const playerIdsInRooms = [...new Set(allMembers.map(m => m.playerId))];
+  const playersData = playerIdsInRooms.length > 0
+    ? await db.select().from(players).where(inArray(players.id, playerIdsInRooms))
+    : [];
+  const playersMap = new Map(playersData.map(p => [p.id, p]));
+
+  // Get last message for each room
+  const lastMessages: Record<string, ChatMessage> = {};
+  for (const roomId of roomIds) {
+    const lastMsg = await db
+      .select()
+      .from(chatMessages)
+      .where(eq(chatMessages.roomId, roomId))
+      .orderBy(desc(chatMessages.createdAt))
+      .limit(1);
+    if (lastMsg[0]) {
+      lastMessages[roomId] = lastMsg[0];
+    }
+  }
+
+  // Count unread messages for each room
+  const unreadCounts: Record<string, number> = {};
+  for (const roomId of roomIds) {
+    const lastRead = lastReadMap.get(roomId);
+    const whereClause = lastRead
+      ? and(eq(chatMessages.roomId, roomId), sql`${chatMessages.createdAt} > ${lastRead}`)
+      : eq(chatMessages.roomId, roomId);
+    
+    const result = await db
+      .select({ count: count() })
+      .from(chatMessages)
+      .where(whereClause);
+    
+    unreadCounts[roomId] = result[0]?.count ?? 0;
+  }
+
+  return rooms.map(room => ({
+    ...room,
+    lastMessage: lastMessages[room.id],
+    unreadCount: unreadCounts[room.id] ?? 0,
+    members: allMembers
+      .filter(m => m.roomId === room.id)
+      .map(m => playersMap.get(m.playerId)!)
+      .filter(Boolean),
+  }));
+}
+
+export async function getChatMessages(
+  roomId: string,
+  options?: { limit?: number; before?: Date }
+): Promise<(ChatMessage & { sender: Player | null })[]> {
+  const whereClause = options?.before
+    ? and(eq(chatMessages.roomId, roomId), sql`${chatMessages.createdAt} < ${options.before}`)
+    : eq(chatMessages.roomId, roomId);
+
+  const result = await db
+    .select()
+    .from(chatMessages)
+    .where(whereClause)
+    .orderBy(desc(chatMessages.createdAt))
+    .limit(options?.limit ?? 50);
+
+  // Fetch sender details
+  const senderIds = [...new Set(result.map(m => m.senderId).filter(Boolean))] as string[];
+  const sendersData = senderIds.length > 0
+    ? await db.select().from(players).where(inArray(players.id, senderIds))
+    : [];
+  
+  const sendersMap = new Map(sendersData.map(p => [p.id, p]));
+
+  return result.reverse().map(msg => ({
+    ...msg,
+    sender: msg.senderId ? sendersMap.get(msg.senderId) ?? null : null,
+  }));
+}
+
+export async function getOrCreateDirectChat(
+  clubId: string,
+  player1Id: string,
+  player2Id: string
+): Promise<ChatRoom> {
+  // Check if a direct chat already exists between these two players
+  const existingMembers = await db
+    .select()
+    .from(chatRoomMembers)
+    .where(eq(chatRoomMembers.playerId, player1Id));
+
+  for (const member of existingMembers) {
+    const room = await db
+      .select()
+      .from(chatRooms)
+      .where(and(eq(chatRooms.id, member.roomId), eq(chatRooms.isDirect, true)))
+      .limit(1);
+
+    if (room[0]) {
+      const otherMember = await db
+        .select()
+        .from(chatRoomMembers)
+        .where(and(eq(chatRoomMembers.roomId, member.roomId), eq(chatRoomMembers.playerId, player2Id)))
+        .limit(1);
+
+      if (otherMember[0]) {
+        return room[0];
+      }
+    }
+  }
+
+  // Create a new direct chat room
+  const [newRoom] = await db
+    .insert(chatRooms)
+    .values({
+      clubId,
+      isDirect: true,
+      isGroup: false,
+      createdBy: player1Id,
+    })
+    .returning();
+
+  // Add both players as members
+  await db.insert(chatRoomMembers).values([
+    { roomId: newRoom.id, playerId: player1Id },
+    { roomId: newRoom.id, playerId: player2Id },
+  ]);
+
+  return newRoom;
+}
+
+export async function sendChatMessage(
+  roomId: string,
+  senderId: string,
+  content: string,
+  messageType: string = 'text'
+): Promise<ChatMessage> {
+  const [message] = await db
+    .insert(chatMessages)
+    .values({
+      roomId,
+      senderId,
+      content,
+      messageType,
+    })
+    .returning();
+
+  // Update room's updatedAt
+  await db
+    .update(chatRooms)
+    .set({ updatedAt: new Date() })
+    .where(eq(chatRooms.id, roomId));
+
+  return message;
+}
+
+export async function markChatAsRead(roomId: string, playerId: string): Promise<void> {
+  await db
+    .update(chatRoomMembers)
+    .set({ lastReadAt: new Date() })
+    .where(and(eq(chatRoomMembers.roomId, roomId), eq(chatRoomMembers.playerId, playerId)));
+}
+
+export async function getChatRoomById(roomId: string): Promise<ChatRoom | null> {
+  const result = await db
+    .select()
+    .from(chatRooms)
+    .where(eq(chatRooms.id, roomId))
+    .limit(1);
+  
+  return result[0] ?? null;
+}
+
+export async function isPlayerInChatRoom(roomId: string, playerId: string): Promise<boolean> {
+  const result = await db
+    .select()
+    .from(chatRoomMembers)
+    .where(and(eq(chatRoomMembers.roomId, roomId), eq(chatRoomMembers.playerId, playerId)))
+    .limit(1);
+  
+  return result.length > 0;
+}

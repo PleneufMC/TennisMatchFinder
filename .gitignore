@@ -114,3 +114,4 @@ temp/
 # Prisma (si utilisé plus tard)
 prisma/*.db
 prisma/*.db-journal
+core

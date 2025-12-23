@@ -399,6 +399,75 @@ export const notifications = pgTable(
 );
 
 // ============================================
+// CHAT TABLES
+// ============================================
+
+// Chat Rooms (conversations)
+export const chatRooms = pgTable(
+  'chat_rooms',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    clubId: uuid('club_id')
+      .notNull()
+      .references(() => clubs.id, { onDelete: 'cascade' }),
+    name: varchar('name', { length: 100 }),
+    isDirect: boolean('is_direct').default(false).notNull(), // true = conversation privée
+    isGroup: boolean('is_group').default(false).notNull(),   // true = conversation de groupe
+    createdBy: uuid('created_by').references(() => players.id, { onDelete: 'set null' }),
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (table) => ({
+    clubIdIdx: index('chat_rooms_club_id_idx').on(table.clubId),
+  })
+);
+
+// Chat Room Members (participants)
+export const chatRoomMembers = pgTable(
+  'chat_room_members',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    roomId: uuid('room_id')
+      .notNull()
+      .references(() => chatRooms.id, { onDelete: 'cascade' }),
+    playerId: uuid('player_id')
+      .notNull()
+      .references(() => players.id, { onDelete: 'cascade' }),
+    isAdmin: boolean('is_admin').default(false).notNull(),
+    lastReadAt: timestamp('last_read_at', { mode: 'date' }),
+    joinedAt: timestamp('joined_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (table) => ({
+    roomIdIdx: index('chat_room_members_room_id_idx').on(table.roomId),
+    playerIdIdx: index('chat_room_members_player_id_idx').on(table.playerId),
+    uniqueMember: index('chat_room_members_unique_idx').on(table.roomId, table.playerId),
+  })
+);
+
+// Chat Messages
+export const chatMessages = pgTable(
+  'chat_messages',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    roomId: uuid('room_id')
+      .notNull()
+      .references(() => chatRooms.id, { onDelete: 'cascade' }),
+    senderId: uuid('sender_id').references(() => players.id, { onDelete: 'set null' }),
+    content: text('content').notNull(),
+    messageType: varchar('message_type', { length: 20 }).default('text').notNull(), // 'text', 'image', 'system'
+    metadata: jsonb('metadata').default({}).notNull(),
+    isEdited: boolean('is_edited').default(false).notNull(),
+    editedAt: timestamp('edited_at', { mode: 'date' }),
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (table) => ({
+    roomIdIdx: index('chat_messages_room_id_idx').on(table.roomId),
+    senderIdIdx: index('chat_messages_sender_id_idx').on(table.senderId),
+    createdAtIdx: index('chat_messages_created_at_idx').on(table.createdAt),
+  })
+);
+
+// ============================================
 // RELATIONS
 // ============================================
 
@@ -416,6 +485,7 @@ export const clubsRelations = relations(clubs, ({ many }) => ({
   matches: many(matches),
   forumThreads: many(forumThreads),
   matchProposals: many(matchProposals),
+  chatRooms: many(chatRooms),
 }));
 
 export const playersRelations = relations(players, ({ one, many }) => ({
@@ -510,6 +580,41 @@ export const forumRepliesRelations = relations(forumReplies, ({ one }) => ({
   }),
 }));
 
+export const chatRoomsRelations = relations(chatRooms, ({ one, many }) => ({
+  club: one(clubs, {
+    fields: [chatRooms.clubId],
+    references: [clubs.id],
+  }),
+  creator: one(players, {
+    fields: [chatRooms.createdBy],
+    references: [players.id],
+  }),
+  members: many(chatRoomMembers),
+  messages: many(chatMessages),
+}));
+
+export const chatRoomMembersRelations = relations(chatRoomMembers, ({ one }) => ({
+  room: one(chatRooms, {
+    fields: [chatRoomMembers.roomId],
+    references: [chatRooms.id],
+  }),
+  player: one(players, {
+    fields: [chatRoomMembers.playerId],
+    references: [players.id],
+  }),
+}));
+
+export const chatMessagesRelations = relations(chatMessages, ({ one }) => ({
+  room: one(chatRooms, {
+    fields: [chatMessages.roomId],
+    references: [chatRooms.id],
+  }),
+  sender: one(players, {
+    fields: [chatMessages.senderId],
+    references: [players.id],
+  }),
+}));
+
 // ============================================
 // TYPE EXPORTS
 // ============================================
@@ -540,3 +645,12 @@ export type NewForumReply = typeof forumReplies.$inferInsert;
 
 export type PlayerBadge = typeof playerBadges.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
+
+export type ChatRoom = typeof chatRooms.$inferSelect;
+export type NewChatRoom = typeof chatRooms.$inferInsert;
+
+export type ChatRoomMember = typeof chatRoomMembers.$inferSelect;
+export type NewChatRoomMember = typeof chatRoomMembers.$inferInsert;
+
+export type ChatMessage = typeof chatMessages.$inferSelect;
+export type NewChatMessage = typeof chatMessages.$inferInsert;

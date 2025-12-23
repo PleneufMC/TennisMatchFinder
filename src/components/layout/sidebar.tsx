@@ -7,6 +7,7 @@ import {
   Swords,
   Users,
   MessageSquare,
+  MessageCircle,
   User,
   Settings,
   ChevronLeft,
@@ -29,6 +30,7 @@ const navItems: NavItem[] = [
   { href: '/classement', label: 'Classement', icon: Trophy },
   { href: '/matchs', label: 'Mes matchs', icon: Swords },
   { href: '/suggestions', label: 'Trouver un adversaire', icon: Users },
+  { href: '/chat', label: 'Messages', icon: MessageCircle },
   { href: '/forum', label: 'Forum', icon: MessageSquare },
   { href: '/profil', label: 'Mon profil', icon: User },
 ];
