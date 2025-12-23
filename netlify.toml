@@ -1,13 +1,12 @@
 # netlify.toml - Configuration Netlify pour Next.js 14 avec App Router
 
 [build]
-  command = "npm run build"
+  command = "npm ci --legacy-peer-deps && npm run build"
   publish = ".next"
 
 [build.environment]
   NODE_VERSION = "20"
   NEXT_TELEMETRY_DISABLED = "1"
-  NPM_FLAGS = "--legacy-peer-deps"
 
 # Plugin Next.js obligatoire pour App Router
 [[plugins]]
