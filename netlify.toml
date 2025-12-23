@@ -1,7 +1,7 @@
 # netlify.toml - Configuration Netlify pour Next.js 14 avec App Router
 
 [build]
-  command = "npm ci --legacy-peer-deps && npm run build"
+  command = "npm install && npm run build"
   publish = ".next"
 
 [build.environment]
