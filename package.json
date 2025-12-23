@@ -14,7 +14,7 @@
     "db:migrate": "supabase db push",
     "db:seed": "supabase db seed",
     "db:reset": "supabase db reset",
-    "postinstall": "npx shadcn@latest init -y || true"
+    "postinstall": "echo 'Postinstall completed'"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
@@ -38,8 +38,7 @@
     "@supabase/supabase-js": "^2.39.3",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
-    "date-fns": "^3.3.1",
-    "date-fns-tz": "^2.0.0",
+    "date-fns": "^2.30.0",
     "embla-carousel-react": "^8.0.0",
     "framer-motion": "^11.0.3",
     "lucide-react": "^0.321.0",

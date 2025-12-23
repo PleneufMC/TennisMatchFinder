@@ -54,9 +54,6 @@ const nextConfig = {
     },
   },
 
-  // Désactiver la télémétrie Next.js
-  telemetry: false,
-
   // Configuration pour le mode strict React
   reactStrictMode: true,
 

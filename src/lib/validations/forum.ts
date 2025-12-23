@@ -105,8 +105,8 @@ export type SearchThreadsInput = z.infer<typeof searchThreadsSchema>;
  */
 export function extractMentions(content: string): string[] {
   const mentionRegex = /@([a-zA-ZÀ-ÿ][a-zA-ZÀ-ÿ\s'-]*)/g;
-  const matches = content.matchAll(mentionRegex);
-  return [...matches].map((match) => match[1]?.trim() ?? '').filter((name) => name.length > 0);
+  const matches = Array.from(content.matchAll(mentionRegex));
+  return matches.map((match) => match[1]?.trim() ?? '').filter((name) => name.length > 0);
 }
 
 /**

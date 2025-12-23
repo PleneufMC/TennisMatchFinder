@@ -1,6 +1,13 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import type { Database } from '@/types/database';
+import type { Database, Tables } from '@/types/database';
+
+/**
+ * Type pour le profil joueur avec son club
+ */
+export type PlayerProfileData = Tables<'players'> & {
+  clubs: Tables<'clubs'>;
+};
 
 /**
  * Crée un client Supabase pour le serveur (Server Components, Server Actions, Route Handlers)
@@ -75,7 +82,7 @@ export async function getSession() {
 /**
  * Récupère le profil joueur de l'utilisateur connecté
  */
-export async function getPlayerProfile() {
+export async function getPlayerProfile(): Promise<PlayerProfileData | null> {
   const user = await getUser();
   if (!user) return null;
 
@@ -90,5 +97,5 @@ export async function getPlayerProfile() {
     return null;
   }
 
-  return player;
+  return player as PlayerProfileData;
 }

@@ -6,11 +6,11 @@
 import type { Player, SuggestedPlayer, SuggestionTag } from '@/types';
 import { SUGGESTION_CONFIG } from '@/constants/elo';
 
-interface PlayerWithHistory extends Player {
+export interface PlayerWithHistory extends Player {
   matchHistory?: {
     opponentId: string;
     playedAt: string;
-    winnerId: string;
+    winnerId: string | null;
   }[];
 }
 

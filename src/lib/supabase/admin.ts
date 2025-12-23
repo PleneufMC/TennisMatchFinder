@@ -78,16 +78,19 @@ export async function createNotification(
 ) {
   const adminClient = createAdminClient();
 
+  const notificationData = {
+    user_id: userId,
+    type,
+    title,
+    message,
+    link: options?.link || null,
+    data: options?.data ? JSON.parse(JSON.stringify(options.data)) : null,
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await adminClient
     .from('notifications')
-    .insert({
-      user_id: userId,
-      type,
-      title,
-      message,
-      link: options?.link,
-      data: options?.data,
-    })
+    .insert(notificationData as any)
     .select()
     .single();
 

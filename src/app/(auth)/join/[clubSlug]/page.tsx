@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: JoinPageProps): Promise<Metad
     .from('clubs')
     .select('name')
     .eq('slug', clubSlug)
-    .single();
+    .single() as { data: { name: string } | null };
 
   if (!club) {
     return { title: 'Club non trouvé' };
@@ -29,21 +29,30 @@ export async function generateMetadata({ params }: JoinPageProps): Promise<Metad
   };
 }
 
+interface ClubData {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+}
+
 export default async function JoinClubPage({ params }: JoinPageProps) {
   const { clubSlug } = await params;
   const supabase = await createClient();
 
   // Vérifier que le club existe
-  const { data: club, error } = await supabase
+  const { data, error } = await supabase
     .from('clubs')
     .select('id, name, slug, description')
     .eq('slug', clubSlug)
     .eq('is_active', true)
     .single();
 
-  if (error || !club) {
+  if (error || !data) {
     notFound();
   }
+
+  const club = data as ClubData;
 
   return (
     <div className="space-y-6">

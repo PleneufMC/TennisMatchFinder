@@ -1,34 +1,66 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
+
+// Force dynamic rendering - this page requires Supabase data
+export const dynamic = 'force-dynamic';
 import Link from 'next/link';
 import { Trophy, Swords, Users, TrendingUp, Calendar, Star } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { getPlayerProfile } from '@/lib/supabase/server';
-import { createClient } from '@/lib/supabase/server';
+import { getPlayerProfile, createClient, type PlayerProfileData } from '@/lib/supabase/server';
 import { formatRelativeDate } from '@/lib/utils/dates';
 import { formatEloDelta, pluralize } from '@/lib/utils/format';
 import { getEloRankTitle, calculateEloTrend } from '@/lib/elo';
+
+interface EloHistoryRow {
+  delta: number;
+  recorded_at: string;
+}
+
+interface MatchRow {
+  id: string;
+  played_at: string;
+  player1_id: string;
+  player2_id: string;
+  winner_id: string | null;
+  score: string | null;
+  player1_elo_before: number;
+  player1_elo_after: number;
+  player2_elo_before: number;
+  player2_elo_after: number;
+  player1: { full_name: string } | null;
+  player2: { full_name: string } | null;
+}
+
+interface ProposalRow {
+  id: string;
+  from_player_id: string;
+  proposed_date: string | null;
+  proposed_time: string | null;
+  message: string | null;
+  from_player: { full_name: string; avatar_url: string | null } | null;
+}
 
 export const metadata: Metadata = {
   title: 'Tableau de bord',
 };
 
 export default async function DashboardPage() {
-  const player = await getPlayerProfile();
+  const playerData = await getPlayerProfile();
 
-  if (!player) {
+  if (!playerData) {
     redirect('/login');
   }
 
+  const player: PlayerProfileData = playerData;
   const supabase = await createClient();
 
   // Récupérer les statistiques
   const [
-    { data: recentMatches },
-    { data: eloHistory },
-    { data: pendingProposals },
+    { data: matchesData },
+    { data: historyData },
+    { data: proposalsData },
   ] = await Promise.all([
     // Derniers matchs
     supabase
@@ -52,6 +84,10 @@ export default async function DashboardPage() {
       .eq('status', 'pending')
       .limit(5),
   ]);
+
+  const recentMatches = matchesData as MatchRow[] | null;
+  const eloHistory = historyData as EloHistoryRow[] | null;
+  const pendingProposals = proposalsData as ProposalRow[] | null;
 
   // Calculer la tendance
   const trend = calculateEloTrend(eloHistory || []);

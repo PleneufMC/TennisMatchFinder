@@ -45,29 +45,53 @@ export async function GET(request: NextRequest) {
     const sinceDate = since ? new Date(since) : new Date(Date.now() - 24 * 60 * 60 * 1000); // Default: 24h
 
     // Récupérer les matchs récents
-    const { data: recentMatches } = await adminClient
+    const { data: recentMatchesData } = await adminClient
       .from('matches')
       .select(`
         id,
         score,
         played_at,
+        player1_id,
+        player2_id,
         player1_elo_before,
         player1_elo_after,
         player2_elo_before,
         player2_elo_after,
-        winner_id,
-        player1:player1_id(id, full_name),
-        player2:player2_id(id, full_name)
+        winner_id
       `)
       .eq('club_id', clubId)
       .gte('created_at', sinceDate.toISOString())
       .order('created_at', { ascending: false });
 
+    // Récupérer les noms des joueurs séparément pour éviter les ambiguïtés
+    interface MatchData {
+      id: string;
+      score: string | null;
+      played_at: string;
+      player1_id: string;
+      player2_id: string;
+      player1_elo_before: number;
+      player1_elo_after: number;
+      player2_elo_before: number;
+      player2_elo_after: number;
+      winner_id: string | null;
+    }
+    const recentMatches = recentMatchesData as MatchData[] | null;
+
     if (recentMatches) {
+      // Récupérer tous les IDs uniques de joueurs
+      const playerIds = Array.from(new Set(recentMatches.flatMap(m => [m.player1_id, m.player2_id])));
+      const { data: playersData } = await adminClient
+        .from('players')
+        .select('id, full_name')
+        .in('id', playerIds);
+      
+      const playersMap = new Map((playersData || []).map(p => [p.id, p.full_name]));
+
       for (const match of recentMatches) {
-        const player1 = match.player1 as { id: string; full_name: string } | null;
-        const player2 = match.player2 as { id: string; full_name: string } | null;
-        const isUpset = match.winner_id === player1?.id
+        const player1Name = playersMap.get(match.player1_id) || 'Inconnu';
+        const player2Name = playersMap.get(match.player2_id) || 'Inconnu';
+        const isUpset = match.winner_id === match.player1_id
           ? match.player1_elo_before < match.player2_elo_before - 100
           : match.player2_elo_before < match.player1_elo_before - 100;
 
@@ -77,14 +101,14 @@ export async function GET(request: NextRequest) {
           type: 'match_recorded',
           data: {
             player1: {
-              id: player1?.id,
-              name: player1?.full_name,
+              id: match.player1_id,
+              name: player1Name,
               newElo: match.player1_elo_after,
               delta: match.player1_elo_after - match.player1_elo_before,
             },
             player2: {
-              id: player2?.id,
-              name: player2?.full_name,
+              id: match.player2_id,
+              name: player2Name,
               newElo: match.player2_elo_after,
               delta: match.player2_elo_after - match.player2_elo_before,
             },

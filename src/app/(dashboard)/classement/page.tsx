@@ -1,14 +1,28 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import { Trophy, TrendingUp, TrendingDown, Minus, Star } from 'lucide-react';
+
+// Force dynamic rendering - this page requires Supabase data
+export const dynamic = 'force-dynamic';
+import { Trophy } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { PlayerAvatar } from '@/components/ui/avatar';
-import { getPlayerProfile, createClient } from '@/lib/supabase/server';
+import { getPlayerProfile, createClient, type PlayerProfileData } from '@/lib/supabase/server';
 import { cn } from '@/lib/utils';
 import { getEloRankTitle } from '@/lib/elo';
 import { formatWinRate } from '@/lib/utils/format';
 import Link from 'next/link';
+
+interface RankedPlayerRow {
+  id: string;
+  full_name: string;
+  avatar_url: string | null;
+  current_elo: number;
+  matches_played: number;
+  wins: number;
+  losses: number;
+  win_streak: number;
+}
 
 export const metadata: Metadata = {
   title: 'Classement',
@@ -16,21 +30,24 @@ export const metadata: Metadata = {
 };
 
 export default async function ClassementPage() {
-  const player = await getPlayerProfile();
+  const playerData = await getPlayerProfile();
 
-  if (!player) {
+  if (!playerData) {
     redirect('/login');
   }
 
+  const player: PlayerProfileData = playerData;
   const supabase = await createClient();
 
   // Récupérer tous les joueurs du club triés par ELO
-  const { data: players, error } = await supabase
+  const { data, error } = await supabase
     .from('players')
     .select('id, full_name, avatar_url, current_elo, matches_played, wins, losses, win_streak')
     .eq('club_id', player.club_id)
     .eq('is_active', true)
     .order('current_elo', { ascending: false });
+  
+  const players = data as RankedPlayerRow[] | null;
 
   if (error) {
     console.error('Error fetching players:', error);
