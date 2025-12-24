@@ -38,6 +38,37 @@ const profileSchema = z.object({
 
 type ProfileFormData = z.infer<typeof profileSchema>;
 
+// Type pour les données de disponibilité
+interface AvailabilityData {
+  days?: string[];
+  timeSlots?: string[];
+}
+
+// Type pour les préférences
+interface PreferencesData {
+  gameTypes?: string[];
+  surfaces?: string[];
+}
+
+// Helper pour parser les données JSONB
+function parseAvailability(data: unknown): AvailabilityData {
+  if (!data || typeof data !== 'object') return { days: [], timeSlots: [] };
+  const obj = data as Record<string, unknown>;
+  return {
+    days: Array.isArray(obj.days) ? obj.days as string[] : [],
+    timeSlots: Array.isArray(obj.timeSlots) ? obj.timeSlots as string[] : [],
+  };
+}
+
+function parsePreferences(data: unknown): PreferencesData {
+  if (!data || typeof data !== 'object') return { gameTypes: [], surfaces: [] };
+  const obj = data as Record<string, unknown>;
+  return {
+    gameTypes: Array.isArray(obj.gameTypes) ? obj.gameTypes as string[] : [],
+    surfaces: Array.isArray(obj.surfaces) ? obj.surfaces as string[] : [],
+  };
+}
+
 interface PlayerData {
   id: string;
   fullName: string;
@@ -45,8 +76,8 @@ interface PlayerData {
   phone: string | null;
   bio: string | null;
   selfAssessedLevel: string;
-  availability: { days?: string[]; timeSlots?: string[] } | null;
-  preferences: { gameTypes?: string[]; surfaces?: string[] } | null;
+  availability: unknown; // JSONB retourne unknown
+  preferences: unknown;  // JSONB retourne unknown
 }
 
 interface ProfileEditFormProps {
@@ -60,6 +91,10 @@ export function ProfileEditForm({ player }: ProfileEditFormProps) {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Parser les données JSONB
+  const availability = parseAvailability(player.availability);
+  const preferences = parsePreferences(player.preferences);
+
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -67,10 +102,10 @@ export function ProfileEditForm({ player }: ProfileEditFormProps) {
       phone: player.phone || '',
       bio: player.bio || '',
       selfAssessedLevel: player.selfAssessedLevel,
-      availabilityDays: player.availability?.days || [],
-      availabilityTimeSlots: player.availability?.timeSlots || [],
-      preferredSurfaces: player.preferences?.surfaces || [],
-      preferredGameTypes: player.preferences?.gameTypes || [],
+      availabilityDays: availability.days || [],
+      availabilityTimeSlots: availability.timeSlots || [],
+      preferredSurfaces: preferences.surfaces || [],
+      preferredGameTypes: preferences.gameTypes || [],
     },
   });
 
