@@ -121,7 +121,7 @@ export default async function ChatPage() {
                         'text-sm mt-2 p-2 rounded bg-muted/50 truncate',
                         section.unreadCount > 0 && 'bg-primary/10'
                       )}>
-                        <span className="font-medium">{section.lastMessage.senderName}: </span>
+                        <span className="font-medium">{section.lastMessage.senderName ?? 'Membre'}: </span>
                         {section.lastMessage.content}
                       </div>
                     )}

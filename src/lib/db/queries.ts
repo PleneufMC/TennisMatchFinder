@@ -642,10 +642,13 @@ export async function getClubSections(
   return result;
 }
 
+// Type enrichi pour lastMessage avec senderName
+export type LastMessageWithSender = ChatMessage & { senderName?: string };
+
 export async function getClubSectionsWithUnread(
   clubId: string,
   playerId: string
-): Promise<(ChatRoom & { lastMessage?: ChatMessage; unreadCount: number; memberCount: number })[]> {
+): Promise<(ChatRoom & { lastMessage?: LastMessageWithSender; unreadCount: number; memberCount: number })[]> {
   // Get all section rooms for the club
   const sections = await db
     .select()
@@ -655,13 +658,25 @@ export async function getClubSectionsWithUnread(
 
   if (sections.length === 0) return [];
 
-  const result: (ChatRoom & { lastMessage?: ChatMessage; unreadCount: number; memberCount: number })[] = [];
+  const result: (ChatRoom & { lastMessage?: LastMessageWithSender; unreadCount: number; memberCount: number })[] = [];
   
   for (const section of sections) {
-    // Get last message
-    const lastMsg = await db
-      .select()
+    // Get last message with sender name
+    const lastMsgWithSender = await db
+      .select({
+        id: chatMessages.id,
+        roomId: chatMessages.roomId,
+        senderId: chatMessages.senderId,
+        content: chatMessages.content,
+        messageType: chatMessages.messageType,
+        metadata: chatMessages.metadata,
+        isEdited: chatMessages.isEdited,
+        editedAt: chatMessages.editedAt,
+        createdAt: chatMessages.createdAt,
+        senderName: players.fullName,
+      })
       .from(chatMessages)
+      .leftJoin(players, eq(chatMessages.senderId, players.id))
       .where(eq(chatMessages.roomId, section.id))
       .orderBy(desc(chatMessages.createdAt))
       .limit(1);
@@ -700,7 +715,7 @@ export async function getClubSectionsWithUnread(
 
     result.push({
       ...section,
-      lastMessage: lastMsg[0],
+      lastMessage: lastMsgWithSender[0] as LastMessageWithSender | undefined,
       unreadCount,
       memberCount: memberCountResult[0]?.count ?? 0,
     });
