@@ -101,8 +101,7 @@ export async function GET(request: NextRequest) {
       clubId: newClub.id,
       fullName: request_.requesterName,
       phone: request_.requesterPhone,
-      level: 'intermédiaire',
-      currentElo: 1000, // ELO de départ
+      selfAssessedLevel: 'intermédiaire',
       isAdmin: true, // ADMIN DU CLUB
       isVerified: true,
       isActive: true,
