@@ -135,6 +135,10 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
+    if (!newRequest) {
+      return NextResponse.json({ error: 'Erreur lors de la création de la demande' }, { status: 500 });
+    }
+
     // Construire les URLs d'approbation/rejet
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tennismatchfinder.net';
     const approveUrl = `${baseUrl}/api/clubs/approve?token=${approvalToken}&action=approve`;

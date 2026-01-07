@@ -163,7 +163,8 @@ export async function POST(request: NextRequest) {
       .where(and(eq(players.id, opponentId), eq(players.clubId, player.clubId)))
       .limit(1);
 
-    if (opponent.length === 0) {
+    const opponentPlayer = opponent[0];
+    if (!opponentPlayer) {
       return NextResponse.json({ error: 'Adversaire non trouvé dans votre club' }, { status: 400 });
     }
 
@@ -177,7 +178,7 @@ export async function POST(request: NextRequest) {
     const player1Id = player.id;
     const player2Id = opponentId;
     const player1Elo = player.currentElo;
-    const player2Elo = opponent[0].currentElo;
+    const player2Elo = opponentPlayer.currentElo;
 
     // Vérifier les modificateurs ELO
     // 1. Est-ce un nouvel adversaire ?
@@ -257,8 +258,12 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
+    if (!newMatch) {
+      return NextResponse.json({ error: 'Erreur lors de la création du match' }, { status: 500 });
+    }
+
     // Créer une notification pour l'adversaire
-    const winnerName = winnerId === player.id ? player.fullName : opponent[0].fullName;
+    const winnerName = winnerId === player.id ? player.fullName : opponentPlayer.fullName;
     const reporterIsWinner = winnerId === player.id;
 
     await db.insert(notifications).values({

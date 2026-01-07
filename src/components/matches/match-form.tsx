@@ -93,7 +93,8 @@ export function MatchForm({ currentPlayer, opponents, clubId }: MatchFormProps) 
       const match = set.match(/^(\d)-(\d)(\((\d+)\))?$/);
       if (!match) return false;
       
-      const [, games1, games2, , tiebreak] = match;
+      const [, games1, games2] = match;
+      if (!games1 || !games2) return false;
       const g1 = parseInt(games1);
       const g2 = parseInt(games2);
       
@@ -121,6 +122,7 @@ export function MatchForm({ currentPlayer, opponents, clubId }: MatchFormProps) 
       if (!match) return null;
       
       const [, g1, g2] = match;
+      if (!g1 || !g2) return null;
       if (parseInt(g1) > parseInt(g2)) {
         player1Sets++;
       } else {

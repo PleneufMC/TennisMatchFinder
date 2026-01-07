@@ -59,6 +59,10 @@ export async function PUT(
       .where(eq(clubs.id, clubId))
       .returning();
 
+    if (!updated[0]) {
+      return NextResponse.json({ error: 'Club non trouvé' }, { status: 404 });
+    }
+
     return NextResponse.json(updated[0]);
   } catch (error) {
     console.error('Error updating club:', error);

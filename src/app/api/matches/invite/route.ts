@@ -27,14 +27,15 @@ export async function POST(request: NextRequest) {
       .where(eq(users.email, email.toLowerCase()))
       .limit(1);
 
-    if (existingUser.length > 0) {
+    const foundUser = existingUser[0];
+    if (foundUser) {
       // L'utilisateur existe déjà, vérifier s'il a une demande en cours
       const existingRequest = await db
         .select()
         .from(clubJoinRequests)
         .where(
           and(
-            eq(clubJoinRequests.userId, existingUser[0].id),
+            eq(clubJoinRequests.userId, foundUser.id),
             eq(clubJoinRequests.clubId, player.clubId),
             eq(clubJoinRequests.status, 'pending')
           )
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
       // Créer une demande d'adhésion pour l'utilisateur existant
       await db.insert(clubJoinRequests).values({
         clubId: player.clubId,
-        userId: existingUser[0].id,
+        userId: foundUser.id,
         fullName: name,
         email: email.toLowerCase(),
         message: `Invité par ${player.fullName}`,
@@ -79,6 +80,10 @@ export async function POST(request: NextRequest) {
         emailVerified: null, // Non vérifié
       })
       .returning();
+
+    if (!newUser) {
+      return NextResponse.json({ error: 'Erreur lors de la création de l\'utilisateur' }, { status: 500 });
+    }
 
     // Créer une demande d'adhésion automatiquement approuvée (invité par un membre)
     await db.insert(clubJoinRequests).values({
