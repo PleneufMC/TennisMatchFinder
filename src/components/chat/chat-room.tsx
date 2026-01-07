@@ -351,7 +351,7 @@ export function ChatRoom({
             <div className="bg-muted px-4 py-2 rounded-2xl rounded-bl-md">
               <p className="text-sm text-muted-foreground italic">
                 {typingUsers.length === 1
-                  ? `${typingUsers[0].playerName} écrit...`
+                  ? `${typingUsers[0]?.playerName ?? 'Quelqu\'un'} écrit...`
                   : `${typingUsers.map((u) => u.playerName).join(', ')} écrivent...`}
               </p>
             </div>
