@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerPlayer } from '@/lib/auth-helpers';
-import { getChatMessages, sendChatMessage, isPlayerInChatRoom, markChatAsRead } from '@/lib/db/queries';
+import { getChatMessages, sendChatMessage, isPlayerInChatRoom, markChatAsRead, getChatRoomById } from '@/lib/db/queries';
+import { broadcastNewMessage } from '@/lib/pusher/server';
 
 export async function GET(
   request: NextRequest,
@@ -69,6 +70,22 @@ export async function POST(
 
     // Envoyer le message
     const message = await sendChatMessage(roomId, player.id, content.trim());
+
+    // Broadcast via Pusher pour le temps réel
+    // Récupérer le clubId depuis la room
+    const room = await getChatRoomById(roomId);
+    if (room?.clubId) {
+      await broadcastNewMessage(room.clubId, roomId, {
+        id: message.id,
+        roomId: message.roomId,
+        senderId: message.senderId || '',
+        senderName: player.fullName,
+        senderAvatar: player.avatarUrl || null,
+        content: message.content,
+        messageType: message.messageType,
+        createdAt: message.createdAt.toISOString(),
+      });
+    }
 
     return NextResponse.json(message);
   } catch (error) {
