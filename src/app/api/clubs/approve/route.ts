@@ -88,7 +88,11 @@ export async function GET(request: NextRequest) {
       })
       .returning();
 
-    // 2. Récupérer l'utilisateur
+    if (!newClub) {
+      return createHtmlResponse('error', 'Erreur', 'Impossible de créer le club. Veuillez réessayer.');
+    }
+
+    // 2. Récupérer l'utilisateur (non utilisé actuellement mais gardé pour référence future)
     const [user] = await db
       .select()
       .from(users)
