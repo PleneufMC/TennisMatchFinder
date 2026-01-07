@@ -79,6 +79,12 @@ export const joinRequestStatusEnum = pgEnum('join_request_status', [
   'rejected',
 ]);
 
+export const clubCreationStatusEnum = pgEnum('club_creation_status', [
+  'pending',
+  'approved',
+  'rejected',
+]);
+
 // ============================================
 // NEXT-AUTH TABLES
 // ============================================
@@ -438,6 +444,44 @@ export const clubJoinRequests = pgTable(
 );
 
 // ============================================
+// CLUB CREATION REQUESTS (Demandes de création de club)
+// ============================================
+
+export const clubCreationRequests = pgTable(
+  'club_creation_requests',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    // Infos du demandeur
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    requesterName: varchar('requester_name', { length: 100 }).notNull(),
+    requesterEmail: varchar('requester_email', { length: 255 }).notNull(),
+    requesterPhone: varchar('requester_phone', { length: 20 }),
+    // Infos du club demandé
+    clubName: varchar('club_name', { length: 100 }).notNull(),
+    clubSlug: varchar('club_slug', { length: 50 }).notNull(),
+    clubDescription: text('club_description'),
+    clubAddress: text('club_address'),
+    clubWebsite: text('club_website'),
+    estimatedMembers: integer('estimated_members'), // Nombre estimé de membres
+    // Validation
+    approvalToken: varchar('approval_token', { length: 64 }).notNull().unique(),
+    status: clubCreationStatusEnum('status').default('pending').notNull(),
+    reviewedAt: timestamp('reviewed_at', { mode: 'date' }),
+    rejectionReason: text('rejection_reason'),
+    // Timestamps
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+    expiresAt: timestamp('expires_at', { mode: 'date' }).notNull(), // Token expire après X jours
+  },
+  (table) => ({
+    userIdIdx: index('club_creation_requests_user_id_idx').on(table.userId),
+    statusIdx: index('club_creation_requests_status_idx').on(table.status),
+    tokenIdx: index('club_creation_requests_token_idx').on(table.approvalToken),
+  })
+);
+
+// ============================================
 // CHAT TABLES
 // ============================================
 
@@ -717,3 +761,6 @@ export type NewChatMessage = typeof chatMessages.$inferInsert;
 
 export type ClubJoinRequest = typeof clubJoinRequests.$inferSelect;
 export type NewClubJoinRequest = typeof clubJoinRequests.$inferInsert;
+
+export type ClubCreationRequest = typeof clubCreationRequests.$inferSelect;
+export type NewClubCreationRequest = typeof clubCreationRequests.$inferInsert;
