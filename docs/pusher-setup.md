@@ -1,149 +1,137 @@
-# 🔴 Configuration Pusher - Chat en temps réel
-
-## Vue d'ensemble
-
-Le chat utilise **Pusher Channels** pour les fonctionnalités temps réel :
-- Messages instantanés
-- Indicateurs de frappe ("X est en train d'écrire...")
-- Présence en ligne
-- Notifications en temps réel
+# Configuration Pusher - Chat en temps réel
 
 ## Architecture
 
+Le chat utilise **Pusher Channels** pour le temps réel avec une architecture multi-club :
+
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                          CLUBS                                   │
-├─────────────────────────────────────────────────────────────────┤
-│  Club A (MCCC)              │  Club B (TC Pleneuf)               │
-│  ┌─────────────────────┐    │  ┌─────────────────────┐          │
-│  │ presence-club-A-    │    │  │ presence-club-B-    │          │
-│  │   room-general      │    │  │   room-general      │          │
-│  │   room-matchs       │    │  │   room-matchs       │          │
-│  │   room-conseils     │    │  │   room-conseils     │          │
-│  └─────────────────────┘    │  └─────────────────────┘          │
-│                              │                                   │
-│  🔒 Isolation totale entre les clubs                            │
-└─────────────────────────────────────────────────────────────────┘
+Canal par salon: presence-club-{clubId}-room-{roomId}
+Canal par club:  presence-club-{clubId}
 ```
 
-Chaque club a ses propres canaux Pusher, garantissant une isolation complète des conversations.
+Chaque club a ses propres canaux isolés, garantissant la confidentialité des conversations.
 
-## Configuration
+## Étapes de configuration
 
 ### 1. Créer un compte Pusher
 
-1. Aller sur [pusher.com](https://pusher.com/)
-2. Créer un compte gratuit
-3. Créer une nouvelle application "Channels"
-4. Choisir le cluster le plus proche (ex: `eu` pour l'Europe)
+1. Allez sur https://pusher.com/
+2. Créez un compte gratuit (suffisant pour < 200k messages/jour)
+3. Créez une nouvelle application "Channels"
+4. Choisissez le cluster le plus proche (ex: `eu` pour l'Europe)
 
-### 2. Variables d'environnement
+### 2. Récupérer les credentials
 
-Ajouter ces variables dans Netlify (Site settings → Environment variables) :
+Dans le dashboard Pusher → App Keys, notez :
+- **app_id** : ID de l'application
+- **key** : Clé publique
+- **secret** : Clé secrète (ne jamais exposer côté client)
+- **cluster** : Région (eu, us2, ap1, etc.)
 
-| Variable | Description | Exemple |
-|----------|-------------|---------|
-| `PUSHER_APP_ID` | ID de l'application (serveur) | `1234567` |
-| `PUSHER_KEY` | Clé publique | `a1b2c3d4e5f6g7h8i9j0` |
-| `PUSHER_SECRET` | Clé secrète (serveur uniquement) | `k1l2m3n4o5p6q7r8s9t0` |
-| `PUSHER_CLUSTER` | Région du serveur | `eu` |
-| `NEXT_PUBLIC_PUSHER_KEY` | Clé publique (client) | `a1b2c3d4e5f6g7h8i9j0` |
-| `NEXT_PUBLIC_PUSHER_CLUSTER` | Région (client) | `eu` |
+### 3. Configurer les variables d'environnement
 
-⚠️ **Important** : `PUSHER_SECRET` ne doit JAMAIS être exposé côté client !
+#### Netlify (Production)
 
-### 3. Limites du plan gratuit
+Site settings → Environment variables → Ajouter :
 
-Le plan gratuit Pusher inclut :
-- **200 000 messages/jour**
-- **100 connexions simultanées**
-- **Illimité** : nombre de canaux
+| Variable | Valeur | Notes |
+|----------|--------|-------|
+| `PUSHER_APP_ID` | `123456` | Votre App ID |
+| `PUSHER_KEY` | `abcd1234...` | Clé publique |
+| `PUSHER_SECRET` | `xyz789...` | **SECRET - Ne jamais exposer** |
+| `PUSHER_CLUSTER` | `eu` | Votre cluster |
+| `NEXT_PUBLIC_PUSHER_KEY` | `abcd1234...` | Même que PUSHER_KEY (accessible côté client) |
+| `NEXT_PUBLIC_PUSHER_CLUSTER` | `eu` | Même que PUSHER_CLUSTER |
 
-Pour un club de tennis typique, c'est largement suffisant.
+#### Local (.env.local)
+
+```env
+PUSHER_APP_ID=your_app_id
+PUSHER_KEY=your_key
+PUSHER_SECRET=your_secret
+PUSHER_CLUSTER=eu
+NEXT_PUBLIC_PUSHER_KEY=your_key
+NEXT_PUBLIC_PUSHER_CLUSTER=eu
+```
+
+### 4. Activer les canaux Presence (optionnel mais recommandé)
+
+Dans Pusher Dashboard → App Settings :
+1. Cochez "Enable client events" si vous voulez les indicateurs de frappe
+2. Assurez-vous que "Presence channels" est activé
 
 ## Fonctionnalités implémentées
 
-### Messages en temps réel
+### ✅ Messages en temps réel
+- Les messages apparaissent instantanément chez tous les participants
+- Mise à jour optimiste côté UI
+
+### ✅ Indicateurs de présence
+- Liste des membres en ligne
+- Badge "Live" / "Hors ligne" 
+- Avatars des membres connectés
+
+### ✅ Indicateurs de frappe
+- "X écrit..." affiché quand quelqu'un tape
+- Timeout automatique après 3 secondes d'inactivité
+
+### ✅ Isolation par club
+- Chaque club a ses propres canaux
+- Un joueur ne peut pas accéder aux canaux d'un autre club
+
+## Structure des fichiers
+
 ```
-Joueur A envoie un message
-    ↓
-API /api/chat/[roomId]/messages (POST)
-    ↓
-Message sauvé en DB + Broadcast Pusher
-    ↓
-Tous les joueurs du salon reçoivent le message instantanément
+src/
+├── lib/pusher/
+│   ├── server.ts      # Configuration serveur + broadcast
+│   └── client.ts      # Configuration client
+├── hooks/
+│   └── use-pusher-chat.ts  # Hook React pour le chat
+├── app/api/
+│   ├── pusher/auth/route.ts     # Auth pour canaux presence
+│   └── chat/
+│       ├── typing/route.ts      # Indicateurs de frappe
+│       └── [roomId]/messages/route.ts  # Messages (GET/POST)
+└── components/chat/
+    └── chat-room.tsx   # Composant UI du chat
 ```
 
-### Indicateur de frappe
-```
-Joueur A commence à écrire
-    ↓
-API /api/chat/typing (POST)
-    ↓
-Broadcast sur le canal du salon
-    ↓
-Autres joueurs voient "Pierre est en train d'écrire..."
-```
+## Événements Pusher
 
-### Présence en ligne
-```
-Joueur se connecte à un salon
-    ↓
-Pusher presence channel (subscription)
-    ↓
-Autres joueurs voient le compteur "3 en ligne"
-```
+| Événement | Description |
+|-----------|-------------|
+| `new-message` | Nouveau message envoyé |
+| `message-edited` | Message modifié |
+| `message-deleted` | Message supprimé |
+| `user-typing` | Utilisateur en train d'écrire |
+| `user-stopped-typing` | Utilisateur a arrêté d'écrire |
+| `pusher:member_added` | Membre rejoint le salon |
+| `pusher:member_removed` | Membre quitte le salon |
 
-## Fichiers concernés
+## Mode dégradé
 
-| Fichier | Rôle |
-|---------|------|
-| `src/lib/pusher/server.ts` | Configuration serveur + fonctions broadcast |
-| `src/lib/pusher/client.ts` | Configuration client + connexion |
-| `src/hooks/use-pusher-chat.ts` | Hook React pour le chat temps réel |
-| `src/app/api/pusher/auth/route.ts` | Authentification des canaux presence |
-| `src/app/api/chat/typing/route.ts` | API indicateur de frappe |
-| `src/app/api/chat/[roomId]/messages/route.ts` | API messages (avec broadcast) |
-| `src/components/chat/chat-room.tsx` | Composant chat avec Pusher |
+Si Pusher n'est pas configuré ou indisponible :
+- Le chat fonctionne toujours via polling (toutes les 5 secondes)
+- Un badge "Hors ligne" s'affiche
+- Les messages sont envoyés et reçus, mais avec un délai
 
-## Fallback sans Pusher
+## Limites du plan gratuit Pusher
 
-Si Pusher n'est pas configuré, le chat fonctionne en mode **polling** :
-- Rafraîchissement toutes les 5 secondes
-- Pas d'indicateur de frappe
-- Pas de compteur en ligne
+- 200 000 messages/jour
+- 100 connexions simultanées max
+- Suffisant pour un club de tennis typique
 
 ## Dépannage
 
-### Le chat ne se met pas à jour en temps réel
+### "Pusher non configuré"
+→ Vérifiez les variables d'environnement Netlify et redéployez
 
-1. Vérifier que les variables d'environnement sont configurées
-2. Vérifier la console du navigateur pour les erreurs Pusher
-3. Vérifier que le joueur appartient bien au club du salon
+### "Erreur de souscription"
+→ Vérifiez que `PUSHER_SECRET` est correct côté serveur
 
-### Erreur "Access denied" à l'authentification
+### Les messages n'arrivent pas en temps réel
+→ Vérifiez les logs Pusher Dashboard → Debug Console
 
-- Le joueur essaie d'accéder à un canal d'un autre club
-- Vérifier `player.clubId` correspond au club du canal
-
-### Messages dupliqués
-
-- Le système filtre automatiquement les messages du joueur courant
-- Si duplication persiste, vérifier les IDs des messages
-
-## Test local
-
-```bash
-# Ajouter les variables dans .env.local
-PUSHER_APP_ID=...
-PUSHER_KEY=...
-PUSHER_SECRET=...
-PUSHER_CLUSTER=eu
-NEXT_PUBLIC_PUSHER_KEY=...
-NEXT_PUBLIC_PUSHER_CLUSTER=eu
-
-# Redémarrer le serveur
-npm run dev
-```
-
-Ouvrir deux navigateurs différents, se connecter avec deux comptes du même club, et envoyer des messages pour tester.
+### "Non authentifié" sur les canaux presence
+→ L'utilisateur doit être connecté avec une session valide
