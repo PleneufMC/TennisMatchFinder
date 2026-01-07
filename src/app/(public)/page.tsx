@@ -42,7 +42,7 @@ export default function HomePage() {
           </div>
 
           <p className="text-sm text-muted-foreground mt-4">
-            Gratuit pour toujours • Aucune carte bancaire requise
+            Inscription gratuite • Fonctionnalités premium disponibles
           </p>
         </div>
       </section>
@@ -247,7 +247,7 @@ export default function HomePage() {
           </p>
           <Button size="lg" variant="secondary" asChild>
             <Link href="/register">
-              Créer mon compte gratuitement
+              Créer mon compte
               <ArrowRight className="ml-2 h-5 w-5" />
             </Link>
           </Button>
