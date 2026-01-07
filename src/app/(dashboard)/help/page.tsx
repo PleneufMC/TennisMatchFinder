@@ -213,6 +213,29 @@ export default async function HelpPage() {
                 </p>
               </AccordionContent>
             </AccordionItem>
+
+            <AccordionItem value="chat-forum">
+              <AccordionTrigger>
+                <span className="flex items-center gap-2">
+                  <MessageCircle className="h-4 w-4" />
+                  Quelle différence entre Chat et Forum ?
+                </span>
+              </AccordionTrigger>
+              <AccordionContent className="text-muted-foreground space-y-2">
+                <p><strong>💬 Chat</strong> - Pour les échanges rapides et spontanés :</p>
+                <ul className="list-disc list-inside space-y-1 ml-2">
+                  <li>Messages en temps réel</li>
+                  <li>Messages supprimés après <strong>24 heures</strong></li>
+                  <li>Idéal pour : "Qui joue ce soir ?", "Court libre ?"</li>
+                </ul>
+                <p className="mt-3"><strong>📋 Forum</strong> - Pour les discussions durables :</p>
+                <ul className="list-disc list-inside space-y-1 ml-2">
+                  <li>Messages conservés indéfiniment</li>
+                  <li>Organisé par catégories et sujets</li>
+                  <li>Idéal pour : annonces, conseils, débats, résultats de tournois</li>
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
           </Accordion>
         </CardContent>
       </Card>
