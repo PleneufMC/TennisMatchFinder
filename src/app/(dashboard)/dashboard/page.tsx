@@ -9,6 +9,7 @@ import { Trophy, Swords, Users, TrendingUp, Calendar, Star } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { ClubBanner } from '@/components/club/club-banner';
 import { getServerPlayer } from '@/lib/auth-helpers';
 import { 
   getMatchesByPlayer, 
@@ -49,15 +50,22 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Titre avec salutation */}
-      <div>
-        <h1 className="text-3xl font-bold">
-          Bonjour, {player.fullName.split(' ')[0]} ! 👋
-        </h1>
-        <p className="text-muted-foreground">
-          Voici un aperçu de votre activité tennis
-        </p>
-      </div>
+      {/* Banner du club */}
+      <ClubBanner 
+        bannerUrl={player.club.bannerUrl} 
+        clubName={player.club.name}
+        height="md"
+      >
+        <div className="text-white">
+          <p className="text-sm text-white/80 font-medium">{player.club.name}</p>
+          <h1 className="text-2xl md:text-3xl font-bold drop-shadow-lg">
+            Bonjour, {player.fullName.split(' ')[0]} ! 👋
+          </h1>
+          <p className="text-sm text-white/90 mt-1">
+            Voici un aperçu de votre activité tennis
+          </p>
+        </div>
+      </ClubBanner>
 
       {/* Cartes de stats principales */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
