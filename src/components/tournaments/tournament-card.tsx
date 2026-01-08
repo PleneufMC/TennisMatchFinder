@@ -48,17 +48,52 @@ const FORMAT_LABELS: Record<string, string> = {
   consolation: 'Avec consolation',
 };
 
+// Helper pour parser les dates de manière sécurisée
+function safeParseDate(date: Date | string | null | undefined): Date | null {
+  if (!date) return null;
+  try {
+    const parsed = typeof date === 'string' ? new Date(date) : date;
+    return isNaN(parsed.getTime()) ? null : parsed;
+  } catch {
+    return null;
+  }
+}
+
+// Helper pour formater une date de manière sécurisée
+function safeFormat(date: Date | string | null | undefined, formatStr: string): string {
+  const parsed = safeParseDate(date);
+  if (!parsed) return '-';
+  try {
+    return format(parsed, formatStr, { locale: fr });
+  } catch {
+    return '-';
+  }
+}
+
 export function TournamentCard({ tournament, participantCount = 0, isRegistered, mySeed }: TournamentCardProps) {
   const statusConfig = getStatusConfig(tournament.status);
   const now = new Date();
+  
+  // Parser les dates de manière sécurisée
+  const registrationStart = safeParseDate(tournament.registrationStart);
+  const registrationEnd = safeParseDate(tournament.registrationEnd);
+  const startDate = safeParseDate(tournament.startDate);
+  
   const registrationOpen = tournament.status === 'registration' && 
-    isAfter(now, new Date(tournament.registrationStart)) &&
-    isBefore(now, new Date(tournament.registrationEnd));
+    registrationStart && registrationEnd &&
+    isAfter(now, registrationStart) &&
+    isBefore(now, registrationEnd);
   
   const progressPercent = (participantCount / tournament.maxParticipants) * 100;
-  const daysUntilStart = isAfter(new Date(tournament.startDate), now)
-    ? formatDistanceToNow(new Date(tournament.startDate), { locale: fr, addSuffix: true })
-    : null;
+  
+  let daysUntilStart: string | null = null;
+  if (startDate && isAfter(startDate, now)) {
+    try {
+      daysUntilStart = formatDistanceToNow(startDate, { locale: fr, addSuffix: true });
+    } catch {
+      daysUntilStart = null;
+    }
+  }
 
   return (
     <Card className="hover:shadow-lg transition-shadow">
@@ -116,14 +151,14 @@ export function TournamentCard({ tournament, participantCount = 0, isRegistered,
           <div className="flex items-center gap-2 text-muted-foreground">
             <Calendar className="h-4 w-4" />
             <span>
-              {format(new Date(tournament.startDate), 'dd MMM yyyy', { locale: fr })}
+              {safeFormat(tournament.startDate, 'dd MMM yyyy')}
             </span>
           </div>
-          {registrationOpen && (
+          {registrationOpen && registrationEnd && (
             <div className="flex items-center gap-2 text-amber-600">
               <Clock className="h-4 w-4" />
               <span className="text-xs">
-                Jusqu'au {format(new Date(tournament.registrationEnd), 'dd MMM', { locale: fr })}
+                Jusqu&apos;au {safeFormat(registrationEnd, 'dd MMM')}
               </span>
             </div>
           )}
