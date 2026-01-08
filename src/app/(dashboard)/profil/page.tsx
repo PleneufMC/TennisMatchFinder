@@ -16,6 +16,7 @@ import { formatFullDate, formatRelativeDate } from '@/lib/utils/dates';
 import { formatWinRate, formatEloDelta } from '@/lib/utils/format';
 import { getEloRankTitle } from '@/lib/elo';
 import { levelLabels, weekdayLabels, timeSlotLabels, surfaceLabels } from '@/lib/validations/profile';
+import { TrophyCase } from '@/components/gamification';
 
 export const metadata: Metadata = {
   title: 'Mon profil',
@@ -284,39 +285,18 @@ export default async function ProfilPage() {
             </CardContent>
           </Card>
 
-          {/* Badges */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Badges</CardTitle>
-              <CardDescription>
-                {badges.length} badge{badges.length > 1 ? 's' : ''} obtenu{badges.length > 1 ? 's' : ''}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {badges.length > 0 ? (
-                <div className="grid grid-cols-2 gap-2">
-                  {badges.map((badge) => (
-                    <div
-                      key={badge.id}
-                      className="flex items-center gap-2 p-2 rounded-lg border"
-                      title={badge.badgeDescription || ''}
-                    >
-                      <span className="text-xl">{badge.badgeIcon}</span>
-                      <span className="text-xs font-medium truncate">
-                        {badge.badgeName}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  Jouez des matchs pour débloquer des badges !
-                </p>
-              )}
-            </CardContent>
-          </Card>
         </div>
       </div>
+
+      {/* Trophy Case - Full width */}
+      <TrophyCase
+        earnedBadges={badges.map((b) => ({
+          badgeType: b.badgeType,
+          earnedAt: b.earnedAt,
+        }))}
+        showProgress={true}
+        showLocked={true}
+      />
     </div>
   );
 }

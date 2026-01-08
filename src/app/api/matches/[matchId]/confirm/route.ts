@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { matches, players, notifications, eloHistory } from '@/lib/db/schema';
 import { getServerPlayer } from '@/lib/auth-helpers';
 import { eq, and, or } from 'drizzle-orm';
+import { triggerBadgeCheckAfterMatch } from '@/lib/gamification';
 
 // POST: Confirmer ou rejeter un match
 export async function POST(
@@ -191,12 +192,45 @@ export async function POST(
       });
     }
 
+    // 5. Vérifier et attribuer les badges pour les deux joueurs
+    const { player1Badges, player2Badges } = await triggerBadgeCheckAfterMatch(
+      match.player1Id,
+      match.player2Id
+    );
+
+    // Notifier les joueurs des nouveaux badges
+    for (const badge of player1Badges) {
+      await db.insert(notifications).values({
+        userId: match.player1Id,
+        type: 'badge_earned',
+        title: `🏆 Nouveau badge : ${badge.name}`,
+        message: badge.description,
+        link: '/profil',
+        data: { badgeId: badge.id, badgeName: badge.name, badgeRarity: badge.rarity },
+      });
+    }
+
+    for (const badge of player2Badges) {
+      await db.insert(notifications).values({
+        userId: match.player2Id,
+        type: 'badge_earned',
+        title: `🏆 Nouveau badge : ${badge.name}`,
+        message: badge.description,
+        link: '/profil',
+        data: { badgeId: badge.id, badgeName: badge.name, badgeRarity: badge.rarity },
+      });
+    }
+
     return NextResponse.json({
       success: true,
       message: 'Match confirmé ! Les ELO ont été mis à jour.',
       eloChanges: {
         player1: { id: match.player1Id, before: match.player1EloBefore, after: player1NewElo, delta: player1EloDelta },
         player2: { id: match.player2Id, before: match.player2EloBefore, after: player2NewElo, delta: player2EloDelta },
+      },
+      newBadges: {
+        player1: player1Badges,
+        player2: player2Badges,
       },
     });
   } catch (error) {
