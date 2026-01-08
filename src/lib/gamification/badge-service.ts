@@ -6,9 +6,9 @@
  */
 
 import { db } from '@/lib/db';
-import { players, playerBadges, matches, eloHistory } from '@/lib/db/schema';
+import { players, playerBadges, matches, eloHistory, notifications } from '@/lib/db/schema';
 import { eq, and, gte, desc, sql, ne, count } from 'drizzle-orm';
-import { BADGES, type Badge } from './badges';
+import { BADGES, type Badge, RARITY_LABELS } from './badges';
 
 // Date limite Early Bird
 const EARLY_BIRD_DEADLINE = new Date('2026-06-30T23:59:59');
@@ -94,8 +94,30 @@ export async function awardBadge(playerId: string, badge: Badge): Promise<void> 
     earnedAt: new Date(),
   });
 
-  // TODO: Créer une notification pour le joueur
-  // await createNotification(playerId, 'badge_earned', { badgeId: badge.id });
+  // Créer une notification pour le joueur
+  await createBadgeNotification(playerId, badge);
+}
+
+/**
+ * Crée une notification pour un badge nouvellement obtenu
+ */
+async function createBadgeNotification(playerId: string, badge: Badge): Promise<void> {
+  const rarityLabel = RARITY_LABELS[badge.rarity] || badge.rarity;
+  
+  await db.insert(notifications).values({
+    userId: playerId,
+    type: 'badge_earned',
+    title: `Nouveau badge : ${badge.name}`,
+    message: `Félicitations ! Vous avez débloqué le badge "${badge.name}" (${rarityLabel}). ${badge.description}`,
+    link: '/achievements',
+    data: {
+      badgeId: badge.id,
+      badgeName: badge.name,
+      badgeIcon: badge.icon,
+      badgeRarity: badge.rarity,
+      badgeCategory: badge.category,
+    },
+  });
 }
 
 /**
