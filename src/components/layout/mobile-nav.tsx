@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { X, Trophy, Swords, Users, MessageSquare, MessageCircle, User, LayoutDashboard, Award } from 'lucide-react';
+import { X, Trophy, Swords, Users, MessageSquare, MessageCircle, User, LayoutDashboard, Award, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
@@ -14,6 +14,7 @@ interface MobileNavProps {
 
 const navItems = [
   { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
+  { href: '/match-now', label: 'Match Now', icon: Zap },
   { href: '/classement', label: 'Classement', icon: Trophy },
   { href: '/matchs', label: 'Mes matchs', icon: Swords },
   { href: '/suggestions', label: 'Trouver un adversaire', icon: Users },

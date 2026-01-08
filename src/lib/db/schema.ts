@@ -633,6 +633,58 @@ export const payments = pgTable(
 );
 
 // ============================================
+// MATCH NOW (Disponibilité instantanée)
+// ============================================
+
+export const matchNowAvailability = pgTable(
+  'match_now_availability',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    playerId: uuid('player_id')
+      .notNull()
+      .references(() => players.id, { onDelete: 'cascade' }),
+    clubId: uuid('club_id')
+      .notNull()
+      .references(() => clubs.id, { onDelete: 'cascade' }),
+    availableUntil: timestamp('available_until', { mode: 'date' }).notNull(),
+    message: varchar('message', { length: 200 }), // "Dispo courts 5-7, niveau intermédiaire+"
+    gameTypes: jsonb('game_types').default(['simple']).notNull(), // ['simple', 'double']
+    eloMin: integer('elo_min'), // Filtre optionnel ELO minimum
+    eloMax: integer('elo_max'), // Filtre optionnel ELO maximum
+    isActive: boolean('is_active').default(true).notNull(),
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (table) => ({
+    playerIdIdx: index('match_now_player_id_idx').on(table.playerId),
+    clubIdIdx: index('match_now_club_id_idx').on(table.clubId),
+    activeUntilIdx: index('match_now_active_until_idx').on(table.isActive, table.availableUntil),
+  })
+);
+
+// Match Now Responses (réponses aux disponibilités)
+export const matchNowResponses = pgTable(
+  'match_now_responses',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    availabilityId: uuid('availability_id')
+      .notNull()
+      .references(() => matchNowAvailability.id, { onDelete: 'cascade' }),
+    responderId: uuid('responder_id')
+      .notNull()
+      .references(() => players.id, { onDelete: 'cascade' }),
+    message: varchar('message', { length: 200 }),
+    status: varchar('status', { length: 20 }).default('pending').notNull(), // 'pending', 'accepted', 'declined'
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (table) => ({
+    availabilityIdIdx: index('match_now_responses_availability_id_idx').on(table.availabilityId),
+    responderIdIdx: index('match_now_responses_responder_id_idx').on(table.responderId),
+  })
+);
+
+// ============================================
 // RELATIONS
 // ============================================
 
