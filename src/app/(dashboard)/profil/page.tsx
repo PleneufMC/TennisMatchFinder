@@ -12,11 +12,13 @@ import { Badge } from '@/components/ui/badge';
 import { PlayerAvatar } from '@/components/ui/avatar';
 import { getServerPlayer } from '@/lib/auth-helpers';
 import { getBadgesByPlayer, getEloHistoryByPlayer } from '@/lib/db/queries';
+import { getPlayerRivalries } from '@/lib/rivalries';
 import { formatFullDate, formatRelativeDate } from '@/lib/utils/dates';
 import { formatWinRate, formatEloDelta } from '@/lib/utils/format';
 import { getEloRankTitle } from '@/lib/elo';
 import { levelLabels, weekdayLabels, timeSlotLabels, surfaceLabels } from '@/lib/validations/profile';
 import { TrophyCase } from '@/components/gamification';
+import { RivalryCard } from '@/components/rivalries';
 
 export const metadata: Metadata = {
   title: 'Mon profil',
@@ -30,10 +32,11 @@ export default async function ProfilPage() {
     redirect('/login');
   }
 
-  // Récupérer les badges et l'historique ELO
-  const [badges, eloHistory] = await Promise.all([
+  // Récupérer les badges, l'historique ELO et les rivalités
+  const [badges, eloHistory, rivalries] = await Promise.all([
     getBadgesByPlayer(player.id),
     getEloHistoryByPlayer(player.id, { limit: 10 }),
+    getPlayerRivalries(player.id, 5),
   ]);
 
   const rankInfo = getEloRankTitle(player.currentElo);
@@ -287,6 +290,37 @@ export default async function ProfilPage() {
 
         </div>
       </div>
+
+      {/* Rivalités */}
+      {rivalries.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Swords className="h-5 w-5" />
+              Vos rivalités
+            </CardTitle>
+            <CardDescription>
+              Vos adversaires les plus fréquents
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2">
+              {rivalries.map((rivalry) => (
+                <RivalryCard
+                  key={rivalry.opponent.id}
+                  playerId={player.id}
+                  opponent={rivalry.opponent}
+                  matchCount={rivalry.matchCount}
+                  wins={rivalry.wins}
+                  losses={rivalry.losses}
+                  lastPlayed={rivalry.lastPlayed}
+                  rivalryLevel={rivalry.rivalryLevel}
+                />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Trophy Case - Full width */}
       <TrophyCase
