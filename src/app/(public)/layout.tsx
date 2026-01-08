@@ -104,6 +104,11 @@ export default function PublicLayout({
                     Cookies
                   </Link>
                 </li>
+                <li>
+                  <Link href="/mentions-legales" className="hover:text-foreground">
+                    Mentions légales
+                  </Link>
+                </li>
               </ul>
             </div>
 
