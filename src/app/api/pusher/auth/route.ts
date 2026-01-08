@@ -57,7 +57,8 @@ export async function POST(request: NextRequest) {
     // For presence channels, verify the user belongs to the club
     if (channelName.startsWith('presence-club-')) {
       // Extract club ID from channel name: presence-club-{clubId}-room-{roomId}
-      const match = channelName.match(/^presence-club-([a-f0-9-]+)/);
+      // Use precise UUID regex to avoid capturing the trailing dash
+      const match = channelName.match(/^presence-club-([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/);
       const channelClubId = match?.[1];
 
       if (channelClubId && channelClubId !== player.clubId) {

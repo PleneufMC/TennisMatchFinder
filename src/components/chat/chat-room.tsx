@@ -348,7 +348,7 @@ export function ChatRoom({
                   </div>
                   {showTimestamp && (
                     <p className="text-xs text-muted-foreground">
-                      {formatTimeAgo(message.createdAt.toISOString())}
+                      {formatTimeAgo(message.createdAt)}
                     </p>
                   )}
                 </div>
