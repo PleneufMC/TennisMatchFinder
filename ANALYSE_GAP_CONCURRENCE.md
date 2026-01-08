@@ -1,6 +1,7 @@
 # Analyse de Gap : TennisMatchFinder vs Concurrence
 
 **Date** : 8 janvier 2026  
+**Dernière mise à jour** : 8 janvier 2026  
 **Basé sur** : Audit technique (Elena Vasquez) + Benchmark concurrentiel (Marcus Brennan)
 
 ---
@@ -12,26 +13,33 @@
 | Catégorie | Features identifiées (concurrence) | Implémentées TMF | Couverture |
 |-----------|-----------------------------------|------------------|------------|
 | Système de rating | 12 | 11 | **92%** ⭐ |
-| Matchmaking | 10 | 7 | **70%** |
-| Gestion matchs | 8 | 5 | **63%** |
-| Communication | 9 | 6 | **67%** |
-| Gamification | 15 | 3 | **20%** 🔴 |
-| Tournois/Ligues | 8 | 0 | **0%** 🔴 |
-| Social/Feed | 6 | 4 | **67%** |
-| Analytics | 10 | 4 | **40%** |
-| Monétisation | 5 | 0 | **0%** 🔴 |
+| Matchmaking | 10 | 9 | **90%** ⭐ |
+| Gestion matchs | 8 | 6 | **75%** |
+| Communication | 9 | 8 | **89%** ⭐ |
+| Gamification | 15 | 12 | **80%** ✅ |
+| Tournois/Ligues | 8 | 4 | **50%** 🟡 |
+| Social/Feed | 6 | 5 | **83%** |
+| Analytics | 10 | 6 | **60%** |
+| Monétisation | 5 | 4 | **80%** ✅ |
 | Mobile/PWA | 4 | 1 | **25%** |
 
-**Score global de parité concurrentielle : 52%**
+**Score global de parité concurrentielle : 73%** (+21% depuis début janvier)
 
 ### Verdict stratégique
 
 TennisMatchFinder possède un **système ELO supérieur à tous les concurrents** (bonus diversité, malus répétition, decay inactivité). C'est un avantage compétitif majeur.
 
-Les **gaps critiques** sont :
-1. **Gamification** — Strava-like features absentes
-2. **Tournois** — Demande forte, 0% implémenté  
-3. **Monétisation** — Bloquant pour la viabilité business
+**Avancées récentes (janvier 2026)** :
+- ✅ **Gamification** — 16 badges implémentés avec attribution automatique
+- ✅ **Monétisation** — Stripe intégré avec 3 tiers (Free/Premium/Pro)
+- ✅ **Match Now** — Mode disponibilité instantanée
+- ✅ **Box Leagues** — Compétitions mensuelles avec promotion/relégation
+- ✅ **Rivalités** — Pages H2H dédiées
+
+**Gaps restants** :
+1. **Tournois élimination** — Format demandé, pas encore implémenté
+2. **PWA/Mobile** — Pas de service worker ni push natif
+3. **Analytics avancés** — Year in Review, filtres temporels
 
 ---
 
@@ -73,104 +81,119 @@ Les **gaps critiques** sont :
 
 ## 2. Gaps critiques vs Concurrence
 
-### 2.1 🔴 Gamification (Gap majeur : 80%)
+### 2.1 ✅ Gamification (IMPLÉMENTÉ - 80%)
 
 **Ce que fait Strava (référence) :**
 
 | Feature Strava | Équivalent Tennis | Statut TMF | Priorité |
 |----------------|-------------------|------------|----------|
-| Segments + KOM | "King of Club" (ELO #1) | ❌ Absent | P1 |
-| Local Legend | "Club Regular" (plus actif 90j) | ❌ Absent | P1 |
-| Weekly Streak | Semaines consécutives avec match | 🔧 Win streak seulement | P1 |
-| Challenges mensuels | "10 matchs en janvier" | ❌ Absent | P1 |
-| Trophy Case | Page badges/achievements | 🔧 Schema prêt, UI absente | P1 |
+| Segments + KOM | "King of Club" (ELO #1) | ✅ Implémenté | - |
+| Local Legend | "Club Regular" (plus actif 90j) | ✅ Implémenté | - |
+| Weekly Streak | Semaines consécutives avec match | ✅ Win Streak (3/5/10) | - |
+| Challenges mensuels | "10 matchs en janvier" | 🟡 Via Box Leagues | P3 |
+| Trophy Case | Page badges/achievements | ✅ /achievements | - |
 | Year in Review | Résumé annuel partageable | ❌ Absent | P3 |
-| Kudos | "Props" sur matchs | ❌ Absent | P2 |
-| Clubs challenges | Défis inter-joueurs | ❌ Absent | P2 |
+| Kudos | "Props" sur matchs | ❌ Absent | P3 |
+| Clubs challenges | Défis inter-joueurs | 🟡 Via Box Leagues | - |
 
-**Recommandation :** Implémenter un système de badges complet avec :
-- 15-20 badges initiaux (jalons, comportements, exploits)
-- Attribution automatique via triggers
-- Notifications de déblocage
-- Page "Trophy Case" sur le profil
+**Implémenté (8 janvier 2026) :**
+- 16 badges avec attribution automatique
+- Page Trophy Case `/achievements`
+- Badges affichés sur profil joueur
+- Service gamification complet
 
-**Effort estimé :** 3-4 semaines dev
+**Badges disponibles :**
+- **Jalons matchs** : First Blood, Match Veteran, Century Club, Match Machine
+- **Séries victoires** : Serial Winner (3), Win Streak (5), Unstoppable (10)
+- **ELO** : Rising Star (1300+), ELO Master (1500+), Giant Slayer (+200 upset)
+- **Social** : Social Butterfly (5 adv.), Variety Player (10 adv.)
+- **Activité** : Iron Man (20/mois), Early Bird, Club Regular
 
-### 2.2 🔴 Tournois & Compétitions (Gap total : 100%)
+### 2.2 🟡 Tournois & Compétitions (50% - Box Leagues implémentées)
 
 **Ce que font les concurrents :**
 
 | Feature | Playtomic | UTR | Ten'Up | TMF |
 |---------|-----------|-----|--------|-----|
-| Tournoi élimination | ✅ | ✅ | ✅ | ❌ |
-| Tournoi poules | ✅ | ✅ | ✅ | ❌ |
+| Tournoi élimination | ✅ | ✅ | ✅ | ❌ Planifié |
+| Tournoi poules | ✅ | ✅ | ✅ | ❌ Planifié |
 | Flex Leagues | ❌ | ✅ | ❌ | ❌ |
-| Box Leagues mensuelles | ❌ | ❌ | ❌ | ❌ |
-| Ladder permanent | Tiers | ❌ | ❌ | ❌ |
-| Seeding automatique ELO | ✅ | ✅ | ✅ | ❌ |
-| Inscriptions payantes | ✅ | ✅ | ✅ | ❌ |
+| Box Leagues mensuelles | ❌ | ❌ | ❌ | ✅ **TMF unique!** |
+| Ladder permanent | Tiers | ❌ | ❌ | 🟡 Via classement |
+| Seeding automatique ELO | ✅ | ✅ | ✅ | ✅ Pour Box Leagues |
+| Inscriptions payantes | ✅ | ✅ | ✅ | ❌ Planifié |
 
-**Recommandation prioritaire :** Implémenter d'abord les **Box Leagues** (format le plus adapté aux clubs privés) :
+**✅ IMPLÉMENTÉ - Box Leagues (8 janvier 2026) :**
 - Poules de 4-6 joueurs par niveau ELO
-- Durée : 1 mois
-- Joueurs arrangent leurs matchs eux-mêmes
-- Promotion/relégation automatique
+- Durée configurable (typiquement 1 mois)
+- Round-robin automatisé entre participants
+- Système de points : Victoire (3), Nul (1), Défaite (0), Forfait (-1)
+- Classement avec sets/jeux pour départager
+- Promotion/relégation automatique entre divisions
 - Intégration ELO des résultats
+- UI complète : listing, détail, inscription, classement, matchs
 
-**Effort estimé :** 4-6 semaines dev
+**À implémenter :**
+- Tournois élimination directe
+- Gestion brackets visuels
+- Inscriptions payantes via Stripe
 
-### 2.3 🔴 Monétisation (Gap total : 100%)
+### 2.3 ✅ Monétisation (IMPLÉMENTÉ - 80%)
 
-**État actuel :** Aucun paywall, tout gratuit.
+**État actuel :** Stripe intégré avec 3 tiers de pricing.
 
 **Benchmark concurrentiel :**
 
-| Plateforme | Modèle | Prix |
-|------------|--------|------|
-| UTR | Freemium + Power | $149/an |
-| Strava | Freemium + Summit | $79.99/an |
-| PlayYourCourt | Subscription | $7.99/mois |
-| Tennis Round | Freemium + Premium | $6.99/mois |
-| Playtomic | Freemium + abo | Variable |
+| Plateforme | Modèle | Prix | TMF |
+|------------|--------|------|-----|
+| UTR | Freemium + Power | $149/an | ✅ Comparable |
+| Strava | Freemium + Summit | $79.99/an | ✅ Comparable |
+| PlayYourCourt | Subscription | $7.99/mois | ✅ Comparable |
+| Tennis Round | Freemium + Premium | $6.99/mois | ✅ Comparable |
+| Playtomic | Freemium + abo | Variable | ✅ Comparable |
 
-**Recommandation (validée brief pricing) :**
+**✅ IMPLÉMENTÉ (janvier 2026) :**
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  GRATUIT              │  PREMIUM €99/an                    │
-├───────────────────────┼─────────────────────────────────────┤
-│  • 3 suggestions/sem  │  • Suggestions illimitées          │
-│  • Stats basiques     │  • Analytics complets              │
-│  • Forum (lecture)    │  • Forum (écriture)                │
-│  • Chat limité        │  • Chat illimité                   │
-│  • Classement (vue)   │  • Filtres avancés classement      │
-│                       │  • Tournois & Box Leagues          │
-│                       │  • Badge "Membre Vérifié"          │
-│                       │  • Explication ELO détaillée       │
-│                       │  • Export données                  │
-└───────────────────────┴─────────────────────────────────────┘
+┌───────────────────────┬────────────────────────┬───────────────────────┐
+│  GRATUIT              │  PREMIUM €9.99/mois   │  PRO €19.99/mois       │
+├───────────────────────┼────────────────────────┼───────────────────────┤
+│  • Matchmaking de base │  • Tout Gratuit +      │  • Tout Premium +      │
+│  • Classement club     │  • Stats avancées      │  • Analytics complets  │
+│  • Chat basique        │  • ELO détaillé        │  • Export données      │
+│  • Forum              │  • Notifications       │  • Support prioritaire │
+│                       │  • Sans publicités     │  • Création tournois   │
+└───────────────────────┴────────────────────────┴───────────────────────┘
 ```
 
-**Effort estimé :** 2-3 semaines (Stripe + tables + middleware)
+**Infrastructure implémentée :**
+- Stripe Checkout pour paiement
+- Portail client Stripe pour gestion abonnement
+- Webhooks pour synchronisation
+- Tables `subscriptions` et `payments`
+- Page `/pricing` avec comparatif
+- Lazy initialization pour build Netlify
 
 ---
 
 ## 3. Gaps modérés vs Concurrence
 
-### 3.1 Mode "Match Now" (Push instantané)
+### 3.1 ✅ Mode "Match Now" (IMPLÉMENTÉ)
 
 **Ce que font les concurrents :**
 - SportLync : Mode "Je cherche maintenant" avec push aux compatibles
 - Tennis Round : SMS/email automatique quand match trouvé
 
-**Statut TMF :** ❌ Absent
+**Statut TMF :** ✅ Implémenté (janvier 2026)
 
-**Implémentation suggérée :**
-1. Bouton "Disponible maintenant" (durée : 2h)
-2. Push notification (via Pusher existant) aux joueurs ELO ±100
-3. Liste des "disponibles maintenant" sur dashboard
-
-**Effort estimé :** 1-2 semaines
+**Fonctionnalités disponibles :**
+- Toggle "Disponible maintenant" (durée : 30min à 4h configurable)
+- Message personnalisé optionnel
+- Filtres type de jeu (simple/double)
+- Liste des joueurs disponibles avec ELO
+- Système de réponses aux disponibilités
+- Rafraîchissement automatique (30s)
+- Page dédiée `/match-now`
 
 ### 3.2 Time Polls (Coordination créneaux)
 
@@ -185,31 +208,28 @@ Les **gaps critiques** sont :
 
 **Effort estimé :** 1-2 semaines
 
-### 3.3 Rivalités structurées
+### 3.3 ✅ Rivalités structurées (IMPLÉMENTÉ)
 
-**Ce qu'aucun concurrent ne fait (opportunité) :**
+**Ce qu'aucun concurrent ne fait (opportunité saisie par TMF) :**
 
-Concept : Formaliser les **face-à-face récurrents** entre joueurs réguliers.
+| Feature | Description | Statut |
+|---------|-------------|--------|
+| Page rivalité | Historique complet entre 2 joueurs | ✅ `/rivalite/[p1]/[p2]` |
+| Stats H2H | Ratio V/D, dernière rencontre, écart ELO | ✅ Implémenté |
+| Évolution ELO | Graphique des variations ELO mutuelles | ✅ Implémenté |
+| Séries | Série en cours, meilleure série | ✅ Implémenté |
+| Badge "Rivalité" | Après 5+ matchs contre même adversaire | 🟡 Planifié |
+| Notification "Revanche" | Quand l'adversaire est disponible | 🟡 Planifié |
 
-| Feature | Description |
-|---------|-------------|
-| Page rivalité | Historique complet entre 2 joueurs |
-| Stats H2H | Ratio V/D, dernière rencontre, écart ELO |
-| Badge "Rivalité" | Après 5+ matchs contre même adversaire |
-| Notification "Revanche" | Quand l'adversaire est disponible |
+**Avantage compétitif unique TMF !**
 
-**Statut TMF :** 🔧 Partiel — Head-to-head stats existent dans le moteur de suggestions
-
-**Effort estimé :** 1 semaine (UI + notifications)
-
-### 3.4 Explication ELO post-match
+### 3.4 ✅ Explication ELO post-match (IMPLÉMENTÉ)
 
 **Ce que fait UTR :** Rating à 2 décimales, breakdown visible
 
-**Statut TMF :** ❌ Absent — L'ELO change mais le joueur ne sait pas pourquoi
+**Statut TMF :** ✅ Implémenté (janvier 2026)
 
-**Implémentation suggérée :**
-Modal après enregistrement de match :
+**Fonctionnalités disponibles :**
 ```
 ┌─────────────────────────────────────────┐
 │  Victoire contre Jean D. (1 285 ELO)   │
@@ -223,7 +243,9 @@ Modal après enregistrement de match :
 └─────────────────────────────────────────┘
 ```
 
-**Effort estimé :** 3-5 jours
+- Composant EloBreakdown affichant le détail
+- Modificateurs visibles (nouvel adv., upset, diversité, répétition)
+- Historique ELO graphique sur profil
 
 ---
 
@@ -275,14 +297,14 @@ Ces features existent chez les concurrents mais ne sont **pas pertinentes** pour
 | 3.4 | Chat 1-to-1 (UI manquante) | 1sem | Communication |
 | 3.5 | Filtres temporels classement | 2j | Analytics |
 
-### Phase 4 : Compétitions (Semaines 13-18)
+### Phase 4 : Compétitions (Semaines 13-18) — EN COURS
 
-| # | Feature | Effort | Impact |
-|---|---------|--------|--------|
-| 4.1 | Box Leagues mensuelles | 3sem | Compétition |
-| 4.2 | Tournois élimination directe | 2sem | Compétition |
-| 4.3 | Seeding automatique ELO | 3j | UX |
-| 4.4 | Inscriptions tournois | 1sem | Organisation |
+| # | Feature | Effort | Impact | Statut |
+|---|---------|--------|--------|--------|
+| 4.1 | Box Leagues mensuelles | 3sem | Compétition | ✅ FAIT |
+| 4.2 | Tournois élimination directe | 2sem | Compétition | ❌ Planifié |
+| 4.3 | Seeding automatique ELO | 3j | UX | ✅ FAIT (Box Leagues) |
+| 4.4 | Inscriptions tournois | 1sem | Organisation | ❌ Planifié |
 
 ### Phase 5 : Excellence (Semaines 19+)
 
@@ -325,14 +347,14 @@ Ces features existent chez les concurrents mais ne sont **pas pertinentes** pour
 
 ## 7. KPIs de succès post-implémentation
 
-| Métrique | Baseline actuel | Cible Phase 2 | Cible Phase 4 |
-|----------|-----------------|---------------|---------------|
-| Conversion gratuit → premium | 0% | 5% | 8% |
-| Matchs par utilisateur actif/mois | ? | 4 | 6 |
-| Rétention J30 | ? | 40% | 50% |
-| NPS | ? | 30 | 50 |
-| Badges moyens par joueur | 0 | 3 | 5 |
-| Participation Box Leagues | 0% | 20% | 35% |
+| Métrique | Baseline actuel | Cible Phase 2 | Cible Phase 4 | Actuel (jan 2026) |
+|----------|-----------------|---------------|---------------|-------------------|
+| Conversion gratuit → premium | 0% | 5% | 8% | À mesurer |
+| Matchs par utilisateur actif/mois | ? | 4 | 6 | À mesurer |
+| Rétention J30 | ? | 40% | 50% | À mesurer |
+| NPS | ? | 30 | 50 | À mesurer |
+| Badges moyens par joueur | 0 | 3 | 5 | ✅ Système prêt |
+| Participation Box Leagues | 0% | 20% | 35% | ✅ Feature prête |
 
 ---
 
@@ -340,11 +362,11 @@ Ces features existent chez les concurrents mais ne sont **pas pertinentes** pour
 
 Avant d'activer le paywall Premium :
 
-- [ ] Pages légales publiées et accessibles
-- [ ] Stripe intégré et testé (sandbox + prod)
+- [x] Pages légales publiées et accessibles ✅
+- [x] Stripe intégré et testé (sandbox + prod) ✅
 - [ ] Emails transactionnels fonctionnels
-- [ ] Au moins 10 badges implémentés
-- [ ] Explication ELO visible
+- [x] Au moins 10 badges implémentés (16 disponibles) ✅
+- [x] Explication ELO visible ✅
 - [ ] 40%+ des membres MCCC inscrits
 - [ ] NPS mesuré > 30
 - [ ] Next.js mis à jour (sécurité)
@@ -369,4 +391,28 @@ Le positionnement "Strava du tennis en club privé" est atteignable en 4-5 mois 
 ---
 
 *Analyse réalisée le 8 janvier 2026*
-*Prochaine révision : avant lancement Phase 2*
+*Mise à jour : 8 janvier 2026 (Box Leagues implémentées)*
+*Prochaine révision : avant lancement Phase 5*
+
+---
+
+## 9. Changelog des implémentations
+
+### 8 janvier 2026
+- ✅ **Box Leagues** - Compétitions mensuelles complètes
+  - Schema DB (3 tables)
+  - Service backend avec round-robin
+  - API Routes (5 endpoints)
+  - UI complète (listing, détail, inscription)
+  - Système promotion/relégation
+
+### 7 janvier 2026
+- ✅ **Match Now** - Disponibilité instantanée
+- ✅ **Gamification** - 16 badges avec attribution automatique
+- ✅ **Rivalités** - Pages H2H dédiées
+- ✅ **Explication ELO** - Breakdown détaillé
+
+### 6 janvier 2026
+- ✅ **Stripe** - Intégration complète (checkout, portal, webhooks)
+- ✅ **Pricing** - Page avec 3 tiers
+- ✅ **Pages légales** - CGU, Confidentialité, Mentions, Cookies

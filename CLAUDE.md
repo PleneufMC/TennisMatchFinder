@@ -188,15 +188,29 @@ src/
 ├── app/
 │   ├── api/           # Routes API
 │   ├── (auth)/        # Pages authentification
-│   └── (dashboard)/   # Pages tableau de bord
-├── components/        # Composants React
+│   ├── (dashboard)/   # Pages tableau de bord
+│   └── (public)/      # Pages publiques (landing, CGU, etc.)
+├── components/
+│   ├── ui/            # Composants shadcn/ui
+│   ├── layout/        # Sidebar, Header, Mobile Nav
+│   ├── box-leagues/   # Composants Box Leagues
+│   ├── match-now/     # Composants Match Now
+│   ├── gamification/  # Badges, Achievements
+│   ├── rivalries/     # Composants rivalités
+│   ├── chat/          # Composants chat temps réel
+│   └── ...            # Autres composants
 ├── lib/
 │   ├── db/
 │   │   ├── schema.ts  # Schéma Drizzle (SOURCE DE VÉRITÉ)
 │   │   └── queries.ts # Requêtes réutilisables
 │   ├── auth.ts        # Configuration NextAuth
-│   └── email/         # Envoi d'emails
-└── types/             # Types TypeScript
+│   ├── email/         # Envoi d'emails
+│   ├── stripe/        # Configuration Stripe (lazy init)
+│   ├── box-leagues/   # Service Box Leagues
+│   ├── match-now/     # Service Match Now
+│   ├── gamification/  # Service badges/achievements
+│   └── elo/           # Calcul ELO avancé
+└── hooks/             # Hooks React personnalisés
 ```
 
 ---
@@ -353,6 +367,7 @@ export default function PricingPage() {
 ## Checklist avant Commit
 
 - [ ] `npx tsc --noEmit` passe sans erreur
+- [ ] `npm run build` réussit localement
 - [ ] Tous les `.returning()` ont une vérification `if (!result)`
 - [ ] Les accès `array[0]` sont vérifiés avec extraction dans une variable
 - [ ] Les noms de champs correspondent au schéma `src/lib/db/schema.ts`
@@ -372,3 +387,162 @@ npm run build
 ```
 
 Si le build passe avec des variables factices, il passera sur Netlify avec les vraies variables.
+
+---
+
+## Features Implémentées
+
+### Phase 1 : Pré-requis business ✅
+- [x] Pages légales (CGU, Confidentialité, Mentions, Cookies)
+- [x] Système de paiement Stripe (checkout, portail, webhooks)
+- [x] Paywall features premium (3 tiers: Free, Premium, Pro)
+- [x] Page pricing avec comparatif des plans
+
+### Phase 2 : Gamification ✅
+- [x] Système badges complet (16 badges)
+  - First Blood, Match Veteran, Century Club, Match Machine
+  - Serial Winner, Win Streak, Unstoppable, Comeback King
+  - Rising Star, ELO Master, Giant Slayer, Social Butterfly
+  - Variety Player, Iron Man, Early Bird, Club Regular
+- [x] Attribution automatique via triggers
+- [x] Page Achievements (`/achievements`)
+- [x] API badges (`/api/badges`, `/api/gamification`)
+
+### Phase 3 : Différenciation ✅
+- [x] Explication ELO post-match (breakdown détaillé)
+- [x] Mode "Match Now" (disponibilité instantanée)
+  - Toggle disponibilité avec durée configurable
+  - Liste joueurs disponibles avec filtres ELO
+  - Système de réponses/notifications
+- [x] Rivalités (page H2H dédiée `/rivalite/[playerId]/[opponentId]`)
+  - Historique complet des confrontations
+  - Stats H2H, séries, évolution ELO
+- [x] Chat temps réel (Pusher)
+  - Salons de club (sections)
+  - Conversations privées
+  - Indicateur de frappe
+
+### Phase 4 : Compétitions 🟡 (En cours)
+- [x] **Box Leagues mensuelles** (implémenté 8 jan 2026)
+  - Schema DB : `box_leagues`, `box_league_participants`, `box_league_matches`
+  - Service complet avec CRUD et round-robin
+  - API Routes : listing, détail, inscription
+  - UI : cards, tableau classement, liste matchs
+  - Système promotion/relégation
+  - Intégration ELO des résultats
+- [ ] Tournois élimination directe
+- [ ] Seeding automatique ELO
+- [ ] Inscriptions tournois
+
+---
+
+## Modules et Services
+
+### Box Leagues (`src/lib/box-leagues/`)
+
+**Types** (`types.ts`):
+- `BoxLeague` - Compétition mensuelle
+- `BoxLeagueParticipant` - Inscription joueur avec stats
+- `BoxLeagueMatch` - Match du round-robin
+- `BoxLeagueStanding` - Classement avec tendance
+
+**Service** (`service.ts`):
+```typescript
+// Création et gestion
+createBoxLeague(params) // Créer une league
+getBoxLeagueById(id)    // Récupérer une league
+getBoxLeaguesByClub(clubId, filters) // Lister les leagues
+updateBoxLeagueStatus(id, status)    // Changer statut
+
+// Participants
+registerParticipant(params)     // Inscrire un joueur
+getLeagueParticipants(leagueId) // Liste participants
+getLeagueStandings(leagueId)    // Classement calculé
+
+// Matchs
+generateLeagueMatches(leagueId) // Générer round-robin
+getLeagueMatches(leagueId)      // Liste des matchs
+recordMatchResult(params)       // Enregistrer résultat
+
+// Finalisation
+finalizeLeagueStandings(leagueId) // Calcul promo/relégation
+```
+
+**API Routes**:
+- `GET /api/box-leagues` - Liste (filtres: status, my=true)
+- `POST /api/box-leagues` - Créer (admin)
+- `GET /api/box-leagues/[leagueId]` - Détail + standings + matchs
+- `PATCH /api/box-leagues/[leagueId]` - Update statut (admin)
+- `POST /api/box-leagues/[leagueId]/register` - Inscription joueur
+
+### Match Now (`src/lib/match-now/`)
+
+**Fonctionnalités**:
+- Activer sa disponibilité (30min à 4h)
+- Message personnalisé optionnel
+- Filtres type de jeu (simple/double)
+- Liste joueurs disponibles avec ELO
+- Système de réponses
+
+**API Routes**:
+- `GET /api/match-now` - Ma dispo + joueurs disponibles
+- `POST /api/match-now` - Activer disponibilité
+- `DELETE /api/match-now` - Désactiver
+- `POST /api/match-now/respond` - Répondre à une dispo
+
+### Gamification (`src/lib/gamification/`)
+
+**16 Badges disponibles**:
+| Badge | Condition |
+|-------|----------|
+| First Blood | 1er match joué |
+| Match Veteran | 10 matchs |
+| Century Club | 100 matchs |
+| Serial Winner | 3 victoires consécutives |
+| Win Streak | 5 victoires consécutives |
+| Unstoppable | 10 victoires consécutives |
+| Rising Star | ELO 1300+ |
+| ELO Master | ELO 1500+ |
+| Giant Slayer | Victoire vs +200 ELO |
+| Social Butterfly | 5 adversaires différents |
+| Variety Player | 10 adversaires différents |
+| Iron Man | 20 matchs en 1 mois |
+| Early Bird | Match avant 9h |
+| Club Regular | Plus actif sur 90 jours |
+| Comeback King | Victoire après 0-1 en sets |
+| Match Machine | 50 matchs |
+
+---
+
+## Base de Données - Tables Principales
+
+### Tables Core
+- `users` - Comptes NextAuth
+- `players` - Profils joueurs (ELO, stats, préférences)
+- `clubs` - Clubs avec settings
+- `matches` - Historique des matchs
+- `elo_history` - Historique ELO détaillé
+
+### Tables Fonctionnalités
+- `match_proposals` - Propositions de match
+- `match_now_availability` - Disponibilités instantanées
+- `match_now_responses` - Réponses aux dispos
+- `player_badges` - Badges obtenus
+- `notifications` - Notifications utilisateur
+
+### Tables Box Leagues
+- `box_leagues` - Compétitions mensuelles
+- `box_league_participants` - Inscriptions + stats
+- `box_league_matches` - Matchs round-robin
+
+### Tables Communication
+- `forum_threads` - Sujets forum
+- `forum_replies` - Réponses forum
+- `forum_reactions` - Réactions (likes)
+- `chat_rooms` - Salons chat
+- `chat_room_members` - Membres salons
+- `chat_messages` - Messages chat
+
+### Tables Subscription
+- `subscriptions` - Abonnements Stripe
+- `payments` - Historique paiements
