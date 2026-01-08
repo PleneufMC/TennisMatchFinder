@@ -685,6 +685,144 @@ export const matchNowResponses = pgTable(
 );
 
 // ============================================
+// BOX LEAGUES (Compétitions mensuelles)
+// ============================================
+
+export const boxLeagueStatusEnum = pgEnum('box_league_status', [
+  'draft',        // En préparation
+  'registration', // Inscriptions ouvertes
+  'active',       // En cours
+  'completed',    // Terminée
+  'cancelled',    // Annulée
+]);
+
+// Box League (compétition mensuelle)
+export const boxLeagues = pgTable(
+  'box_leagues',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    clubId: uuid('club_id')
+      .notNull()
+      .references(() => clubs.id, { onDelete: 'cascade' }),
+    name: varchar('name', { length: 100 }).notNull(),
+    description: text('description'),
+    // Période
+    startDate: timestamp('start_date', { mode: 'date' }).notNull(),
+    endDate: timestamp('end_date', { mode: 'date' }).notNull(),
+    registrationDeadline: timestamp('registration_deadline', { mode: 'date' }).notNull(),
+    // Configuration
+    minPlayers: integer('min_players').default(4).notNull(),
+    maxPlayers: integer('max_players').default(6).notNull(),
+    eloRangeMin: integer('elo_range_min'), // ELO minimum pour cette division
+    eloRangeMax: integer('elo_range_max'), // ELO maximum pour cette division
+    division: integer('division').default(1).notNull(), // 1 = Division 1 (top), 2, 3...
+    matchesPerPlayer: integer('matches_per_player').default(5).notNull(), // Matchs requis
+    // Points système
+    pointsWin: integer('points_win').default(3).notNull(),
+    pointsDraw: integer('points_draw').default(1).notNull(),
+    pointsLoss: integer('points_loss').default(0).notNull(),
+    pointsForfeit: integer('points_forfeit').default(-1).notNull(),
+    // Promotion/Relégation
+    promotionSpots: integer('promotion_spots').default(1).notNull(), // Nombre de promus
+    relegationSpots: integer('relegation_spots').default(1).notNull(), // Nombre de relégués
+    // Status
+    status: boxLeagueStatusEnum('status').default('draft').notNull(),
+    // Metadata
+    createdBy: uuid('created_by').references(() => players.id, { onDelete: 'set null' }),
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (table) => ({
+    clubIdIdx: index('box_leagues_club_id_idx').on(table.clubId),
+    statusIdx: index('box_leagues_status_idx').on(table.status),
+    datesIdx: index('box_leagues_dates_idx').on(table.startDate, table.endDate),
+  })
+);
+
+// Participants à une Box League
+export const boxLeagueParticipants = pgTable(
+  'box_league_participants',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    leagueId: uuid('league_id')
+      .notNull()
+      .references(() => boxLeagues.id, { onDelete: 'cascade' }),
+    playerId: uuid('player_id')
+      .notNull()
+      .references(() => players.id, { onDelete: 'cascade' }),
+    // Stats dans cette league
+    eloAtStart: integer('elo_at_start').notNull(), // ELO au moment de l'inscription
+    matchesPlayed: integer('matches_played').default(0).notNull(),
+    matchesWon: integer('matches_won').default(0).notNull(),
+    matchesLost: integer('matches_lost').default(0).notNull(),
+    matchesDrawn: integer('matches_drawn').default(0).notNull(),
+    points: integer('points').default(0).notNull(),
+    setsWon: integer('sets_won').default(0).notNull(),
+    setsLost: integer('sets_lost').default(0).notNull(),
+    gamesWon: integer('games_won').default(0).notNull(),
+    gamesLost: integer('games_lost').default(0).notNull(),
+    // Classement final
+    finalRank: integer('final_rank'),
+    isPromoted: boolean('is_promoted').default(false).notNull(),
+    isRelegated: boolean('is_relegated').default(false).notNull(),
+    // Status
+    isActive: boolean('is_active').default(true).notNull(), // false si retiré
+    withdrawReason: text('withdraw_reason'),
+    // Timestamps
+    registeredAt: timestamp('registered_at', { mode: 'date' }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (table) => ({
+    leagueIdIdx: index('box_league_participants_league_id_idx').on(table.leagueId),
+    playerIdIdx: index('box_league_participants_player_id_idx').on(table.playerId),
+    pointsIdx: index('box_league_participants_points_idx').on(table.points),
+    uniqueParticipant: index('box_league_participants_unique_idx').on(table.leagueId, table.playerId),
+  })
+);
+
+// Matchs d'une Box League
+export const boxLeagueMatches = pgTable(
+  'box_league_matches',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    leagueId: uuid('league_id')
+      .notNull()
+      .references(() => boxLeagues.id, { onDelete: 'cascade' }),
+    player1Id: uuid('player1_id')
+      .notNull()
+      .references(() => players.id, { onDelete: 'cascade' }),
+    player2Id: uuid('player2_id')
+      .notNull()
+      .references(() => players.id, { onDelete: 'cascade' }),
+    // Résultat
+    winnerId: uuid('winner_id').references(() => players.id, { onDelete: 'set null' }),
+    score: varchar('score', { length: 50 }), // Ex: "6-4 6-3"
+    player1Sets: integer('player1_sets'),
+    player2Sets: integer('player2_sets'),
+    player1Games: integer('player1_games'),
+    player2Games: integer('player2_games'),
+    // Status
+    status: varchar('status', { length: 20 }).default('scheduled').notNull(), // 'scheduled', 'completed', 'forfeit', 'cancelled'
+    forfeitBy: uuid('forfeit_by').references(() => players.id, { onDelete: 'set null' }),
+    // Lien avec le match principal (pour intégration ELO)
+    mainMatchId: uuid('main_match_id').references(() => matches.id, { onDelete: 'set null' }),
+    // Dates
+    scheduledDate: timestamp('scheduled_date', { mode: 'date' }),
+    playedAt: timestamp('played_at', { mode: 'date' }),
+    deadline: timestamp('deadline', { mode: 'date' }), // Date limite pour jouer
+    // Timestamps
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (table) => ({
+    leagueIdIdx: index('box_league_matches_league_id_idx').on(table.leagueId),
+    player1IdIdx: index('box_league_matches_player1_id_idx').on(table.player1Id),
+    player2IdIdx: index('box_league_matches_player2_id_idx').on(table.player2Id),
+    statusIdx: index('box_league_matches_status_idx').on(table.status),
+  })
+);
+
+// ============================================
 // RELATIONS
 // ============================================
 
