@@ -7,6 +7,7 @@ import { Header } from '@/components/layout/header';
 import { MobileNav } from '@/components/layout/mobile-nav';
 import { DashboardSkeleton } from '@/components/ui/skeleton';
 import { usePlayer } from '@/hooks/use-player';
+import { TSAFooter } from '@/components/partners';
 
 export default function DashboardLayout({
   children,
@@ -51,7 +52,10 @@ export default function DashboardLayout({
         />
 
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
-          {children}
+          <div className="max-w-7xl mx-auto">
+            {children}
+            <TSAFooter className="mt-12 mb-6" />
+          </div>
         </main>
       </div>
 

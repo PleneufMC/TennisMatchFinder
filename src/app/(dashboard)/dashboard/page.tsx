@@ -19,6 +19,7 @@ import {
 import { formatRelativeDate } from '@/lib/utils/dates';
 import { formatEloDelta } from '@/lib/utils/format';
 import { getEloRankTitle, calculateEloTrend } from '@/lib/elo';
+import { TSABanner } from '@/components/partners';
 
 export const metadata: Metadata = {
   title: 'Tableau de bord',
@@ -194,6 +195,9 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Banner partenaire TSA */}
+      <TSABanner className="my-6" />
 
       {/* Derniers matchs */}
       <Card>
