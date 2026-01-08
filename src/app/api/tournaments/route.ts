@@ -134,6 +134,8 @@ export async function POST(request: NextRequest) {
       setsToWin: body.setsToWin,
       finalSetsToWin: body.finalSetsToWin,
       thirdPlaceMatch: body.thirdPlaceMatch,
+      entryFee: body.entryFee || 0, // En centimes
+      currency: body.currency || 'EUR',
       createdBy: player.id,
     });
 

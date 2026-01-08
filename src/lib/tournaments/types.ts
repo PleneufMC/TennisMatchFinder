@@ -6,6 +6,7 @@ export type TournamentStatus = 'draft' | 'registration' | 'seeding' | 'active' |
 export type TournamentFormat = 'single_elimination' | 'double_elimination' | 'consolation';
 export type TournamentMatchStatus = 'pending' | 'scheduled' | 'in_progress' | 'completed' | 'walkover' | 'bye';
 export type BracketType = 'main' | 'consolation' | 'losers';
+export type PaymentStatus = 'pending' | 'paid' | 'refunded' | 'free';
 
 export interface Tournament {
   id: string;
@@ -25,6 +26,11 @@ export interface Tournament {
   setsToWin: number;
   finalSetsToWin: number;
   thirdPlaceMatch: boolean;
+  // Payment
+  entryFee: number; // en centimes (0 = gratuit)
+  currency: string;
+  stripeProductId: string | null;
+  stripePriceId: string | null;
   status: TournamentStatus;
   currentRound: number;
   totalRounds: number | null;
@@ -46,6 +52,12 @@ export interface TournamentParticipant {
   eliminatedInRound: number | null;
   isActive: boolean;
   withdrawReason: string | null;
+  // Payment
+  paymentStatus: PaymentStatus;
+  stripePaymentIntentId: string | null;
+  stripeSessionId: string | null;
+  paidAt: Date | null;
+  paidAmount: number | null;
   registeredAt: Date;
   // Joined data
   player?: {
@@ -122,6 +134,8 @@ export interface CreateTournamentParams {
   setsToWin?: number;
   finalSetsToWin?: number;
   thirdPlaceMatch?: boolean;
+  entryFee?: number; // en centimes (0 = gratuit)
+  currency?: string;
   createdBy: string;
 }
 

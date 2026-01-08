@@ -6,6 +6,7 @@ import {
   handleSubscriptionDeleted,
   recordPayment,
 } from '@/lib/stripe/subscription';
+import { handleTournamentPaymentSuccess } from '@/lib/tournaments/payment';
 import type Stripe from 'stripe';
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
@@ -40,7 +41,26 @@ export async function POST(request: NextRequest) {
         const session = event.data.object as Stripe.Checkout.Session;
         console.log('Checkout session completed:', session.id);
         
-        // The subscription will be handled by customer.subscription.created
+        // Vérifier si c'est un paiement de tournoi
+        if (session.metadata?.type === 'tournament_registration') {
+          const participantId = session.metadata.participantId;
+          const tournamentId = session.metadata.tournamentId;
+          const playerId = session.metadata.playerId;
+          
+          if (participantId && tournamentId && playerId) {
+            await handleTournamentPaymentSuccess({
+              sessionId: session.id,
+              participantId,
+              tournamentId,
+              playerId,
+              amountPaid: session.amount_total || 0,
+              paymentIntentId: typeof session.payment_intent === 'string' 
+                ? session.payment_intent 
+                : session.payment_intent?.id || null,
+            });
+          }
+        }
+        // Les abonnements sont gérés par customer.subscription.created
         break;
       }
 

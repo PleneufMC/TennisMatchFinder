@@ -117,10 +117,10 @@ export default function PublicLayout({
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
                   <a
-                    href="mailto:contact@tennismatchfinder.net"
+                    href="mailto:pleneuftrading@gmail.com"
                     className="hover:text-foreground"
                   >
-                    contact@tennismatchfinder.net
+                    pleneuftrading@gmail.com
                   </a>
                 </li>
               </ul>

@@ -47,6 +47,8 @@ export async function createTournament(params: CreateTournamentParams): Promise<
       setsToWin: params.setsToWin || 2,
       finalSetsToWin: params.finalSetsToWin || 2,
       thirdPlaceMatch: params.thirdPlaceMatch || false,
+      entryFee: params.entryFee || 0,
+      currency: params.currency || 'EUR',
       status: 'draft',
       createdBy: params.createdBy,
     })

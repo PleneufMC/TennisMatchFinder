@@ -21,7 +21,7 @@ export default function MentionsLegalesPage() {
             <p className="text-muted-foreground">
               <strong>TennisMatchFinder</strong><br />
               Site web : <a href="https://tennismatchfinder.net" className="text-primary hover:underline">tennismatchfinder.net</a><br />
-              Email : <a href="mailto:contact@tennismatchfinder.net" className="text-primary hover:underline">contact@tennismatchfinder.net</a>
+              Email : <a href="mailto:pleneuftrading@gmail.com" className="text-primary hover:underline">pleneuftrading@gmail.com</a>
             </p>
           </div>
         </section>
@@ -32,7 +32,7 @@ export default function MentionsLegalesPage() {
             Le directeur de la publication est le représentant légal de TennisMatchFinder.
           </p>
           <p className="text-muted-foreground mt-2">
-            Contact : <a href="mailto:contact@tennismatchfinder.net" className="text-primary hover:underline">contact@tennismatchfinder.net</a>
+            Contact : <a href="mailto:pleneuftrading@gmail.com" className="text-primary hover:underline">pleneuftrading@gmail.com</a>
           </p>
         </section>
 
@@ -137,7 +137,7 @@ export default function MentionsLegalesPage() {
             Pour toute question concernant ces mentions légales, vous pouvez nous contacter :
           </p>
           <ul className="list-disc pl-6 text-muted-foreground space-y-1 mt-2">
-            <li>Par email : <a href="mailto:contact@tennismatchfinder.net" className="text-primary hover:underline">contact@tennismatchfinder.net</a></li>
+            <li>Par email : <a href="mailto:pleneuftrading@gmail.com" className="text-primary hover:underline">pleneuftrading@gmail.com</a></li>
           </ul>
         </section>
       </div>

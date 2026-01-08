@@ -13,6 +13,7 @@ import {
   Target,
   Swords,
   Crown,
+  Euro,
 } from 'lucide-react';
 import Link from 'next/link';
 import type { Tournament } from '@/lib/tournaments/types';
@@ -87,15 +88,28 @@ export function TournamentCard({ tournament, participantCount = 0, isRegistered,
           <p className="text-sm text-muted-foreground line-clamp-2">{tournament.description}</p>
         )}
 
-        {/* ELO Range */}
-        {(tournament.eloRangeMin || tournament.eloRangeMax) && (
-          <div className="flex items-center gap-2 text-sm">
-            <Target className="h-4 w-4 text-muted-foreground" />
-            <span className="text-muted-foreground">
+        {/* Prix et ELO Range */}
+        <div className="flex flex-wrap items-center gap-3 text-sm">
+          {/* Prix */}
+          {tournament.entryFee > 0 ? (
+            <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 font-medium">
+              <Euro className="h-3 w-3" />
+              {(tournament.entryFee / 100).toFixed(0)} EUR
+            </div>
+          ) : (
+            <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-muted-foreground">
+              Gratuit
+            </div>
+          )}
+          
+          {/* ELO Range */}
+          {(tournament.eloRangeMin || tournament.eloRangeMax) && (
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <Target className="h-3 w-3" />
               ELO: {tournament.eloRangeMin || '∞'} - {tournament.eloRangeMax || '∞'}
-            </span>
-          </div>
-        )}
+            </div>
+          )}
+        </div>
 
         {/* Dates */}
         <div className="grid grid-cols-2 gap-3 text-sm">
@@ -171,7 +185,9 @@ export function TournamentCard({ tournament, participantCount = 0, isRegistered,
           {registrationOpen && !isRegistered && (
             <Button variant="outline" asChild>
               <Link href={`/tournaments/${tournament.id}?register=true`}>
-                S'inscrire
+                {tournament.entryFee > 0 
+                  ? `S'inscrire (${(tournament.entryFee / 100).toFixed(0)}€)` 
+                  : "S'inscrire"}
               </Link>
             </Button>
           )}

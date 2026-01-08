@@ -868,6 +868,11 @@ export const tournaments = pgTable(
     setsToWin: integer('sets_to_win').default(2).notNull(), // Best of 3 = 2, Best of 5 = 3
     finalSetsToWin: integer('final_sets_to_win').default(2).notNull(), // Pour la finale
     thirdPlaceMatch: boolean('third_place_match').default(false).notNull(), // Petite finale
+    // Paiement
+    entryFee: integer('entry_fee').default(0).notNull(), // Frais d'inscription en centimes (0 = gratuit)
+    currency: varchar('currency', { length: 3 }).default('EUR').notNull(),
+    stripeProductId: varchar('stripe_product_id', { length: 255 }),
+    stripePriceId: varchar('stripe_price_id', { length: 255 }),
     // Status
     status: tournamentStatusEnum('status').default('draft').notNull(),
     currentRound: integer('current_round').default(0).notNull(),
@@ -908,6 +913,12 @@ export const tournamentParticipants = pgTable(
     // Status
     isActive: boolean('is_active').default(true).notNull(),
     withdrawReason: text('withdraw_reason'),
+    // Paiement
+    paymentStatus: varchar('payment_status', { length: 20 }).default('pending').notNull(), // 'pending', 'paid', 'refunded', 'free'
+    stripePaymentIntentId: varchar('stripe_payment_intent_id', { length: 255 }),
+    stripeSessionId: varchar('stripe_session_id', { length: 255 }),
+    paidAt: timestamp('paid_at', { mode: 'date' }),
+    paidAmount: integer('paid_amount'), // Montant payé en centimes
     // Timestamps
     registeredAt: timestamp('registered_at', { mode: 'date' }).defaultNow().notNull(),
   },
@@ -916,6 +927,7 @@ export const tournamentParticipants = pgTable(
     playerIdIdx: index('tournament_participants_player_id_idx').on(table.playerId),
     seedIdx: index('tournament_participants_seed_idx').on(table.seed),
     uniqueParticipant: index('tournament_participants_unique_idx').on(table.tournamentId, table.playerId),
+    paymentStatusIdx: index('tournament_participants_payment_status_idx').on(table.paymentStatus),
   })
 );
 

@@ -52,8 +52,11 @@ export default function TournamentDetailPage({ params }: { params: Promise<PageP
   const router = useRouter();
   const searchParams = useSearchParams();
   const showRegister = searchParams.get('register') === 'true';
+  const paymentSuccess = searchParams.get('payment') === 'success';
+  const paymentCancelled = searchParams.get('payment') === 'cancelled';
 
   const [tournament, setTournament] = useState<Tournament | null>(null);
+  const [showPaymentSuccess, setShowPaymentSuccess] = useState(paymentSuccess);
   const [bracket, setBracket] = useState<BracketType | null>(null);
   const [participants, setParticipants] = useState<TournamentParticipant[]>([]);
   const [isRegistered, setIsRegistered] = useState(false);
@@ -99,6 +102,26 @@ export default function TournamentDetailPage({ params }: { params: Promise<PageP
 
     try {
       setRegistering(true);
+      
+      // Si tournoi payant, rediriger vers Stripe Checkout
+      if (tournament.entryFee > 0) {
+        const checkoutRes = await fetch(`/api/tournaments/${tournament.id}/checkout`, {
+          method: 'POST',
+        });
+
+        if (!checkoutRes.ok) {
+          const data = await checkoutRes.json();
+          throw new Error(data.error || 'Erreur lors de la création du paiement');
+        }
+
+        const { checkoutUrl } = await checkoutRes.json();
+        
+        // Rediriger vers Stripe Checkout
+        window.location.href = checkoutUrl;
+        return;
+      }
+      
+      // Tournoi gratuit : inscription directe
       const res = await fetch(`/api/tournaments/${tournament.id}/register`, {
         method: 'POST',
       });
@@ -197,6 +220,26 @@ export default function TournamentDetailPage({ params }: { params: Promise<PageP
         </Link>
       </Button>
 
+      {/* Payment Success Alert */}
+      {showPaymentSuccess && (
+        <Alert className="mb-4 border-green-200 bg-green-50 dark:bg-green-950/30">
+          <CheckCircle className="h-4 w-4 text-green-600" />
+          <AlertDescription className="text-green-800 dark:text-green-200">
+            <strong>Paiement reussi !</strong> Votre inscription au tournoi est confirmee.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Payment Cancelled Alert */}
+      {paymentCancelled && (
+        <Alert className="mb-4 border-amber-200 bg-amber-50 dark:bg-amber-950/30">
+          <AlertCircle className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="text-amber-800 dark:text-amber-200">
+            Le paiement a ete annule. Vous pouvez reessayer en cliquant sur "S'inscrire".
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
         <div>
@@ -286,12 +329,14 @@ export default function TournamentDetailPage({ params }: { params: Promise<PageP
               {registering ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Inscription...
+                  {tournament.entryFee > 0 ? 'Redirection...' : 'Inscription...'}
                 </>
               ) : (
                 <>
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  S'inscrire
+                  {tournament.entryFee > 0 
+                    ? `S'inscrire (${(tournament.entryFee / 100).toFixed(0)}€)` 
+                    : "S'inscrire"}
                 </>
               )}
             </Button>

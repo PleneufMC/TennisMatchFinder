@@ -231,7 +231,7 @@ function PricingPageContent() {
               d&apos;une offre exclusive en remerciement de leur confiance.
             </p>
             <p className="text-sm text-muted-foreground">
-              Une question ? <a href="mailto:contact@tennismatchfinder.net" className="text-primary hover:underline">contact@tennismatchfinder.net</a>
+              Une question ? <a href="mailto:pleneuftrading@gmail.com" className="text-primary hover:underline">pleneuftrading@gmail.com</a>
             </p>
           </div>
         </div>
@@ -398,8 +398,8 @@ function PricingPageContent() {
         <div className="mt-16 text-center">
           <p className="text-muted-foreground mb-4">
             Une question ? Contactez-nous à{' '}
-            <a href="mailto:contact@tennismatchfinder.net" className="text-primary hover:underline">
-              contact@tennismatchfinder.net
+            <a href="mailto:pleneuftrading@gmail.com" className="text-primary hover:underline">
+              pleneuftrading@gmail.com
             </a>
           </p>
           <Button variant="outline" asChild>

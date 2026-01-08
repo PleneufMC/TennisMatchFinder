@@ -87,6 +87,8 @@ export function CreateTournamentDialog({ clubId, onSuccess }: CreateTournamentDi
   const [eloRangeEnabled, setEloRangeEnabled] = useState(false);
   const [eloRangeMin, setEloRangeMin] = useState(1000);
   const [eloRangeMax, setEloRangeMax] = useState(1600);
+  const [isPaid, setIsPaid] = useState(false);
+  const [entryFee, setEntryFee] = useState(15); // Prix en euros
 
   const resetForm = () => {
     const now = new Date();
@@ -106,6 +108,8 @@ export function CreateTournamentDialog({ clubId, onSuccess }: CreateTournamentDi
     setEloRangeEnabled(false);
     setEloRangeMin(1000);
     setEloRangeMax(1600);
+    setIsPaid(false);
+    setEntryFee(15);
     setError(null);
   };
 
@@ -157,6 +161,8 @@ export function CreateTournamentDialog({ clubId, onSuccess }: CreateTournamentDi
           thirdPlaceMatch,
           eloRangeMin: eloRangeEnabled ? eloRangeMin : null,
           eloRangeMax: eloRangeEnabled ? eloRangeMax : null,
+          entryFee: isPaid ? entryFee * 100 : 0, // Convertir en centimes
+          currency: 'EUR',
         }),
       });
 
@@ -402,6 +408,43 @@ export function CreateTournamentDialog({ clubId, onSuccess }: CreateTournamentDi
                     min={0}
                     max={3000}
                   />
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="isPaid">Inscription payante</Label>
+                <p className="text-sm text-muted-foreground">
+                  Les joueurs devront payer pour s'inscrire
+                </p>
+              </div>
+              <Switch
+                id="isPaid"
+                checked={isPaid}
+                onCheckedChange={setIsPaid}
+              />
+            </div>
+
+            {isPaid && (
+              <div className="pl-4 border-l-2 border-green-200">
+                <div className="space-y-2">
+                  <Label htmlFor="entryFee">Frais d'inscription (EUR)</Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="entryFee"
+                      type="number"
+                      value={entryFee}
+                      onChange={(e) => setEntryFee(parseInt(e.target.value) || 0)}
+                      min={1}
+                      max={500}
+                      className="w-24"
+                    />
+                    <span className="text-muted-foreground">EUR</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Le paiement sera effectue via Stripe lors de l'inscription
+                  </p>
                 </div>
               </div>
             )}

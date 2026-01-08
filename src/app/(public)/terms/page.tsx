@@ -185,7 +185,7 @@ export default function TermsPage() {
             Pour toute question relative aux présentes CGU, vous pouvez nous contacter :
           </p>
           <ul className="list-disc pl-6 text-muted-foreground space-y-1 mt-2">
-            <li>Par email : <a href="mailto:contact@tennismatchfinder.net" className="text-primary hover:underline">contact@tennismatchfinder.net</a></li>
+            <li>Par email : <a href="mailto:pleneuftrading@gmail.com" className="text-primary hover:underline">pleneuftrading@gmail.com</a></li>
           </ul>
         </section>
       </div>
