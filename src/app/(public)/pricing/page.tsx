@@ -13,6 +13,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 
 // Mode Early Bird actif
 const EARLY_BIRD_MODE = true;
+const EARLY_BIRD_END_DATE = new Date('2026-06-30T23:59:59');
 
 const plans = [
   {
@@ -129,6 +130,16 @@ export default function PricingPage() {
     }
   };
 
+  // Calcul du temps restant
+  const now = new Date();
+  const timeLeft = EARLY_BIRD_END_DATE.getTime() - now.getTime();
+  const daysLeft = Math.max(0, Math.ceil(timeLeft / (1000 * 60 * 60 * 24)));
+  const endDateFormatted = EARLY_BIRD_END_DATE.toLocaleDateString('fr-FR', { 
+    day: 'numeric', 
+    month: 'long', 
+    year: 'numeric' 
+  });
+
   // Affichage Early Bird
   if (EARLY_BIRD_MODE) {
     return (
@@ -151,6 +162,16 @@ export default function PricingPage() {
               <strong className="text-foreground"> toutes les fonctionnalités Pro sans limite</strong>, 
               sans carte bancaire requise.
             </p>
+
+            {/* Countdown */}
+            <div className="inline-flex items-center gap-3 bg-red-500/10 border border-red-500/30 rounded-lg px-6 py-3 mb-8">
+              <div className="text-red-600 dark:text-red-400 font-bold text-lg">
+                ⏰ Offre valable jusqu&apos;au {endDateFormatted}
+              </div>
+              <div className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                {daysLeft} jours restants
+              </div>
+            </div>
           </div>
 
           {/* Single Card - Everything Free */}

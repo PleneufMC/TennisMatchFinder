@@ -1,48 +1,92 @@
 import Link from 'next/link';
-import { ArrowRight, Trophy, Users, TrendingUp, MessageSquare, Zap, Shield } from 'lucide-react';
+import Image from 'next/image';
+import { ArrowRight, Trophy, Users, TrendingUp, MessageSquare, Zap, Shield, Clock, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
+// Configuration Early Bird
+const EARLY_BIRD_END_DATE = new Date('2026-06-30T23:59:59');
+
+function EarlyBirdCountdown() {
+  const now = new Date();
+  const timeLeft = EARLY_BIRD_END_DATE.getTime() - now.getTime();
+  const daysLeft = Math.max(0, Math.ceil(timeLeft / (1000 * 60 * 60 * 24)));
+  
+  return (
+    <div className="flex flex-col sm:flex-row items-center gap-3 justify-center mb-6">
+      {/* Badge principale */}
+      <div className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full px-5 py-2.5 shadow-lg shadow-amber-500/30">
+        <Gift className="h-5 w-5" />
+        <span className="font-bold">Offre Early Bird</span>
+      </div>
+      
+      {/* Compte à rebours */}
+      <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur border border-white/20 rounded-full px-4 py-2">
+        <Clock className="h-4 w-4 text-amber-300" />
+        <span className="text-white font-medium">
+          Gratuit jusqu&apos;au <span className="text-amber-300 font-bold">30 juin 2026</span>
+        </span>
+        <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+          {daysLeft}j
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function HomePage() {
   return (
     <>
-      {/* Hero Section */}
-      <section className="relative overflow-hidden py-20 md:py-32">
-        {/* Décoration background */}
-        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-primary/5 to-transparent" />
-        <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-tennis-green/10 blur-3xl" />
+      {/* Hero Section with Clay Court Background */}
+      <section className="relative overflow-hidden py-20 md:py-32 min-h-[90vh] flex items-center">
+        {/* Background Image */}
+        <div className="absolute inset-0 -z-20">
+          <Image
+            src="/images/clay-court-bg.jpg"
+            alt="Court de tennis terre battue"
+            fill
+            className="object-cover object-center"
+            priority
+            quality={90}
+          />
+        </div>
+        
+        {/* Overlay gradient for readability */}
+        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/70 via-black/50 to-black/80" />
+        
+        {/* Decorative blur effects */}
+        <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-primary/20 blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-orange-500/20 blur-3xl" />
 
-        <div className="container px-4 text-center">
-          <Badge variant="secondary" className="mb-4">
-            🎾 Nouveau : Système ELO innovant
-          </Badge>
+        <div className="container px-4 text-center relative z-10">
+          {/* Early Bird Countdown - bien visible */}
+          <EarlyBirdCountdown />
 
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
+          <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 text-white drop-shadow-lg">
             Trouvez votre prochain
-            <span className="text-gradient"> adversaire de tennis</span>
+            <span className="text-amber-400"> adversaire de tennis</span>
           </h1>
 
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
+          <p className="text-xl text-gray-200 max-w-2xl mx-auto mb-8 drop-shadow">
             TennisMatchFinder connecte les joueurs de tennis de votre club avec un système
             de classement ELO qui récompense la diversité des rencontres.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" asChild>
+            <Button size="lg" className="bg-amber-500 hover:bg-amber-600 text-white shadow-lg" asChild>
               <Link href="/register">
-                Commencer gratuitement
+                Rejoindre gratuitement
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </Button>
-            <Button size="lg" variant="outline" asChild>
+            <Button size="lg" variant="outline" className="bg-white/10 backdrop-blur border-white/30 text-white hover:bg-white/20" asChild>
               <Link href="/join/mccc">Rejoindre le club MCCC</Link>
             </Button>
           </div>
 
-          <p className="text-sm text-muted-foreground mt-4">
-            Inscription gratuite • Fonctionnalités premium disponibles
+          <p className="text-sm text-gray-300 mt-4">
+            Aucune carte bancaire requise • Toutes les fonctionnalités incluses
           </p>
         </div>
       </section>
