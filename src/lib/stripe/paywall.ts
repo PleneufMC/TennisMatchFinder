@@ -54,6 +54,11 @@ export function tierHasAccess(tier: SubscriptionTier, feature: PremiumFeature): 
 
 // Check if user has access to a feature
 export async function userHasAccess(userId: string, feature: PremiumFeature): Promise<boolean> {
+  // 🎁 EARLY BIRD MODE: Tout le monde a accès à tout
+  if (process.env.EARLY_BIRD_MODE === 'true') {
+    return true;
+  }
+  
   const tier = await getUserTier(userId);
   return tierHasAccess(tier, feature);
 }

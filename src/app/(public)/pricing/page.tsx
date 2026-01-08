@@ -3,13 +3,16 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Check, X, Sparkles, Crown, Zap } from 'lucide-react';
+import { Check, X, Sparkles, Crown, Zap, Gift, PartyPopper } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+
+// Mode Early Bird actif
+const EARLY_BIRD_MODE = true;
 
 const plans = [
   {
@@ -125,6 +128,95 @@ export default function PricingPage() {
       setLoading(null);
     }
   };
+
+  // Affichage Early Bird
+  if (EARLY_BIRD_MODE) {
+    return (
+      <div className="py-12 md:py-20">
+        <div className="container px-4 max-w-4xl mx-auto">
+          {/* Early Bird Banner */}
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-full px-6 py-2 mb-6">
+              <PartyPopper className="h-5 w-5 text-amber-500" />
+              <span className="font-semibold text-amber-700 dark:text-amber-400">Offre de lancement</span>
+              <Gift className="h-5 w-5 text-amber-500" />
+            </div>
+            
+            <h1 className="text-3xl md:text-5xl font-bold mb-6">
+              Accès <span className="text-gradient">100% gratuit</span> pour les premiers membres
+            </h1>
+            
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
+              Rejoignez TennisMatchFinder pendant notre phase de lancement et profitez de 
+              <strong className="text-foreground"> toutes les fonctionnalités Pro sans limite</strong>, 
+              sans carte bancaire requise.
+            </p>
+          </div>
+
+          {/* Single Card - Everything Free */}
+          <Card className="border-2 border-amber-500/50 shadow-xl shadow-amber-500/10 max-w-xl mx-auto">
+            <CardHeader className="text-center pb-2">
+              <div className="h-16 w-16 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center mx-auto mb-4">
+                <Crown className="h-8 w-8 text-white" />
+              </div>
+              <Badge className="bg-amber-500 hover:bg-amber-600 mb-2 mx-auto">Early Bird</Badge>
+              <CardTitle className="text-2xl">Accès Pro Complet</CardTitle>
+              <CardDescription>Toutes les fonctionnalités, aucune restriction</CardDescription>
+            </CardHeader>
+            
+            <CardContent>
+              <div className="text-center mb-6">
+                <span className="text-5xl font-bold">Gratuit</span>
+                <p className="text-muted-foreground mt-2">Pendant la phase de lancement</p>
+              </div>
+
+              <div className="grid gap-3">
+                {[
+                  'Suggestions d\'adversaires illimitées',
+                  'Statistiques avancées et analytics',
+                  'Forum complet (lecture & écriture)',
+                  'Chat illimité',
+                  'Classement avec filtres avancés',
+                  'Explication ELO détaillée',
+                  'Tournois & Box Leagues (bientôt)',
+                  'Badge "Early Bird" exclusif',
+                ].map((feature) => (
+                  <div key={feature} className="flex items-center gap-3">
+                    <div className="h-5 w-5 rounded-full bg-green-500/20 flex items-center justify-center">
+                      <Check className="h-3 w-3 text-green-600" />
+                    </div>
+                    <span>{feature}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+            
+            <CardFooter className="flex-col gap-4">
+              <Button size="lg" className="w-full text-lg py-6" asChild>
+                <Link href="/register">
+                  Rejoindre gratuitement
+                </Link>
+              </Button>
+              <p className="text-sm text-muted-foreground text-center">
+                Aucune carte bancaire requise • Accès immédiat
+              </p>
+            </CardFooter>
+          </Card>
+
+          {/* Future pricing info */}
+          <div className="mt-12 text-center">
+            <p className="text-muted-foreground mb-4">
+              Les tarifs seront annoncés ultérieurement. Les early birds bénéficieront 
+              d&apos;une offre exclusive en remerciement de leur confiance.
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Une question ? <a href="mailto:contact@tennismatchfinder.net" className="text-primary hover:underline">contact@tennismatchfinder.net</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="py-12 md:py-20">

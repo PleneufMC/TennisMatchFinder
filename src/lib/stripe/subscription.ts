@@ -51,6 +51,12 @@ export async function getUserSubscription(userId: string) {
 
 // Get user's subscription tier (defaults to 'free')
 export async function getUserTier(userId: string): Promise<SubscriptionTier> {
+  // 🎁 EARLY BIRD MODE: Tout le monde a accès Pro gratuitement pendant la phase de lancement
+  // TODO: Désactiver cette ligne quand on active le paywall
+  if (process.env.EARLY_BIRD_MODE === 'true') {
+    return 'pro';
+  }
+  
   const sub = await getUserSubscription(userId);
   if (!sub) return 'free';
   
