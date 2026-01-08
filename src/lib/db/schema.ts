@@ -556,6 +556,83 @@ export const chatMessages = pgTable(
 );
 
 // ============================================
+// SUBSCRIPTION & STRIPE TABLES
+// ============================================
+
+export const subscriptionStatusEnum = pgEnum('subscription_status', [
+  'active',
+  'canceled',
+  'incomplete',
+  'incomplete_expired',
+  'past_due',
+  'trialing',
+  'unpaid',
+]);
+
+export const subscriptionTierEnum = pgEnum('subscription_tier', [
+  'free',
+  'premium',
+  'pro',
+]);
+
+// Subscriptions
+export const subscriptions = pgTable(
+  'subscriptions',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    stripeCustomerId: varchar('stripe_customer_id', { length: 255 }).notNull(),
+    stripeSubscriptionId: varchar('stripe_subscription_id', { length: 255 }),
+    stripePriceId: varchar('stripe_price_id', { length: 255 }),
+    tier: subscriptionTierEnum('tier').default('free').notNull(),
+    status: subscriptionStatusEnum('status').default('active').notNull(),
+    currentPeriodStart: timestamp('current_period_start', { mode: 'date' }),
+    currentPeriodEnd: timestamp('current_period_end', { mode: 'date' }),
+    cancelAtPeriodEnd: boolean('cancel_at_period_end').default(false).notNull(),
+    canceledAt: timestamp('canceled_at', { mode: 'date' }),
+    trialStart: timestamp('trial_start', { mode: 'date' }),
+    trialEnd: timestamp('trial_end', { mode: 'date' }),
+    metadata: jsonb('metadata').default({}).notNull(),
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdIdx: index('subscriptions_user_id_idx').on(table.userId),
+    stripeCustomerIdIdx: index('subscriptions_stripe_customer_id_idx').on(table.stripeCustomerId),
+    stripeSubscriptionIdIdx: index('subscriptions_stripe_subscription_id_idx').on(table.stripeSubscriptionId),
+    statusIdx: index('subscriptions_status_idx').on(table.status),
+  })
+);
+
+// Payment History
+export const payments = pgTable(
+  'payments',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    subscriptionId: uuid('subscription_id').references(() => subscriptions.id, { onDelete: 'set null' }),
+    stripePaymentIntentId: varchar('stripe_payment_intent_id', { length: 255 }),
+    stripeInvoiceId: varchar('stripe_invoice_id', { length: 255 }),
+    amount: integer('amount').notNull(), // in cents
+    currency: varchar('currency', { length: 3 }).default('eur').notNull(),
+    status: varchar('status', { length: 50 }).notNull(), // 'succeeded', 'pending', 'failed'
+    description: text('description'),
+    metadata: jsonb('metadata').default({}).notNull(),
+    paidAt: timestamp('paid_at', { mode: 'date' }),
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdIdx: index('payments_user_id_idx').on(table.userId),
+    stripePaymentIntentIdIdx: index('payments_stripe_payment_intent_id_idx').on(table.stripePaymentIntentId),
+    statusIdx: index('payments_status_idx').on(table.status),
+  })
+);
+
+// ============================================
 // RELATIONS
 // ============================================
 
@@ -566,6 +643,27 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   }),
   accounts: many(accounts),
   sessions: many(sessions),
+  subscriptions: many(subscriptions),
+  payments: many(payments),
+}));
+
+export const subscriptionsRelations = relations(subscriptions, ({ one, many }) => ({
+  user: one(users, {
+    fields: [subscriptions.userId],
+    references: [users.id],
+  }),
+  payments: many(payments),
+}));
+
+export const paymentsRelations = relations(payments, ({ one }) => ({
+  user: one(users, {
+    fields: [payments.userId],
+    references: [users.id],
+  }),
+  subscription: one(subscriptions, {
+    fields: [payments.subscriptionId],
+    references: [subscriptions.id],
+  }),
 }));
 
 export const clubsRelations = relations(clubs, ({ many }) => ({
@@ -764,3 +862,12 @@ export type NewClubJoinRequest = typeof clubJoinRequests.$inferInsert;
 
 export type ClubCreationRequest = typeof clubCreationRequests.$inferSelect;
 export type NewClubCreationRequest = typeof clubCreationRequests.$inferInsert;
+
+export type Subscription = typeof subscriptions.$inferSelect;
+export type NewSubscription = typeof subscriptions.$inferInsert;
+
+export type Payment = typeof payments.$inferSelect;
+export type NewPayment = typeof payments.$inferInsert;
+
+export type SubscriptionTier = 'free' | 'premium' | 'pro';
+export type SubscriptionStatus = 'active' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'past_due' | 'trialing' | 'unpaid';
