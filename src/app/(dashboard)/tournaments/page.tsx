@@ -14,22 +14,28 @@ import {
   Clock,
   Filter,
   Crown,
+  AlertCircle,
 } from 'lucide-react';
 import { TournamentCard, CreateTournamentDialog } from '@/components/tournaments';
 import { usePlayer } from '@/hooks/use-player';
 import type { Tournament } from '@/lib/tournaments/types';
 
 export default function TournamentsPage() {
-  const { player } = usePlayer();
+  const { player, isLoading: playerLoading } = usePlayer();
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [myTournaments, setMyTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('all');
 
   useEffect(() => {
     async function fetchTournaments() {
+      // Attendre que le player soit chargé
+      if (playerLoading) return;
+      
       try {
         setLoading(true);
+        setError(null);
         
         const [allRes, myRes] = await Promise.all([
           fetch('/api/tournaments'),
@@ -39,21 +45,27 @@ export default function TournamentsPage() {
         if (allRes.ok) {
           const data = await allRes.json();
           setTournaments(data.tournaments || []);
+        } else if (allRes.status === 401) {
+          setError('Session expirée. Veuillez vous reconnecter.');
+        } else {
+          const errData = await allRes.json().catch(() => ({}));
+          setError(errData.error || 'Erreur lors du chargement des tournois');
         }
 
         if (myRes.ok) {
           const data = await myRes.json();
           setMyTournaments(data.tournaments || []);
         }
-      } catch (error) {
-        console.error('Erreur chargement tournois:', error);
+      } catch (err) {
+        console.error('Erreur chargement tournois:', err);
+        setError('Erreur de connexion au serveur');
       } finally {
         setLoading(false);
       }
     }
 
     fetchTournaments();
-  }, []);
+  }, [playerLoading]);
 
   // Filtrer les tournois par statut
   const registrationTournaments = tournaments.filter(t => t.status === 'registration');
@@ -73,7 +85,7 @@ export default function TournamentsPage() {
     }).finally(() => setLoading(false));
   };
 
-  if (loading) {
+  if (loading || playerLoading) {
     return (
       <div className="container mx-auto py-6 px-4 max-w-6xl space-y-6">
         <div className="flex items-center justify-between">
@@ -85,6 +97,22 @@ export default function TournamentsPage() {
             <Skeleton key={i} className="h-72" />
           ))}
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto py-6 px-4 max-w-6xl">
+        <Card className="border-red-200 bg-red-50 dark:bg-red-950/20">
+          <CardContent className="p-6 flex items-center gap-4">
+            <AlertCircle className="h-8 w-8 text-red-500" />
+            <div>
+              <h2 className="font-semibold text-red-700 dark:text-red-400">Erreur</h2>
+              <p className="text-red-600 dark:text-red-300">{error}</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
