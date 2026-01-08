@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { X, Trophy, Swords, Users, MessageSquare, MessageCircle, User, LayoutDashboard } from 'lucide-react';
+import { X, Trophy, Swords, Users, MessageSquare, MessageCircle, User, LayoutDashboard, Award } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
@@ -17,6 +17,7 @@ const navItems = [
   { href: '/classement', label: 'Classement', icon: Trophy },
   { href: '/matchs', label: 'Mes matchs', icon: Swords },
   { href: '/suggestions', label: 'Trouver un adversaire', icon: Users },
+  { href: '/achievements', label: 'Achievements', icon: Award },
   { href: '/chat', label: 'Messages', icon: MessageCircle },
   { href: '/forum', label: 'Forum', icon: MessageSquare },
   { href: '/profil', label: 'Mon profil', icon: User },

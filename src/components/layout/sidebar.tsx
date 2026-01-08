@@ -13,6 +13,7 @@ import {
   ChevronLeft,
   ChevronRight,
   LayoutDashboard,
+  Award,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,7 @@ const navItems: NavItem[] = [
   { href: '/classement', label: 'Classement', icon: Trophy },
   { href: '/matchs', label: 'Mes matchs', icon: Swords },
   { href: '/suggestions', label: 'Trouver un adversaire', icon: Users },
+  { href: '/achievements', label: 'Achievements', icon: Award },
   { href: '/chat', label: 'Messages', icon: MessageCircle },
   { href: '/forum', label: 'Forum', icon: MessageSquare },
   { href: '/profil', label: 'Mon profil', icon: User },
