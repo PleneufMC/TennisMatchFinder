@@ -422,7 +422,7 @@ Si le build passe avec des variables factices, il passera sur Netlify avec les v
   - Conversations privées
   - Indicateur de frappe
 
-### Phase 4 : Compétitions 🟡 (En cours)
+### Phase 4 : Compétitions ✅
 - [x] **Box Leagues mensuelles** (implémenté 8 jan 2026)
   - Schema DB : `box_leagues`, `box_league_participants`, `box_league_matches`
   - Service complet avec CRUD et round-robin
@@ -430,13 +430,59 @@ Si le build passe avec des variables factices, il passera sur Netlify avec les v
   - UI : cards, tableau classement, liste matchs
   - Système promotion/relégation
   - Intégration ELO des résultats
-- [ ] Tournois élimination directe
-- [ ] Seeding automatique ELO
-- [ ] Inscriptions tournois
+- [x] **Tournois élimination directe** (implémenté 8 jan 2026)
+  - Schema DB : `tournaments`, `tournament_participants`, `tournament_matches`
+  - Formats : single_elimination, double_elimination, consolation
+  - Seeding automatique : ELO ou aléatoire
+  - Gestion automatique des BYE
+  - Brackets visuels interactifs
+  - Match pour 3ème place optionnel
+- [x] Seeding automatique ELO
+- [ ] Inscriptions tournois payantes (Stripe)
 
 ---
 
 ## Modules et Services
+
+### Tournois (`src/lib/tournaments/`)
+
+**Types** (`types.ts`):
+- `Tournament` - Tournoi avec format et settings
+- `TournamentParticipant` - Inscription joueur avec seed
+- `TournamentMatch` - Match du bracket avec liens
+- `TournamentBracketData` - Structure du bracket pour UI
+
+**Service** (`service.ts`):
+```typescript
+// Création et gestion
+createTournament(params)       // Créer un tournoi
+getTournamentById(id)          // Récupérer un tournoi
+getTournamentsByClub(clubId)   // Lister les tournois
+updateTournamentStatus(id, status) // Changer statut
+
+// Participants
+registerParticipant(params)    // Inscrire un joueur
+getTournamentParticipants(id)  // Liste participants
+
+// Bracket
+generateBracket(tournamentId)  // Générer les matchs
+getTournamentBracket(id)       // Structure du bracket
+recordMatchResult(params)      // Enregistrer résultat + avancer gagnant
+
+// Utilitaires internes
+calculateBracketSize(count)    // Puissance de 2 supérieure
+generateSeedPositions(size)    // Positions équilibrées
+linkBracketMatches(id)         // Lier matchs entre rounds
+processByes(tournamentId)      // Faire avancer les BYE
+```
+
+**API Routes**:
+- `GET /api/tournaments` - Liste (filtres: status, format)
+- `POST /api/tournaments` - Créer (admin)
+- `GET /api/tournaments/[tournamentId]` - Détail + bracket + matchs
+- `PATCH /api/tournaments/[tournamentId]` - Update statut (admin)
+- `POST /api/tournaments/[tournamentId]/register` - Inscription joueur
+- `PATCH /api/tournaments/[tournamentId]/matches/[matchId]` - Enregistrer résultat
 
 ### Box Leagues (`src/lib/box-leagues/`)
 
@@ -534,6 +580,11 @@ finalizeLeagueStandings(leagueId) // Calcul promo/relégation
 - `box_leagues` - Compétitions mensuelles
 - `box_league_participants` - Inscriptions + stats
 - `box_league_matches` - Matchs round-robin
+
+### Tables Tournois
+- `tournaments` - Tournois (nom, format, dates, settings)
+- `tournament_participants` - Inscriptions avec seed et élimination
+- `tournament_matches` - Matchs du bracket avec liens (nextMatchId, winnerToPosition)
 
 ### Tables Communication
 - `forum_threads` - Sujets forum

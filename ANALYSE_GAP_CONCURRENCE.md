@@ -17,13 +17,13 @@
 | Gestion matchs | 8 | 6 | **75%** |
 | Communication | 9 | 8 | **89%** ⭐ |
 | Gamification | 15 | 12 | **80%** ✅ |
-| Tournois/Ligues | 8 | 4 | **50%** 🟡 |
+| Tournois/Ligues | 8 | 7 | **88%** ✅ |
 | Social/Feed | 6 | 5 | **83%** |
 | Analytics | 10 | 6 | **60%** |
 | Monétisation | 5 | 4 | **80%** ✅ |
 | Mobile/PWA | 4 | 1 | **25%** |
 
-**Score global de parité concurrentielle : 73%** (+21% depuis début janvier)
+**Score global de parité concurrentielle : 80%** (+28% depuis début janvier)
 
 ### Verdict stratégique
 
@@ -37,9 +37,9 @@ TennisMatchFinder possède un **système ELO supérieur à tous les concurrents*
 - ✅ **Rivalités** — Pages H2H dédiées
 
 **Gaps restants** :
-1. **Tournois élimination** — Format demandé, pas encore implémenté
-2. **PWA/Mobile** — Pas de service worker ni push natif
-3. **Analytics avancés** — Year in Review, filtres temporels
+1. **PWA/Mobile** — Pas de service worker ni push natif
+2. **Analytics avancés** — Year in Review, filtres temporels
+3. **Inscriptions payantes tournois** — Stripe pour frais d'inscription
 
 ---
 
@@ -109,18 +109,18 @@ TennisMatchFinder possède un **système ELO supérieur à tous les concurrents*
 - **Social** : Social Butterfly (5 adv.), Variety Player (10 adv.)
 - **Activité** : Iron Man (20/mois), Early Bird, Club Regular
 
-### 2.2 🟡 Tournois & Compétitions (50% - Box Leagues implémentées)
+### 2.2 ✅ Tournois & Compétitions (88% - IMPLÉMENTÉ)
 
 **Ce que font les concurrents :**
 
 | Feature | Playtomic | UTR | Ten'Up | TMF |
 |---------|-----------|-----|--------|-----|
-| Tournoi élimination | ✅ | ✅ | ✅ | ❌ Planifié |
-| Tournoi poules | ✅ | ✅ | ✅ | ❌ Planifié |
+| Tournoi élimination | ✅ | ✅ | ✅ | ✅ **FAIT** |
+| Tournoi poules | ✅ | ✅ | ✅ | ✅ Via Box Leagues |
 | Flex Leagues | ❌ | ✅ | ❌ | ❌ |
 | Box Leagues mensuelles | ❌ | ❌ | ❌ | ✅ **TMF unique!** |
 | Ladder permanent | Tiers | ❌ | ❌ | 🟡 Via classement |
-| Seeding automatique ELO | ✅ | ✅ | ✅ | ✅ Pour Box Leagues |
+| Seeding automatique ELO | ✅ | ✅ | ✅ | ✅ **FAIT** |
 | Inscriptions payantes | ✅ | ✅ | ✅ | ❌ Planifié |
 
 **✅ IMPLÉMENTÉ - Box Leagues (8 janvier 2026) :**
@@ -133,9 +133,17 @@ TennisMatchFinder possède un **système ELO supérieur à tous les concurrents*
 - Intégration ELO des résultats
 - UI complète : listing, détail, inscription, classement, matchs
 
+**✅ IMPLÉMENTÉ - Tournois élimination directe (8 janvier 2026) :**
+- 3 formats : single_elimination, double_elimination, consolation
+- Seeding automatique basé sur ELO ou aléatoire
+- Gestion automatique des BYE (bracket power of 2)
+- Brackets visuels interactifs
+- Match pour la 3ème place optionnel
+- Avancement automatique du gagnant
+- Intégration ELO des résultats
+- UI complète : listing, bracket visuel, inscription
+
 **À implémenter :**
-- Tournois élimination directe
-- Gestion brackets visuels
 - Inscriptions payantes via Stripe
 
 ### 2.3 ✅ Monétisation (IMPLÉMENTÉ - 80%)
@@ -297,14 +305,14 @@ Ces features existent chez les concurrents mais ne sont **pas pertinentes** pour
 | 3.4 | Chat 1-to-1 (UI manquante) | 1sem | Communication |
 | 3.5 | Filtres temporels classement | 2j | Analytics |
 
-### Phase 4 : Compétitions (Semaines 13-18) — EN COURS
+### Phase 4 : Compétitions (Semaines 13-18) — ✅ TERMINÉE
 
 | # | Feature | Effort | Impact | Statut |
 |---|---------|--------|--------|--------|
 | 4.1 | Box Leagues mensuelles | 3sem | Compétition | ✅ FAIT |
-| 4.2 | Tournois élimination directe | 2sem | Compétition | ❌ Planifié |
-| 4.3 | Seeding automatique ELO | 3j | UX | ✅ FAIT (Box Leagues) |
-| 4.4 | Inscriptions tournois | 1sem | Organisation | ❌ Planifié |
+| 4.2 | Tournois élimination directe | 2sem | Compétition | ✅ FAIT |
+| 4.3 | Seeding automatique ELO | 3j | UX | ✅ FAIT |
+| 4.4 | Inscriptions tournois payantes | 1sem | Organisation | ❌ Planifié |
 
 ### Phase 5 : Excellence (Semaines 19+)
 
@@ -391,7 +399,7 @@ Le positionnement "Strava du tennis en club privé" est atteignable en 4-5 mois 
 ---
 
 *Analyse réalisée le 8 janvier 2026*
-*Mise à jour : 8 janvier 2026 (Box Leagues implémentées)*
+*Mise à jour : 8 janvier 2026 (Tournois élimination + Box Leagues implémentés)*
 *Prochaine révision : avant lancement Phase 5*
 
 ---
@@ -399,6 +407,15 @@ Le positionnement "Strava du tennis en club privé" est atteignable en 4-5 mois 
 ## 9. Changelog des implémentations
 
 ### 8 janvier 2026
+- ✅ **Tournois élimination directe** - Brackets complets
+  - Schema DB (3 tables : tournaments, tournament_participants, tournament_matches)
+  - Service backend avec génération brackets et avancement auto
+  - 3 formats : single_elimination, double_elimination, consolation
+  - Seeding ELO ou aléatoire avec gestion BYE
+  - API Routes (6 endpoints)
+  - UI complète (listing, bracket visuel, inscription)
+  - Match 3ème place optionnel
+  
 - ✅ **Box Leagues** - Compétitions mensuelles complètes
   - Schema DB (3 tables)
   - Service backend avec round-robin
