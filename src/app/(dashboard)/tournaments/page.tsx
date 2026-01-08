@@ -15,10 +15,12 @@ import {
   Filter,
   Crown,
 } from 'lucide-react';
-import { TournamentCard } from '@/components/tournaments';
+import { TournamentCard, CreateTournamentDialog } from '@/components/tournaments';
+import { usePlayer } from '@/hooks/use-player';
 import type { Tournament } from '@/lib/tournaments/types';
 
 export default function TournamentsPage() {
+  const { player } = usePlayer();
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [myTournaments, setMyTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,6 +61,18 @@ export default function TournamentsPage() {
   const completedTournaments = tournaments.filter(t => t.status === 'completed');
   const myTournamentIds = new Set(myTournaments.map(t => t.id));
 
+  const handleTournamentCreated = () => {
+    // Recharger les donnees
+    setLoading(true);
+    Promise.all([
+      fetch('/api/tournaments').then(r => r.json()),
+      fetch('/api/tournaments?my=true').then(r => r.json()),
+    ]).then(([allData, myData]) => {
+      setTournaments(allData.tournaments || []);
+      setMyTournaments(myData.tournaments || []);
+    }).finally(() => setLoading(false));
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto py-6 px-4 max-w-6xl space-y-6">
@@ -90,6 +104,14 @@ export default function TournamentsPage() {
             Compétitions à élimination directe avec brackets automatiques
           </p>
         </div>
+        
+        {/* Bouton creer tournoi (admin seulement) */}
+        {player?.isAdmin && player?.clubId && (
+          <CreateTournamentDialog 
+            clubId={player.clubId} 
+            onSuccess={handleTournamentCreated}
+          />
+        )}
       </div>
 
       {/* Stats Overview */}
