@@ -1,8 +1,11 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
+import { Suspense } from 'react';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { SessionProvider } from '@/components/providers/session-provider';
 import { Toaster } from '@/components/ui/toast';
+import { CookieBanner } from '@/components/cookie-banner';
+import { GoogleAnalyticsWithConsent } from '@/components/google-analytics';
 import './globals.css';
 
 const inter = Inter({
@@ -88,6 +91,8 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || '';
+
   return (
     <html lang="fr" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
@@ -100,6 +105,13 @@ export default function RootLayout({
           >
             {children}
             <Toaster />
+            <CookieBanner />
+            {/* Google Analytics - conditionnel au consentement */}
+            {gaId && (
+              <Suspense fallback={null}>
+                <GoogleAnalyticsWithConsent measurementId={gaId} />
+              </Suspense>
+            )}
           </ThemeProvider>
         </SessionProvider>
       </body>

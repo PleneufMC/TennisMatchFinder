@@ -1,0 +1,156 @@
+Catégorie,Feature,Statut,Code Statut,Priorité,Détails,Localisation Code,Impact Business,Effort Estimation
+Authentification & Compte,Inscription email,Terminé,✅,Haute,Formulaire avec validation,/app/(auth)/register,Core,Fait
+Authentification & Compte,Connexion Magic Link,Terminé,✅,Haute,Passwordless via email,/lib/auth.ts,Core,Fait
+Authentification & Compte,OAuth Google,Absent,❌,Basse,Non configuré,-,Nice to have,3 jours
+Authentification & Compte,OAuth Apple,Absent,❌,Basse,Non configuré,-,Nice to have,3 jours
+Authentification & Compte,Vérification email,Terminé,✅,Haute,Via NextAuth,verificationTokens,Core,Fait
+Authentification & Compte,Déconnexion,Terminé,✅,Haute,Via NextAuth signOut,Header component,Core,Fait
+Authentification & Compte,Suppression compte,Absent,❌,Moyenne,RGPD manquant,-,Conformité légale,3 jours
+Authentification & Compte,Sessions multiples,Terminé,✅,Moyenne,DB sessions,NextAuth,UX,Fait
+Profil Joueur,Photo de profil,Terminé,✅,Haute,Upload et stockage,/api/upload/avatar,UX,Fait
+Profil Joueur,Informations personnelles,Terminé,✅,Haute,Nom - téléphone - bio,/app/(dashboard)/profil,Core,Fait
+Profil Joueur,Niveau auto-évalué,Terminé,✅,Haute,4 niveaux enum,Schema players,Matchmaking,Fait
+Profil Joueur,ELO calculé dynamique,Terminé,✅,Haute,1200 par défaut,/lib/elo/calculator.ts,Core,Fait
+Profil Joueur,Disponibilités,Terminé,✅,Haute,Jours + créneaux JSON,Schema availability,Matchmaking,Fait
+Profil Joueur,Préférences de jeu,Terminé,✅,Haute,Types + surfaces JSON,Schema preferences,Matchmaking,Fait
+Profil Joueur,Bio / Description,Terminé,✅,Moyenne,Champ texte libre,Schema bio,Social,Fait
+Profil Joueur,Historique matchs,Terminé,✅,Haute,Liste avec stats,Page profil,Core,Fait
+Profil Joueur,Badges affichés,Terminé,✅,Moyenne,15 badges définis,/lib/gamification/badges.ts,Engagement,Fait
+Profil Joueur,Badge Verified,Terminé,✅,Basse,Flag isVerified,Schema players,Trust,Fait
+Système ELO,ELO de départ,Terminé,✅,Haute,1200 configurable,/lib/elo/types.ts:23,Core,Fait
+Système ELO,Calcul après match,Terminé,✅,Haute,Formule standard ELO,/lib/elo/calculator.ts:59-73,Core,Fait
+Système ELO,Facteur K dynamique,Terminé,✅,Haute,K=40->32->24->16,/lib/elo/calculator.ts:20-41,Précision,Fait
+Système ELO,Bonus nouvel adversaire,Terminé,✅,Haute,+15%,/lib/elo/modifiers.ts:18,Diversité,Fait
+Système ELO,Malus répétition,Terminé,✅,Haute,-5%/match (min 70%),/lib/elo/modifiers.ts:21-23,Anti-farming,Fait
+Système ELO,Bonus upset,Terminé,✅,Haute,+20% si victoire vs +100 ELO,/lib/elo/modifiers.ts:26-27,Récompense,Fait
+Système ELO,Bonus diversité hebdo,Terminé,✅,Haute,+10% si 3+ adv/semaine,/lib/elo/modifiers.ts:30-32,Diversité,Fait
+Système ELO,ELO min/max,Terminé,✅,Moyenne,100 - 3000,/lib/elo/types.ts:24-25,Protection,Fait
+Système ELO,Historique progression,Terminé,✅,Haute,Table elo_history,Schema + queries,Tracking,Fait
+Système ELO,Graphique évolution,Terminé,✅,Haute,Recharts,Dashboard,UX,Fait
+Système ELO,Decay inactivité,Terminé,✅,Moyenne,-5pts/jour après 14j,/api/cron/inactivity-decay,Engagement,Fait
+Système ELO,Explication post-match,Terminé,✅,Moyenne,Modal EloBreakdown,/components/elo/,Transparence,Fait
+Système ELO,Rang textuel,Terminé,✅,Basse,Débutant -> Grand Maître,calculator.ts:237-261,UX,Fait
+Matchmaking & Recherche,Liste joueurs du club,Terminé,✅,Haute,Avec filtres,/app/(dashboard)/classement,Core,Fait
+Matchmaking & Recherche,Suggestions automatiques,Terminé,✅,Haute,Score de compatibilité,/lib/matching/suggestion-engine.ts,Core,Fait
+Matchmaking & Recherche,Score ELO proximity,Terminé,✅,Haute,Idéal 50-150 points (35%),suggestion-engine.ts:33-53,Qualité,Fait
+Matchmaking & Recherche,Score nouveauté,Terminé,✅,Haute,Jamais affronté=100% (30%),suggestion-engine.ts:59-87,Diversité,Fait
+Matchmaking & Recherche,Score disponibilités,Terminé,✅,Haute,Jours+créneaux communs (20%),suggestion-engine.ts:92-115,Praticité,Fait
+Matchmaking & Recherche,Score préférences,Terminé,✅,Haute,Types de jeu communs (15%),suggestion-engine.ts:120-139,Qualité,Fait
+Matchmaking & Recherche,Tags suggestions,Terminé,✅,Moyenne,"Nouveau défi - Même niveau - Revanche",suggestion-engine.ts:144-175,UX,Fait
+Matchmaking & Recherche,Head-to-head stats,Terminé,✅,Moyenne,V/D par adversaire,suggestion-engine.ts:180-195,Stats,Fait
+Matchmaking & Recherche,Mode Match Now,Terminé,✅,Haute,Disponibilité instantanée,/lib/match-now/service.ts,Engagement,Fait
+Matchmaking & Recherche,Rivalités (H2H page),Terminé,✅,Moyenne,Page dédiée,/app/(dashboard)/rivalite/,Social,Fait
+Propositions et gestion des matchs,Proposer match,Terminé,✅,Haute,Bouton sur profil adversaire,Composants match,Core,Fait
+Propositions et gestion des matchs,Sélection date/heure,Terminé,✅,Haute,Date picker,Formulaire proposition,UX,Fait
+Propositions et gestion des matchs,Message personnalisé,Terminé,✅,Moyenne,Champ texte,Schema message,Social,Fait
+Propositions et gestion des matchs,Liste propositions envoyées,Terminé,✅,Haute,Dans dashboard,Queries,UX,Fait
+Propositions et gestion des matchs,Liste propositions reçues,Terminé,✅,Haute,Dans dashboard,Queries,UX,Fait
+Propositions et gestion des matchs,Accepter/Refuser,Terminé,✅,Haute,API endpoints,/api/matches/,Core,Fait
+Propositions et gestion des matchs,Notification in-app,Terminé,✅,Haute,Table notifications,/api/notifications,Engagement,Fait
+Propositions et gestion des matchs,Notification email,Partiel,🔧,Haute,Infra prête mais pas activé,/lib/email/,Engagement,2 jours
+Propositions et gestion des matchs,Annulation proposition,Terminé,✅,Moyenne,Status expired,Schema,UX,Fait
+Propositions et gestion des matchs,Contre-proposition,Absent,❌,Basse,Non implémenté,-,UX avancé,1 semaine
+Propositions et gestion des matchs,Enregistrement score,Terminé,✅,Haute,Format sets tennis,/components/matches/match-form.tsx,Core,Fait
+Propositions et gestion des matchs,Validation double,Terminé,✅,Haute,2 joueurs confirment,/api/matches/[matchId]/confirm,Intégrité,Fait
+Propositions et gestion des matchs,Types de match,Terminé,✅,Haute,Simple/Double,Schema enum,Flexibilité,Fait
+Propositions et gestion des matchs,Surfaces,Terminé,✅,Moyenne,4 types,Schema enum,Info,Fait
+Propositions et gestion des matchs,Match amical (sans ELO),Absent,❌,Basse,Tous comptent pour ELO,-,Flexibilité,2 jours
+Communication,Salons de club,Terminé,✅,Haute,"Général - Recherche - Annonces",Schema chat_rooms,Community,Fait
+Communication,Messages temps réel,Terminé,✅,Haute,Pusher integration,/lib/pusher/,UX,Fait
+Communication,Messages éphémères,Terminé,✅,Moyenne,Suppression après 24h,/api/cron/cleanup-chat,Storage,Fait
+Communication,Indicateur typing,Terminé,✅,Moyenne,Via Pusher,/api/chat/typing,UX,Fait
+Communication,Unread count,Terminé,✅,Moyenne,Par salon,Queries,UX,Fait
+Communication,Chat 1-to-1,Partiel,🔧,Moyenne,Schema prêt mais UI basique,/api/chat/create,Social,1 semaine
+Communication,Blocage utilisateur,Absent,❌,Basse,Non implémenté,-,Modération,1 semaine
+Communication,Signalement message,Absent,❌,Basse,Non implémenté,-,Modération,3 jours
+Communication,Assistant IA,Prévu,📝,Basse,Webhook n8n configuré,/api/webhooks/n8n-bot,Innovation,2 semaines
+Forum / Communauté,Liste catégories,Terminé,✅,Haute,5 catégories enum,/app/(dashboard)/forum,Structure,Fait
+Forum / Communauté,Création de post,Terminé,✅,Haute,Titre + contenu,Formulaire,Core,Fait
+Forum / Communauté,Réponses,Terminé,✅,Haute,Nested replies possible,Schema parentReplyId,Engagement,Fait
+Forum / Communauté,Édition post,Partiel,🔧,Basse,Non exposé en UI,Schema updatedAt,UX,2 jours
+Forum / Communauté,Suppression post,Partiel,🔧,Basse,Admin seulement,-,Modération,1 jour
+Forum / Communauté,Épingler post,Terminé,✅,Moyenne,Flag isPinned,Schema + UI,Modération,Fait
+Forum / Communauté,Verrouiller post,Terminé,✅,Moyenne,Flag isLocked,Schema,Modération,Fait
+Forum / Communauté,View count,Terminé,✅,Basse,Compteur automatique,Schema,Stats,Fait
+Forum / Communauté,Reply count,Terminé,✅,Basse,Compteur automatique,Schema,Stats,Fait
+Forum / Communauté,Réactions emoji,Terminé,✅,Moyenne,Table dédiée,forum_reactions,Engagement,Fait
+Forum / Communauté,Recherche forum,Absent,❌,Basse,Non implémenté,-,UX avancé,3 jours
+Forum / Communauté,Posts bot,Terminé,✅,Basse,Flag isBot,Schema,Automation,Fait
+Classement & Stats,Classement global club,Terminé,✅,Haute,Trié par ELO,/app/(dashboard)/classement,Core,Fait
+Classement & Stats,Position personnelle,Terminé,✅,Haute,Mise en évidence,UI classement,UX,Fait
+Classement & Stats,Tendance,Terminé,✅,Moyenne,Calculée sur 5 matchs,/lib/elo/calculator.ts:214-232,Insight,Fait
+Classement & Stats,Stats V/D,Terminé,✅,Haute,Sur profil et dashboard,Queries,Core,Fait
+Classement & Stats,Adversaires uniques,Terminé,✅,Moyenne,Compteur,Schema uniqueOpponents,Stats,Fait
+Classement & Stats,Série victoires,Terminé,✅,Moyenne,Actuelle + record,Schema winStreak,Engagement,Fait
+Classement & Stats,Best/Lowest ELO,Terminé,✅,Moyenne,Historique personnel,Schema,Stats,Fait
+Classement & Stats,Filtres temporels,Prévu,📝,Moyenne,Premium feature définie,Paywall,Monetisation,1 semaine
+Classement & Stats,Export données,Prévu,📝,Moyenne,Premium feature définie,Paywall,RGPD + Premium,3 jours
+Gamification,Badges / Achievements,Terminé,✅,Haute,15 badges définis,/lib/gamification/badges.ts,Engagement,Fait
+Gamification,Attribution automatique,Terminé,✅,Haute,Après chaque match,/lib/gamification/badge-service.ts,Core,Fait
+Gamification,Affichage sur profil,Terminé,✅,Haute,Page Achievements,/app/(dashboard)/achievements,UX,Fait
+Gamification,Notifications déblocage,Prévu,📝,Moyenne,TODO dans le code,badge-service.ts:97-98,Engagement,2 heures
+Gamification,Streaks tracking,Terminé,✅,Moyenne,Win streak trackée,Schema + service,Engagement,Fait
+Gamification,Raretés (4 niveaux),Terminé,✅,Moyenne,common->legendary,badges.ts,Engagement,Fait
+Gamification,Early Bird badge,Terminé,✅,Basse,Avant 30/06/2026,badge-service.ts:212,Early adopters,Fait
+Gamification,Challenges hebdo,Absent,❌,Basse,Non implémenté,-,Engagement avancé,2 semaines
+Gamification,Système XP,Absent,❌,Basse,Non implémenté,-,Engagement avancé,2 semaines
+Notifications,Centre notifications in-app,Terminé,✅,Haute,Table + UI,Schema notifications,Core,Fait
+Notifications,Marquer comme lu,Terminé,✅,Haute,Flag isRead,Queries,UX,Fait
+Notifications,Notifications email,Partiel,🔧,Haute,Partiellement activé,/lib/email/,Engagement,2 jours
+Notifications,Push notifications,Absent,❌,Moyenne,Pas de PWA/SW,-,Mobile,1 semaine
+Notifications,Préférences par type,Absent,❌,Basse,Pas de settings granulaires,-,UX avancé,3 jours
+Multi-clubs,Création club,Terminé,✅,Haute,Workflow approbation email,/api/clubs/request,Core,Fait
+Multi-clubs,Rejoindre club,Terminé,✅,Haute,Via slug ou code,/app/(auth)/join/[clubSlug],Core,Fait
+Multi-clubs,ELO séparé par club,Terminé,✅,Haute,FK clubId,Schema,Core,Fait
+Multi-clubs,Forum séparé,Terminé,✅,Haute,FK clubId,Schema,Isolation,Fait
+Multi-clubs,Classement séparé,Terminé,✅,Haute,Filtré par club,Queries,Core,Fait
+Multi-clubs,Salons chat séparés,Terminé,✅,Haute,FK clubId,Schema,Isolation,Fait
+Multi-clubs,Banner/logo club,Terminé,✅,Moyenne,Champs optionnels,Schema + UI,Branding,Fait
+Multi-clubs,Changement de club,Absent,❌,Moyenne,Pas d'UI,-,Flexibilité,3 jours
+Multi-clubs,Multi-appartenance,Absent,❌,Basse,1 joueur = 1 club,Contrainte schema,Complexité,2 semaines
+Administration club,Dashboard admin,Terminé,✅,Haute,Stats + liens rapides,/app/(dashboard)/admin,Core,Fait
+Administration club,Gestion demandes adhésion,Terminé,✅,Haute,Approve/Reject,/admin/demandes,Core,Fait
+Administration club,Liste membres,Terminé,✅,Haute,Avec stats,/admin/membres,Core,Fait
+Administration club,Gestion sections chat,Terminé,✅,Moyenne,CRUD sections,/admin/sections,Admin,Fait
+Administration club,Gestion clubs (super-admin),Terminé,✅,Haute,Liste + édition,/admin/clubs,Super admin,Fait
+Administration club,Modération forum,Partiel,🔧,Moyenne,Épingler/verrouiller,Flags schema,Modération,2 jours
+Administration club,Statistiques club,Prévu,📝,Moyenne,Page existe mais basique,/admin/statistiques,Insights,1 semaine
+Administration club,Notifications membres,Prévu,📝,Moyenne,Page existe,/admin/notifications,Communication,3 jours
+Administration club,Paramètres club,Prévu,📝,Moyenne,Page existe,/admin/parametres,Config,3 jours
+Tournois - Box Leagues,Création Box League,Terminé,✅,Haute,Admin only,/api/box-leagues,Compétition,Fait
+Tournois - Box Leagues,Configuration,Terminé,✅,Haute,"Dates - ELO range - division",Schema,Flexibilité,Fait
+Tournois - Box Leagues,Inscriptions,Terminé,✅,Haute,API + UI,/api/box-leagues/[id]/register,Core,Fait
+Tournois - Box Leagues,Génération round-robin,Terminé,✅,Haute,Matchs automatiques,service.ts:generateLeagueMatches,Core,Fait
+Tournois - Box Leagues,Enregistrement résultats,Terminé,✅,Haute,Intégration ELO,service.ts:recordMatchResult,Core,Fait
+Tournois - Box Leagues,Classement temps réel,Terminé,✅,Haute,"Points - sets - games",service.ts:getLeagueStandings,UX,Fait
+Tournois - Box Leagues,Promotion/Relégation,Terminé,✅,Moyenne,Automatique fin saison,service.ts:finalizeLeagueStandings,Compétition,Fait
+Tournois - Box Leagues,UI Cards,Terminé,✅,Haute,Liste + détail,/components/box-leagues/,UX,Fait
+Tournois - Box Leagues,UI Tableau classement,Terminé,✅,Haute,StandingsTable,standings-table.tsx,UX,Fait
+Tournois - Élimination,Création tournoi,Terminé,✅,Haute,Admin only,/api/tournaments,Compétition,Fait
+Tournois - Élimination,Formats,Terminé,✅,Haute,Single/Double/Consolation,Schema enum,Flexibilité,Fait
+Tournois - Élimination,Configuration,Terminé,✅,Haute,"Dates - ELO - sets - 3ème place",Schema,Flexibilité,Fait
+Tournois - Élimination,Inscriptions,Terminé,✅,Haute,+ gestion paiement,/api/tournaments/[id]/register,Core,Fait
+Tournois - Élimination,Seeding automatique,Terminé,✅,Haute,Par ELO ou aléatoire,service.ts:generateBracket,Équité,Fait
+Tournois - Élimination,Gestion BYE,Terminé,✅,Moyenne,Automatique,service.ts:processByes,Logique,Fait
+Tournois - Élimination,Bracket génération,Terminé,✅,Haute,Positions équilibrées,service.ts:generateSeedPositions,Core,Fait
+Tournois - Élimination,Enregistrement résultats,Terminé,✅,Haute,Avancement automatique,service.ts:advanceWinner,Core,Fait
+Tournois - Élimination,Petite finale,Terminé,✅,Moyenne,Optionnel,service.ts:addToThirdPlaceMatch,Compétition,Fait
+Tournois - Élimination,Bracket UI,Terminé,✅,Haute,Visualisation interactive,/components/tournaments/,UX,Fait
+Tournois - Élimination,Paiement inscription,Partiel,🔧,Moyenne,Schema prêt - Stripe à connecter,Schema entryFee,Monetisation,3 jours
+Technique & UX,Responsive mobile,Terminé,✅,Haute,Tailwind responsive,-,Mobile,Fait
+Technique & UX,PWA / Installable,Absent,❌,Moyenne,Pas de manifest/SW,-,Mobile,1 semaine
+Technique & UX,Mode sombre,Terminé,✅,Moyenne,next-themes + dark:,-,UX,Fait
+Technique & UX,Multilingue,Absent,❌,Basse,Français uniquement,-,Expansion,2 semaines
+Technique & UX,Accessibilité,Partiel,🔧,Moyenne,shadcn/ui ARIA basique,-,Inclusivité,1 semaine
+Technique & UX,SEO,Partiel,🔧,Moyenne,Metadata OK - pas sitemap,-,Acquisition,3 jours
+Technique & UX,Analytics,Absent,❌,Moyenne,Non intégré,-,Data,2 jours
+Technique & UX,États vides,Terminé,✅,Moyenne,Messages + CTAs,-,UX,Fait
+Technique & UX,Loaders/Skeletons,Terminé,✅,Moyenne,Suspense + Skeleton,-,UX,Fait
+Technique & UX,Gestion erreurs,Terminé,✅,Haute,Boundaries + toasts,-,Stabilité,Fait
+Légal & Compliance,CGU,Terminé,✅,Haute,Page complète,/terms,Légal,Fait
+Légal & Compliance,Politique confidentialité,Terminé,✅,Haute,RGPD compliant,/privacy,Légal,Fait
+Légal & Compliance,Politique cookies,Terminé,✅,Haute,Détail par cookie,/cookies,Légal,Fait
+Légal & Compliance,Mentions légales,Terminé,✅,Haute,Page complète,/mentions-legales,Légal,Fait
+Légal & Compliance,Banner cookies,Absent,❌,Haute,Non implémenté,-,Conformité RGPD,2 jours
+Légal & Compliance,RGPD export données,Prévu,📝,Moyenne,Premium feature,Paywall,Conformité,3 jours
+Légal & Compliance,RGPD suppression compte,Absent,❌,Moyenne,Non implémenté,-,Conformité,3 jours
