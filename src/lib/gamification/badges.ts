@@ -1,7 +1,7 @@
 /**
  * Système de badges TennisMatchFinder
  * 
- * 15 badges répartis en 4 catégories :
+ * 16 badges répartis en 4 catégories :
  * - Jalons (milestones) : Progression dans l'utilisation
  * - Exploits (achievements) : Performances exceptionnelles
  * - Social : Engagement communautaire
@@ -151,7 +151,7 @@ export const BADGES: Badge[] = [
     condition: 'uniqueOpponents >= 50',
   },
 
-  // --- SPÉCIAL (2 badges) ---
+  // --- SPÉCIAL (3 badges) ---
   {
     id: 'early_bird',
     name: 'Early Bird',
@@ -169,6 +169,15 @@ export const BADGES: Badge[] = [
     category: 'special',
     rarity: 'legendary',
     condition: 'Classement #1 du club',
+  },
+  {
+    id: 'club_regular',
+    name: 'Club Regular',
+    description: 'Membre le plus actif du club sur les 90 derniers jours',
+    icon: 'Calendar',
+    category: 'special',
+    rarity: 'epic',
+    condition: 'Plus de matchs joués sur 90 jours que tout autre membre',
   },
 ];
 

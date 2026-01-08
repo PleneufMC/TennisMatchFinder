@@ -214,6 +214,9 @@ async function checkBadgeCondition(
     case 'king_of_club':
       return await checkKingOfClub(playerId);
 
+    case 'club_regular':
+      return await checkClubRegular(playerId);
+
     default:
       return false;
   }
@@ -363,6 +366,57 @@ async function checkKingOfClub(playerId: string): Promise<boolean> {
 
   // Si personne n'a un ELO supérieur, le joueur est #1
   return (result[0]?.count ?? 0) === 0;
+}
+
+/**
+ * Vérifie si le joueur est le plus actif du club sur les 90 derniers jours
+ */
+async function checkClubRegular(playerId: string): Promise<boolean> {
+  // Récupérer le club du joueur
+  const player = await db
+    .select({ clubId: players.clubId })
+    .from(players)
+    .where(eq(players.id, playerId))
+    .limit(1);
+
+  if (!player[0] || !player[0].clubId) return false;
+
+  const ninetyDaysAgo = new Date();
+  ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
+  // Compter les matchs par joueur dans le club sur les 90 derniers jours
+  const matchCounts = await db
+    .select({
+      playerId: players.id,
+      matchCount: sql<number>`count(distinct ${matches.id})`.as('matchCount'),
+    })
+    .from(players)
+    .leftJoin(
+      matches,
+      and(
+        eq(players.clubId, player[0].clubId),
+        gte(matches.playedAt, ninetyDaysAgo),
+        eq(matches.validated, true),
+        sql`(${matches.player1Id} = ${players.id} OR ${matches.player2Id} = ${players.id})`
+      )
+    )
+    .where(
+      and(
+        eq(players.clubId, player[0].clubId),
+        eq(players.isActive, true)
+      )
+    )
+    .groupBy(players.id)
+    .orderBy(sql`matchCount DESC`);
+
+  if (matchCounts.length === 0) return false;
+
+  // Trouver le joueur avec le plus de matchs
+  const topPlayer = matchCounts[0];
+  if (!topPlayer || topPlayer.matchCount === 0) return false;
+
+  // Le joueur doit être celui avec le plus de matchs et avoir au moins 10 matchs
+  return topPlayer.playerId === playerId && topPlayer.matchCount >= 10;
 }
 
 // ============================================
