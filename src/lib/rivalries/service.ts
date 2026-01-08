@@ -283,3 +283,53 @@ export async function getPlayerRivalries(
 
   return result;
 }
+
+/**
+ * Récupère les statistiques head-to-head simplifiées entre deux joueurs
+ */
+export async function getHeadToHead(
+  player1Id: string,
+  player2Id: string
+): Promise<{
+  matchCount: number;
+  wins: number;
+  losses: number;
+  lastPlayed: Date | null;
+} | null> {
+  // Récupérer tous les matchs entre les deux joueurs
+  const h2hMatches = await db
+    .select({
+      winnerId: matches.winnerId,
+      playedAt: matches.playedAt,
+    })
+    .from(matches)
+    .where(
+      and(
+        eq(matches.validated, true),
+        or(
+          and(eq(matches.player1Id, player1Id), eq(matches.player2Id, player2Id)),
+          and(eq(matches.player1Id, player2Id), eq(matches.player2Id, player1Id))
+        )
+      )
+    )
+    .orderBy(desc(matches.playedAt));
+
+  if (h2hMatches.length === 0) {
+    return {
+      matchCount: 0,
+      wins: 0,
+      losses: 0,
+      lastPlayed: null,
+    };
+  }
+
+  const wins = h2hMatches.filter((m) => m.winnerId === player1Id).length;
+  const losses = h2hMatches.filter((m) => m.winnerId === player2Id).length;
+
+  return {
+    matchCount: h2hMatches.length,
+    wins,
+    losses,
+    lastPlayed: h2hMatches[0]?.playedAt || null,
+  };
+}
