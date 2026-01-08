@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerPlayer } from '@/lib/auth-helpers';
 import { rejectJoinRequest } from '@/lib/db/queries';
+import { db } from '@/lib/db';
+import { users, clubs, clubJoinRequests } from '@/lib/db/schema';
+import { eq } from 'drizzle-orm';
+import { sendJoinRequestRejectedEmail } from '@/lib/email/send-email';
 
 export async function POST(
   request: NextRequest,
@@ -21,10 +25,45 @@ export async function POST(
     const body = await request.json().catch(() => ({}));
     const reason = body.reason || undefined;
 
+    // Récupérer les infos de la demande avant le rejet
+    const [joinRequest] = await db
+      .select({
+        userId: clubJoinRequests.userId,
+        clubId: clubJoinRequests.clubId,
+        fullName: clubJoinRequests.fullName,
+      })
+      .from(clubJoinRequests)
+      .where(eq(clubJoinRequests.id, requestId))
+      .limit(1);
+
     const result = await rejectJoinRequest(requestId, player.id, reason);
 
-    // TODO: Envoyer un email d'information au demandeur
-    // await sendRejectionEmail(result.email, result.fullName, reason);
+    // Envoyer un email d'information au demandeur
+    if (joinRequest) {
+      const [userInfo] = await db
+        .select({ email: users.email })
+        .from(users)
+        .where(eq(users.id, joinRequest.userId))
+        .limit(1);
+      
+      const [clubInfo] = await db
+        .select({ name: clubs.name })
+        .from(clubs)
+        .where(eq(clubs.id, joinRequest.clubId))
+        .limit(1);
+
+      if (userInfo?.email && clubInfo?.name) {
+        await sendJoinRequestRejectedEmail({
+          to: userInfo.email,
+          memberName: joinRequest.fullName,
+          clubName: clubInfo.name,
+          reason,
+        }).catch((err) => {
+          console.error('Failed to send rejection email:', err);
+          // Ne pas bloquer le rejet si l'email échoue
+        });
+      }
+    }
 
     return NextResponse.json({
       success: true,

@@ -420,7 +420,8 @@ export const authOptions: NextAuthOptions = {
   events: {
     async createUser({ user }) {
       console.log('New user created:', user.email);
-      // TODO: Send welcome email, create default player profile, etc.
+      // Note: L'email de bienvenue est envoyé lors de l'approbation de la demande d'adhésion
+      // car les utilisateurs sont créés dans le contexte d'un club spécifique
     },
 
     async signIn({ user, isNewUser }) {

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { users, clubJoinRequests } from '@/lib/db/schema';
+import { users, clubJoinRequests, clubs } from '@/lib/db/schema';
 import { getServerPlayer } from '@/lib/auth-helpers';
 import { eq, and } from 'drizzle-orm';
+import { sendClubInvitationEmail, sendInvitationMagicLinkEmail } from '@/lib/email/send-email';
 
 // POST: Inviter un nouveau joueur dans le club
 export async function POST(request: NextRequest) {
@@ -19,6 +20,15 @@ export async function POST(request: NextRequest) {
     if (!email || !name) {
       return NextResponse.json({ error: 'Email et nom requis' }, { status: 400 });
     }
+
+    // Récupérer le nom du club
+    const [clubInfo] = await db
+      .select({ name: clubs.name })
+      .from(clubs)
+      .where(eq(clubs.id, player.clubId))
+      .limit(1);
+    
+    const clubName = clubInfo?.name || 'le club';
 
     // Vérifier si l'email est déjà un utilisateur
     const existingUser = await db
@@ -61,7 +71,15 @@ export async function POST(request: NextRequest) {
         status: 'pending',
       });
 
-      // TODO: Envoyer un email de notification à l'utilisateur
+      // Envoyer un email de notification à l'utilisateur existant
+      await sendClubInvitationEmail({
+        to: email.toLowerCase(),
+        inviteeName: name,
+        inviterName: player.fullName,
+        clubName,
+      }).catch((err) => {
+        console.error('Failed to send invitation email:', err);
+      });
 
       return NextResponse.json({
         success: true,
@@ -96,10 +114,18 @@ export async function POST(request: NextRequest) {
       status: 'pending', // En attente que l'admin approuve
     });
 
-    // TODO: Envoyer un email magic link à l'utilisateur pour qu'il puisse:
-    // 1. Vérifier son email
-    // 2. Compléter son profil
-    // 3. Rejoindre le club
+    // Envoyer un email magic link à l'utilisateur pour qu'il puisse se connecter
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tennismatchfinder.net';
+    const magicLinkUrl = `${baseUrl}/api/auth/signin?callbackUrl=${encodeURIComponent('/dashboard')}&email=${encodeURIComponent(email.toLowerCase())}`;
+    
+    await sendInvitationMagicLinkEmail({
+      to: email.toLowerCase(),
+      inviterName: player.fullName,
+      clubName,
+      magicLinkUrl,
+    }).catch((err) => {
+      console.error('Failed to send magic link email:', err);
+    });
 
     return NextResponse.json({
       success: true,

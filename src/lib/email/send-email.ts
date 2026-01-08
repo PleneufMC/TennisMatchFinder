@@ -225,3 +225,293 @@ export async function sendClubCreationConfirmationEmail({
     html,
   });
 }
+
+// Email de bienvenue pour un nouveau membre approuvé
+export async function sendWelcomeMemberEmail({
+  to,
+  memberName,
+  clubName,
+}: {
+  to: string;
+  memberName: string;
+  clubName: string;
+}): Promise<boolean> {
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+    .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+    .welcome-box { background: #d1fae5; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0; }
+    .button { display: inline-block; padding: 15px 30px; background: #10b981; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; }
+    .feature { background: white; padding: 15px; border-radius: 8px; margin: 10px 0; display: flex; align-items: center; gap: 15px; }
+    h1 { margin: 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎾 Bienvenue dans le club !</h1>
+    </div>
+    <div class="content">
+      <p>Bonjour ${memberName},</p>
+      
+      <div class="welcome-box">
+        <h2 style="color: #059669; margin: 0;">Votre demande a été approuvée !</h2>
+        <p>Vous êtes maintenant membre de <strong>${clubName}</strong></p>
+      </div>
+
+      <p>Vous pouvez désormais :</p>
+      
+      <div class="feature">
+        <span style="font-size: 24px;">📊</span>
+        <div>
+          <strong>Consulter le classement</strong>
+          <p style="margin: 0; color: #6b7280; font-size: 14px;">Découvrez votre position ELO parmi les membres</p>
+        </div>
+      </div>
+      
+      <div class="feature">
+        <span style="font-size: 24px;">🎯</span>
+        <div>
+          <strong>Trouver des adversaires</strong>
+          <p style="margin: 0; color: #6b7280; font-size: 14px;">Utilisez les suggestions intelligentes pour jouer</p>
+        </div>
+      </div>
+      
+      <div class="feature">
+        <span style="font-size: 24px;">💬</span>
+        <div>
+          <strong>Participer aux discussions</strong>
+          <p style="margin: 0; color: #6b7280; font-size: 14px;">Rejoignez le forum et le chat du club</p>
+        </div>
+      </div>
+
+      <p style="text-align: center; margin: 30px 0;">
+        <a href="https://tennismatchfinder.net/dashboard" class="button">Accéder à mon club</a>
+      </p>
+
+      <p>À bientôt sur les courts ! 🎾</p>
+      <p>L'équipe TennisMatchFinder</p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+
+  return sendEmail({
+    to,
+    subject: `[TennisMatchFinder] 🎾 Bienvenue dans ${clubName} !`,
+    html,
+  });
+}
+
+// Email de notification de rejet de demande d'adhésion
+export async function sendJoinRequestRejectedEmail({
+  to,
+  memberName,
+  clubName,
+  reason,
+}: {
+  to: string;
+  memberName: string;
+  clubName: string;
+  reason?: string;
+}): Promise<boolean> {
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: #6b7280; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+    .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+    .info-box { background: #fef2f2; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ef4444; }
+    h1 { margin: 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Demande d'adhésion</h1>
+    </div>
+    <div class="content">
+      <p>Bonjour ${memberName},</p>
+      
+      <p>Nous avons examiné votre demande d'adhésion au club <strong>${clubName}</strong>.</p>
+
+      <div class="info-box">
+        <p><strong>Malheureusement, votre demande n'a pas pu être acceptée.</strong></p>
+        ${reason ? `<p>Raison : ${reason}</p>` : ''}
+      </div>
+
+      <p>Si vous pensez qu'il s'agit d'une erreur, n'hésitez pas à contacter l'administration du club.</p>
+
+      <p>Cordialement,<br>L'équipe TennisMatchFinder</p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+
+  return sendEmail({
+    to,
+    subject: `[TennisMatchFinder] Demande d'adhésion à ${clubName}`,
+    html,
+  });
+}
+
+// Email d'invitation à rejoindre un club (utilisateur existant)
+export async function sendClubInvitationEmail({
+  to,
+  inviteeName,
+  inviterName,
+  clubName,
+}: {
+  to: string;
+  inviteeName: string;
+  inviterName: string;
+  clubName: string;
+}): Promise<boolean> {
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+    .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+    .invite-box { background: #dbeafe; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0; border: 2px dashed #3b82f6; }
+    .button { display: inline-block; padding: 15px 30px; background: #3b82f6; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; }
+    h1 { margin: 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎾 Invitation à rejoindre un club</h1>
+    </div>
+    <div class="content">
+      <p>Bonjour ${inviteeName},</p>
+      
+      <div class="invite-box">
+        <p style="margin: 0;"><strong>${inviterName}</strong> vous invite à rejoindre</p>
+        <h2 style="color: #1d4ed8; margin: 10px 0;">${clubName}</h2>
+        <p style="margin: 0; color: #6b7280;">sur TennisMatchFinder</p>
+      </div>
+
+      <p>En acceptant cette invitation, vous pourrez :</p>
+      <ul>
+        <li>Consulter le classement ELO du club</li>
+        <li>Trouver des adversaires de votre niveau</li>
+        <li>Enregistrer vos matchs et suivre votre progression</li>
+        <li>Participer au forum et au chat du club</li>
+      </ul>
+
+      <p style="text-align: center; margin: 30px 0;">
+        <a href="https://tennismatchfinder.net/dashboard" class="button">Voir l'invitation</a>
+      </p>
+
+      <p style="color: #6b7280; font-size: 14px;">
+        Si vous n'êtes pas intéressé, vous pouvez simplement ignorer cet email.
+      </p>
+
+      <p>À bientôt sur les courts ! 🎾</p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+
+  return sendEmail({
+    to,
+    subject: `[TennisMatchFinder] ${inviterName} vous invite à rejoindre ${clubName}`,
+    html,
+  });
+}
+
+// Email magic link pour nouvel utilisateur invité
+export async function sendInvitationMagicLinkEmail({
+  to,
+  inviterName,
+  clubName,
+  magicLinkUrl,
+}: {
+  to: string;
+  inviterName: string;
+  clubName: string;
+  magicLinkUrl: string;
+}): Promise<boolean> {
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+    .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+    .invite-box { background: #d1fae5; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0; }
+    .button { display: inline-block; padding: 15px 30px; background: #10b981; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; }
+    .feature { background: white; padding: 15px; border-radius: 8px; margin: 10px 0; }
+    h1 { margin: 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎾 Vous êtes invité !</h1>
+    </div>
+    <div class="content">
+      <p>Bonjour,</p>
+      
+      <div class="invite-box">
+        <p style="margin: 0;"><strong>${inviterName}</strong> vous invite à rejoindre</p>
+        <h2 style="color: #059669; margin: 10px 0;">${clubName}</h2>
+        <p style="margin: 0; color: #6b7280;">sur TennisMatchFinder</p>
+      </div>
+
+      <p>TennisMatchFinder est une plateforme de mise en relation pour les joueurs de tennis. Vous pourrez :</p>
+      
+      <div class="feature">
+        ⭐ <strong>Trouver des adversaires</strong> de votre niveau grâce au système ELO
+      </div>
+      
+      <div class="feature">
+        📊 <strong>Suivre votre progression</strong> avec des statistiques détaillées
+      </div>
+      
+      <div class="feature">
+        💬 <strong>Rejoindre la communauté</strong> du club via le forum et le chat
+      </div>
+
+      <p style="text-align: center; margin: 30px 0;">
+        <a href="${magicLinkUrl}" class="button">Créer mon compte et rejoindre</a>
+      </p>
+
+      <p style="color: #6b7280; font-size: 14px; text-align: center;">
+        Ce lien expire dans 24 heures. Si vous n'êtes pas intéressé, vous pouvez simplement ignorer cet email.
+      </p>
+
+      <p>À bientôt sur les courts ! 🎾<br>L'équipe TennisMatchFinder</p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+
+  return sendEmail({
+    to,
+    subject: `[TennisMatchFinder] ${inviterName} vous invite à rejoindre ${clubName}`,
+    html,
+  });
+}
