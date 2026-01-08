@@ -201,6 +201,155 @@ src/
 
 ---
 
+## Erreurs de Build Netlify (Next.js 14 App Router)
+
+### 5. Route API - `export const config` dépréciée
+
+**Problème**: Dans App Router, l'ancienne syntaxe Pages Router `export const config = { api: { bodyParser: false } }` n'est plus supportée.
+
+**Erreur typique**:
+```
+Error: Page config in /src/app/api/stripe/webhook/route.ts is deprecated. 
+Replace `export const config=…` with the following:
+```
+
+**Code incorrect**:
+```typescript
+// ❌ Syntaxe Pages Router (dépréciée)
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+```
+
+**Code correct**:
+```typescript
+// ✅ App Router gère automatiquement le raw body via request.text()
+export async function POST(request: NextRequest) {
+  const body = await request.text(); // Raw body pour webhooks Stripe
+  // ...
+}
+// Aucune config nécessaire - supprimer export const config
+```
+
+### 6. Initialisation au Build - Variables d'environnement manquantes
+
+**Problème**: Les modules qui s'initialisent au top-level échouent si les variables d'environnement ne sont pas disponibles pendant le build.
+
+**Erreur typique**:
+```
+Error: Neither apiKey nor config.authenticator provided
+Error: DATABASE_URL environment variable is not set
+```
+
+**Code incorrect**:
+```typescript
+// ❌ Initialisation immédiate - échoue au build
+export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2025-12-15.clover',
+});
+```
+
+**Code correct**:
+```typescript
+// ✅ Lazy initialization - s'exécute seulement au runtime
+let stripeInstance: Stripe | null = null;
+
+export function getStripe(): Stripe {
+  if (!stripeInstance) {
+    const secretKey = process.env.STRIPE_SECRET_KEY;
+    if (!secretKey) {
+      throw new Error('STRIPE_SECRET_KEY is not configured');
+    }
+    stripeInstance = new Stripe(secretKey, {
+      apiVersion: '2025-12-15.clover',
+    });
+  }
+  return stripeInstance;
+}
+
+// Proxy pour compatibilité ascendante
+export const stripe = {
+  get customers() { return getStripe().customers; },
+  get subscriptions() { return getStripe().subscriptions; },
+  // ...
+};
+```
+
+### 7. Prérendu statique - Pages accédant à la DB
+
+**Problème**: Next.js tente de prérender les pages au build. Si une page accède à la base de données, elle échoue.
+
+**Erreur typique**:
+```
+Error occurred prerendering page "/register"
+Error: DATABASE_URL environment variable is not set
+```
+
+**Code incorrect**:
+```typescript
+// ❌ Page Server Component sans export dynamic
+export default async function RegisterPage() {
+  const clubs = await db.select().from(clubs); // Échoue au build
+  return <RegisterForm clubs={clubs} />;
+}
+```
+
+**Code correct**:
+```typescript
+// ✅ Forcer le rendu dynamique
+export const dynamic = 'force-dynamic';
+
+export default async function RegisterPage() {
+  const clubs = await db.select().from(clubs); // OK - exécuté au runtime
+  return <RegisterForm clubs={clubs} />;
+}
+```
+
+### 8. useSearchParams sans Suspense Boundary
+
+**Problème**: Dans App Router, `useSearchParams()` nécessite un wrapper `<Suspense>` pour le CSR bailout.
+
+**Erreur typique**:
+```
+⨯ useSearchParams() should be wrapped in a suspense boundary at page "/pricing"
+```
+
+**Code incorrect**:
+```typescript
+'use client';
+
+export default function PricingPage() {
+  const searchParams = useSearchParams(); // ❌ Erreur au build
+  const canceled = searchParams.get('subscription') === 'canceled';
+  // ...
+}
+```
+
+**Code correct**:
+```typescript
+'use client';
+import { Suspense } from 'react';
+
+function PricingPageContent() {
+  const searchParams = useSearchParams();
+  const canceled = searchParams.get('subscription') === 'canceled';
+  // ... contenu de la page
+}
+
+// ✅ Wrapper avec Suspense
+export default function PricingPage() {
+  return (
+    <Suspense fallback={<div>Chargement...</div>}>
+      <PricingPageContent />
+    </Suspense>
+  );
+}
+```
+
+---
+
 ## Checklist avant Commit
 
 - [ ] `npx tsc --noEmit` passe sans erreur
@@ -208,3 +357,18 @@ src/
 - [ ] Les accès `array[0]` sont vérifiés avec extraction dans une variable
 - [ ] Les noms de champs correspondent au schéma `src/lib/db/schema.ts`
 - [ ] Les regex matches vérifient les groupes capturés
+- [ ] Pas de `export const config` dans les routes API App Router
+- [ ] Services externes (Stripe, DB) utilisent lazy initialization
+- [ ] Pages Server Component avec DB access ont `export const dynamic = 'force-dynamic'`
+- [ ] Composants Client avec `useSearchParams` sont wrappés dans `<Suspense>`
+
+## Checklist avant Déploiement Netlify
+
+```bash
+# Test de build avec variables factices pour valider
+DATABASE_URL="postgresql://x:x@localhost:5432/x" \
+STRIPE_SECRET_KEY="sk_test_x" \
+npm run build
+```
+
+Si le build passe avec des variables factices, il passera sur Netlify avec les vraies variables.
