@@ -17,3 +17,13 @@ export {
   getPlanLimits,
   canUseFeature,
 } from './subscription';
+
+export {
+  PREMIUM_FEATURES,
+  tierHasAccess,
+  userHasAccess,
+  getRemainingWeeklySuggestions,
+  getUpgradePrompt,
+  paywallResponse,
+} from './paywall';
+export type { PremiumFeature } from './paywall';
