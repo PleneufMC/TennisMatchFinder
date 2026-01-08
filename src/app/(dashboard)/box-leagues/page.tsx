@@ -16,10 +16,12 @@ import {
   Clock,
   Filter,
 } from 'lucide-react';
-import { BoxLeagueCard } from '@/components/box-leagues';
+import { BoxLeagueCard, CreateBoxLeagueDialog } from '@/components/box-leagues';
+import { usePlayer } from '@/hooks/use-player';
 import type { BoxLeague } from '@/lib/box-leagues/types';
 
 export default function BoxLeaguesPage() {
+  const { player } = usePlayer();
   const [leagues, setLeagues] = useState<BoxLeague[]>([]);
   const [myLeagues, setMyLeagues] = useState<BoxLeague[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,6 +63,18 @@ export default function BoxLeaguesPage() {
   const completedLeagues = leagues.filter(l => l.status === 'completed');
   const myLeagueIds = new Set(myLeagues.map(l => l.id));
 
+  const handleLeagueCreated = () => {
+    // Recharger les donnees
+    setLoading(true);
+    Promise.all([
+      fetch('/api/box-leagues').then(r => r.json()),
+      fetch('/api/box-leagues?my=true').then(r => r.json()),
+    ]).then(([allData, myData]) => {
+      setLeagues(allData.leagues || []);
+      setMyLeagues(myData.leagues || []);
+    }).finally(() => setLoading(false));
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto py-6 px-4 max-w-6xl space-y-6">
@@ -92,6 +106,14 @@ export default function BoxLeaguesPage() {
             Compétitions mensuelles par niveau avec promotion et relégation
           </p>
         </div>
+        
+        {/* Bouton creer Box League (admin seulement) */}
+        {player?.isAdmin && player?.clubId && (
+          <CreateBoxLeagueDialog 
+            clubId={player.clubId} 
+            onSuccess={handleLeagueCreated}
+          />
+        )}
       </div>
 
       {/* Stats Overview */}
