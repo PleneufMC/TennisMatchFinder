@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Check, X, Sparkles, Crown, Zap, Gift, PartyPopper } from 'lucide-react';
@@ -88,7 +88,7 @@ const plans = [
   },
 ];
 
-export default function PricingPage() {
+function PricingPageContent() {
   const searchParams = useSearchParams();
   const [isYearly, setIsYearly] = useState(true);
   const [loading, setLoading] = useState<string | null>(null);
@@ -408,5 +408,20 @@ export default function PricingPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Wrapper with Suspense for useSearchParams
+export default function PricingPage() {
+  return (
+    <Suspense fallback={
+      <div className="py-12 md:py-20">
+        <div className="container px-4 flex items-center justify-center min-h-[400px]">
+          <div className="animate-pulse text-muted-foreground">Chargement...</div>
+        </div>
+      </div>
+    }>
+      <PricingPageContent />
+    </Suspense>
   );
 }

@@ -154,9 +154,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Disable body parsing for webhooks (Stripe needs raw body)
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+// Note: In App Router, body parsing is handled differently.
+// We use request.text() to get the raw body for Stripe signature verification.
+// No additional config is needed - the runtime handles this automatically.

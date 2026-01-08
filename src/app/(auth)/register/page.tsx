@@ -5,6 +5,9 @@ import { db } from '@/lib/db';
 import { clubs } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
+// Force dynamic rendering to avoid build-time database access
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Inscription',
   description: 'Créez votre compte TennisMatchFinder et rejoignez la communauté',
