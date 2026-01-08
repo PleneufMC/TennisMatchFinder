@@ -823,6 +823,147 @@ export const boxLeagueMatches = pgTable(
 );
 
 // ============================================
+// TOURNAMENTS (Tournois à élimination directe)
+// ============================================
+
+export const tournamentStatusEnum = pgEnum('tournament_status', [
+  'draft',        // En préparation
+  'registration', // Inscriptions ouvertes
+  'seeding',      // Tirage au sort / Seeding
+  'active',       // En cours
+  'completed',    // Terminé
+  'cancelled',    // Annulé
+]);
+
+export const tournamentFormatEnum = pgEnum('tournament_format', [
+  'single_elimination',  // Élimination directe simple
+  'double_elimination',  // Élimination directe avec repêchage
+  'consolation',         // Avec tableau de consolation
+]);
+
+// Tournoi
+export const tournaments = pgTable(
+  'tournaments',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    clubId: uuid('club_id')
+      .notNull()
+      .references(() => clubs.id, { onDelete: 'cascade' }),
+    name: varchar('name', { length: 100 }).notNull(),
+    description: text('description'),
+    // Format
+    format: tournamentFormatEnum('format').default('single_elimination').notNull(),
+    maxParticipants: integer('max_participants').default(16).notNull(), // 4, 8, 16, 32, 64
+    minParticipants: integer('min_participants').default(4).notNull(),
+    // Critères
+    eloRangeMin: integer('elo_range_min'),
+    eloRangeMax: integer('elo_range_max'),
+    seedingMethod: varchar('seeding_method', { length: 20 }).default('elo').notNull(), // 'elo', 'random'
+    // Dates
+    registrationStart: timestamp('registration_start', { mode: 'date' }).notNull(),
+    registrationEnd: timestamp('registration_end', { mode: 'date' }).notNull(),
+    startDate: timestamp('start_date', { mode: 'date' }).notNull(),
+    endDate: timestamp('end_date', { mode: 'date' }),
+    // Règles
+    setsToWin: integer('sets_to_win').default(2).notNull(), // Best of 3 = 2, Best of 5 = 3
+    finalSetsToWin: integer('final_sets_to_win').default(2).notNull(), // Pour la finale
+    thirdPlaceMatch: boolean('third_place_match').default(false).notNull(), // Petite finale
+    // Status
+    status: tournamentStatusEnum('status').default('draft').notNull(),
+    currentRound: integer('current_round').default(0).notNull(),
+    totalRounds: integer('total_rounds'), // Calculé lors du seeding
+    // Vainqueur
+    winnerId: uuid('winner_id').references(() => players.id, { onDelete: 'set null' }),
+    runnerUpId: uuid('runner_up_id').references(() => players.id, { onDelete: 'set null' }),
+    thirdPlaceId: uuid('third_place_id').references(() => players.id, { onDelete: 'set null' }),
+    // Metadata
+    createdBy: uuid('created_by').references(() => players.id, { onDelete: 'set null' }),
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (table) => ({
+    clubIdIdx: index('tournaments_club_id_idx').on(table.clubId),
+    statusIdx: index('tournaments_status_idx').on(table.status),
+    datesIdx: index('tournaments_dates_idx').on(table.startDate),
+  })
+);
+
+// Participants au tournoi
+export const tournamentParticipants = pgTable(
+  'tournament_participants',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    tournamentId: uuid('tournament_id')
+      .notNull()
+      .references(() => tournaments.id, { onDelete: 'cascade' }),
+    playerId: uuid('player_id')
+      .notNull()
+      .references(() => players.id, { onDelete: 'cascade' }),
+    // Seeding
+    seed: integer('seed'), // Position de tête de série (1 = favori)
+    eloAtRegistration: integer('elo_at_registration').notNull(),
+    // Résultat final
+    finalPosition: integer('final_position'), // 1 = vainqueur, 2 = finaliste, etc.
+    eliminatedInRound: integer('eliminated_in_round'),
+    // Status
+    isActive: boolean('is_active').default(true).notNull(),
+    withdrawReason: text('withdraw_reason'),
+    // Timestamps
+    registeredAt: timestamp('registered_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (table) => ({
+    tournamentIdIdx: index('tournament_participants_tournament_id_idx').on(table.tournamentId),
+    playerIdIdx: index('tournament_participants_player_id_idx').on(table.playerId),
+    seedIdx: index('tournament_participants_seed_idx').on(table.seed),
+    uniqueParticipant: index('tournament_participants_unique_idx').on(table.tournamentId, table.playerId),
+  })
+);
+
+// Matchs du tournoi (bracket)
+export const tournamentMatches = pgTable(
+  'tournament_matches',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    tournamentId: uuid('tournament_id')
+      .notNull()
+      .references(() => tournaments.id, { onDelete: 'cascade' }),
+    // Position dans le bracket
+    round: integer('round').notNull(), // 1 = premier tour, 2 = quarts, etc.
+    position: integer('position').notNull(), // Position dans le round (1, 2, 3...)
+    bracketType: varchar('bracket_type', { length: 20 }).default('main').notNull(), // 'main', 'consolation', 'losers'
+    // Joueurs
+    player1Id: uuid('player1_id').references(() => players.id, { onDelete: 'set null' }),
+    player2Id: uuid('player2_id').references(() => players.id, { onDelete: 'set null' }),
+    player1Seed: integer('player1_seed'),
+    player2Seed: integer('player2_seed'),
+    // Résultat
+    winnerId: uuid('winner_id').references(() => players.id, { onDelete: 'set null' }),
+    score: varchar('score', { length: 100 }), // Ex: "6-4 3-6 7-5"
+    player1Sets: integer('player1_sets'),
+    player2Sets: integer('player2_sets'),
+    // Status
+    status: varchar('status', { length: 20 }).default('pending').notNull(), // 'pending', 'scheduled', 'in_progress', 'completed', 'walkover', 'bye'
+    isBye: boolean('is_bye').default(false).notNull(), // Match avec BYE (joueur qualifié automatiquement)
+    // Lien vers match suivant
+    nextMatchId: uuid('next_match_id'), // Match suivant pour le vainqueur
+    // Lien avec le match principal (pour intégration ELO)
+    mainMatchId: uuid('main_match_id').references(() => matches.id, { onDelete: 'set null' }),
+    // Dates
+    scheduledDate: timestamp('scheduled_date', { mode: 'date' }),
+    playedAt: timestamp('played_at', { mode: 'date' }),
+    // Timestamps
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (table) => ({
+    tournamentIdIdx: index('tournament_matches_tournament_id_idx').on(table.tournamentId),
+    roundIdx: index('tournament_matches_round_idx').on(table.round),
+    statusIdx: index('tournament_matches_status_idx').on(table.status),
+    bracketIdx: index('tournament_matches_bracket_idx').on(table.tournamentId, table.bracketType, table.round),
+  })
+);
+
+// ============================================
 // RELATIONS
 // ============================================
 
@@ -1061,3 +1202,15 @@ export type NewPayment = typeof payments.$inferInsert;
 
 export type SubscriptionTier = 'free' | 'premium' | 'pro';
 export type SubscriptionStatus = 'active' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'past_due' | 'trialing' | 'unpaid';
+
+export type Tournament = typeof tournaments.$inferSelect;
+export type NewTournament = typeof tournaments.$inferInsert;
+
+export type TournamentParticipant = typeof tournamentParticipants.$inferSelect;
+export type NewTournamentParticipant = typeof tournamentParticipants.$inferInsert;
+
+export type TournamentMatch = typeof tournamentMatches.$inferSelect;
+export type NewTournamentMatch = typeof tournamentMatches.$inferInsert;
+
+export type TournamentStatus = 'draft' | 'registration' | 'seeding' | 'active' | 'completed' | 'cancelled';
+export type TournamentFormat = 'single_elimination' | 'double_elimination' | 'consolation';

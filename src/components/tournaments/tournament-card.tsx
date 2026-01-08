@@ -1,0 +1,182 @@
+'use client';
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { 
+  Trophy, 
+  Calendar, 
+  Users, 
+  Clock,
+  ChevronRight,
+  Target,
+  Swords,
+  Crown,
+} from 'lucide-react';
+import Link from 'next/link';
+import type { Tournament } from '@/lib/tournaments/types';
+import { formatDistanceToNow, format, isAfter, isBefore } from 'date-fns';
+import { fr } from 'date-fns/locale';
+
+interface TournamentCardProps {
+  tournament: Tournament;
+  participantCount?: number;
+  isRegistered?: boolean;
+  mySeed?: number | null;
+}
+
+const STATUS_CONFIG = {
+  draft: { label: 'Brouillon', variant: 'secondary' as const, color: 'bg-gray-500' },
+  registration: { label: 'Inscriptions ouvertes', variant: 'default' as const, color: 'bg-green-500' },
+  seeding: { label: 'Tirage au sort', variant: 'default' as const, color: 'bg-amber-500' },
+  active: { label: 'En cours', variant: 'default' as const, color: 'bg-blue-500' },
+  completed: { label: 'Terminé', variant: 'secondary' as const, color: 'bg-gray-400' },
+  cancelled: { label: 'Annulé', variant: 'destructive' as const, color: 'bg-red-500' },
+} as const;
+
+type StatusConfigKey = keyof typeof STATUS_CONFIG;
+
+const getStatusConfig = (status: string) => {
+  return STATUS_CONFIG[status as StatusConfigKey] ?? STATUS_CONFIG.draft;
+};
+
+const FORMAT_LABELS: Record<string, string> = {
+  single_elimination: 'Élimination directe',
+  double_elimination: 'Double élimination',
+  consolation: 'Avec consolation',
+};
+
+export function TournamentCard({ tournament, participantCount = 0, isRegistered, mySeed }: TournamentCardProps) {
+  const statusConfig = getStatusConfig(tournament.status);
+  const now = new Date();
+  const registrationOpen = tournament.status === 'registration' && 
+    isAfter(now, new Date(tournament.registrationStart)) &&
+    isBefore(now, new Date(tournament.registrationEnd));
+  
+  const progressPercent = (participantCount / tournament.maxParticipants) * 100;
+  const daysUntilStart = isAfter(new Date(tournament.startDate), now)
+    ? formatDistanceToNow(new Date(tournament.startDate), { locale: fr, addSuffix: true })
+    : null;
+
+  return (
+    <Card className="hover:shadow-lg transition-shadow">
+      <CardHeader className="pb-2">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30">
+              <Trophy className="h-5 w-5 text-purple-600" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">{tournament.name}</CardTitle>
+              <CardDescription className="flex items-center gap-2 text-xs">
+                <Swords className="h-3 w-3" />
+                {FORMAT_LABELS[tournament.format] || tournament.format}
+                <span className="text-muted-foreground">•</span>
+                <span>{tournament.maxParticipants} joueurs max</span>
+              </CardDescription>
+            </div>
+          </div>
+          <Badge variant={statusConfig.variant}>{statusConfig.label}</Badge>
+        </div>
+      </CardHeader>
+      
+      <CardContent className="space-y-4">
+        {/* Description */}
+        {tournament.description && (
+          <p className="text-sm text-muted-foreground line-clamp-2">{tournament.description}</p>
+        )}
+
+        {/* ELO Range */}
+        {(tournament.eloRangeMin || tournament.eloRangeMax) && (
+          <div className="flex items-center gap-2 text-sm">
+            <Target className="h-4 w-4 text-muted-foreground" />
+            <span className="text-muted-foreground">
+              ELO: {tournament.eloRangeMin || '∞'} - {tournament.eloRangeMax || '∞'}
+            </span>
+          </div>
+        )}
+
+        {/* Dates */}
+        <div className="grid grid-cols-2 gap-3 text-sm">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Calendar className="h-4 w-4" />
+            <span>
+              {format(new Date(tournament.startDate), 'dd MMM yyyy', { locale: fr })}
+            </span>
+          </div>
+          {registrationOpen && (
+            <div className="flex items-center gap-2 text-amber-600">
+              <Clock className="h-4 w-4" />
+              <span className="text-xs">
+                Jusqu'au {format(new Date(tournament.registrationEnd), 'dd MMM', { locale: fr })}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Participants Progress */}
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm">
+            <span className="flex items-center gap-1 text-muted-foreground">
+              <Users className="h-4 w-4" />
+              Participants
+            </span>
+            <span className="font-medium">{participantCount} / {tournament.maxParticipants}</span>
+          </div>
+          <Progress value={progressPercent} className="h-2" />
+        </div>
+
+        {/* User Status */}
+        {isRegistered && (
+          <div className="flex items-center gap-2 p-2 rounded-lg bg-primary/10 text-sm">
+            {mySeed ? (
+              <>
+                <Crown className="h-4 w-4 text-amber-500" />
+                <span>
+                  Tête de série <strong>#{mySeed}</strong>
+                </span>
+              </>
+            ) : (
+              <span className="text-green-600 font-medium">✓ Inscrit</span>
+            )}
+          </div>
+        )}
+
+        {/* Winner */}
+        {tournament.status === 'completed' && tournament.winnerId && (
+          <div className="flex items-center gap-2 p-2 rounded-lg bg-amber-50 dark:bg-amber-950/20 text-sm">
+            <Trophy className="h-4 w-4 text-amber-500" />
+            <span className="font-medium text-amber-700 dark:text-amber-400">
+              Vainqueur désigné
+            </span>
+          </div>
+        )}
+
+        {/* Countdown */}
+        {daysUntilStart && tournament.status === 'registration' && (
+          <div className="text-center text-sm text-muted-foreground">
+            Début {daysUntilStart}
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="flex gap-2 pt-2">
+          <Button asChild className="flex-1">
+            <Link href={`/tournaments/${tournament.id}`}>
+              {tournament.status === 'active' ? 'Voir le bracket' : 'Voir les détails'}
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Link>
+          </Button>
+          {registrationOpen && !isRegistered && (
+            <Button variant="outline" asChild>
+              <Link href={`/tournaments/${tournament.id}?register=true`}>
+                S'inscrire
+              </Link>
+            </Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
