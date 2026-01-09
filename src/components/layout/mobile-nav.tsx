@@ -3,13 +3,14 @@
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { X, Trophy, Swords, Users, MessageSquare, MessageCircle, User, LayoutDashboard, Award, Zap, Medal, Crown } from 'lucide-react';
+import { X, Trophy, Swords, Users, MessageSquare, MessageCircle, User, LayoutDashboard, Award, Zap, Medal, Crown, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
 interface MobileNavProps {
   isOpen: boolean;
   onClose: () => void;
+  isAdmin?: boolean;
 }
 
 const navItems = [
@@ -26,7 +27,11 @@ const navItems = [
   { href: '/profil', label: 'Mon profil', icon: User },
 ];
 
-export function MobileNav({ isOpen, onClose }: MobileNavProps) {
+const adminNavItems = [
+  { href: '/admin', label: 'Administration', icon: Settings },
+];
+
+export function MobileNav({ isOpen, onClose, isAdmin = false }: MobileNavProps) {
   const pathname = usePathname();
   const previousPathname = useRef(pathname);
 
@@ -100,6 +105,36 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
               </Link>
             );
           })}
+
+          {/* Section Admin */}
+          {isAdmin && (
+            <>
+              <div className="my-3 border-t" />
+              <p className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Administration
+              </p>
+              {adminNavItems.map((item) => {
+                const isActive = pathname.startsWith(item.href);
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      'flex items-center space-x-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors touch-manipulation',
+                      isActive
+                        ? 'bg-orange-100 text-orange-900 dark:bg-orange-900/30 dark:text-orange-100'
+                        : 'text-muted-foreground hover:bg-muted hover:text-foreground active:bg-muted'
+                    )}
+                    onClick={onClose}
+                  >
+                    <item.icon className="h-5 w-5 flex-shrink-0" />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
+            </>
+          )}
         </nav>
       </div>
     </>
