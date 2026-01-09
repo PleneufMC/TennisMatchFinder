@@ -97,4 +97,47 @@ export default function TournamentDetailPage({ params }: { params: PageParams })
 - `24aab42` - fix(tournaments): Add safe date parsing to tournament detail page
 - `57dc966` - fix(tournaments): Add safe date parsing to prevent React hydration errors
 - `6bb69ac` - fix(tournaments): Add error handling and loading states
-- `[NOUVEAU]` - fix(tournaments): Remove React 19 use() API - use params directly
+- `a54f390` - fix(tournaments): Remove React 19 use() API - use params directly
+- `b76ba5a` - fix(tournaments): Fix API params extraction + add delete button for admins
+
+---
+
+## Solution Complémentaire (2026-01-09)
+
+### 7. API Route params Promise (SUCCÈS FINAL)
+**Cause** : Même problème sur l'API côté serveur. L'API utilisait `await params` qui ne fonctionne pas de manière fiable avec Next.js 14.
+
+**Code Problématique** :
+```typescript
+interface RouteParams {
+  params: Promise<{ tournamentId: string }>;
+}
+
+export async function GET(request: NextRequest, { params }: RouteParams) {
+  const { tournamentId } = await params;
+  // ...
+}
+```
+
+**Code Corrigé** :
+```typescript
+function getTournamentIdFromUrl(request: NextRequest): string {
+  const url = new URL(request.url);
+  const pathParts = url.pathname.split('/');
+  const tournamentIdIndex = pathParts.findIndex(part => part === 'tournaments') + 1;
+  return pathParts[tournamentIdIndex] || '';
+}
+
+export async function GET(request: NextRequest) {
+  const tournamentId = getTournamentIdFromUrl(request);
+  // ...
+}
+```
+
+**Résultat** : ✅ Page détail tournoi fonctionne
+
+### Fonctionnalité Ajoutée : Suppression de Tournoi
+- Bouton "Supprimer" visible uniquement pour les admins
+- Uniquement pour les tournois en brouillon, inscription ouverte ou annulé
+- Boîte de dialogue de confirmation
+- API DELETE /api/tournaments/[tournamentId]
