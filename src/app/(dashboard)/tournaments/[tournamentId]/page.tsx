@@ -27,6 +27,28 @@ import { format, formatDistanceToNow, isBefore, isAfter } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import Link from 'next/link';
 
+// Helper pour parser les dates de manière sécurisée
+function safeParseDate(date: Date | string | null | undefined): Date | null {
+  if (!date) return null;
+  try {
+    const parsed = typeof date === 'string' ? new Date(date) : date;
+    return isNaN(parsed.getTime()) ? null : parsed;
+  } catch {
+    return null;
+  }
+}
+
+// Helper pour formater une date de manière sécurisée
+function safeFormat(date: Date | string | null | undefined, formatStr: string): string {
+  const parsed = safeParseDate(date);
+  if (!parsed) return '-';
+  try {
+    return format(parsed, formatStr, { locale: fr });
+  } catch {
+    return '-';
+  }
+}
+
 interface PageParams {
   tournamentId: string;
 }
@@ -205,9 +227,16 @@ export default function TournamentDetailPage({ params }: { params: Promise<PageP
   const statusConfig = getStatusConfig(tournament.status);
   const StatusIcon = statusConfig.icon;
   const now = new Date();
+  
+  // Parser les dates de manière sécurisée
+  const registrationStart = safeParseDate(tournament.registrationStart);
+  const registrationEnd = safeParseDate(tournament.registrationEnd);
+  const startDate = safeParseDate(tournament.startDate);
+  
   const registrationOpen = tournament.status === 'registration' && 
-    isAfter(now, new Date(tournament.registrationStart)) &&
-    isBefore(now, new Date(tournament.registrationEnd));
+    registrationStart && registrationEnd &&
+    isAfter(now, registrationStart) &&
+    isBefore(now, registrationEnd);
   const participantCount = participants.length;
 
   return (
@@ -287,7 +316,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<PageP
             <Calendar className="h-5 w-5 mx-auto mb-2 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">Date</p>
             <p className="font-medium text-sm">
-              {format(new Date(tournament.startDate), 'dd MMM yyyy', { locale: fr })}
+              {safeFormat(tournament.startDate, 'dd MMM yyyy')}
             </p>
           </CardContent>
         </Card>
@@ -317,13 +346,13 @@ export default function TournamentDetailPage({ params }: { params: Promise<PageP
       </div>
 
       {/* Registration Alert */}
-      {registrationOpen && !isRegistered && (
+      {registrationOpen && !isRegistered && registrationEnd && (
         <Alert className="mb-6 border-green-500 bg-green-50 dark:bg-green-950/20">
           <Clock className="h-4 w-4 text-green-600" />
           <AlertDescription className="flex items-center justify-between">
             <span>
-              Inscriptions ouvertes jusqu'au {format(new Date(tournament.registrationEnd), 'dd MMMM yyyy', { locale: fr })}
-              {' '}({formatDistanceToNow(new Date(tournament.registrationEnd), { locale: fr, addSuffix: true })})
+              Inscriptions ouvertes jusqu&apos;au {safeFormat(tournament.registrationEnd, 'dd MMMM yyyy')}
+              {registrationEnd && ` (${formatDistanceToNow(registrationEnd, { locale: fr, addSuffix: true })})`}
             </span>
             <Button onClick={handleRegister} disabled={registering} className="ml-4">
               {registering ? (
