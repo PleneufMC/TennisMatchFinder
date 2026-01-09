@@ -141,3 +141,51 @@ export async function GET(request: NextRequest) {
 - Uniquement pour les tournois en brouillon, inscription ouverte ou annulé
 - Boîte de dialogue de confirmation
 - API DELETE /api/tournaments/[tournamentId]
+
+---
+
+## Solutions Testées SANS Succès (2026-01-09)
+
+### 8. Extraction URL personnalisée (ÉCHEC)
+**Hypothèse** : Le pattern `await params` ne fonctionne pas
+**Action** : Extraction du tournamentId depuis `request.url`
+```typescript
+function getTournamentIdFromUrl(request: NextRequest): string {
+  const url = new URL(request.url);
+  const pathParts = url.pathname.split('/');
+  const tournamentIdIndex = pathParts.findIndex(part => part === 'tournaments') + 1;
+  return pathParts[tournamentIdIndex] || '';
+}
+```
+**Résultat** : ❌ Erreur 404 persiste - REVERT effectué
+
+### 9. Retour au pattern standard Next.js (ÉCHEC)
+**Action** : Retour à `await params` comme les autres routes API (box-leagues)
+**Résultat** : ❌ Erreur persiste après redéploiement
+
+### 10. Clear cache Netlify + Redeploy (ÉCHEC)
+**Action** : "Clear cache and deploy site" dans Netlify
+**Résultat** : ❌ Erreur persiste
+
+### 11. Hard refresh navigateur (ÉCHEC)
+**Action** : Ctrl+Shift+R, vider cache DevTools
+**Résultat** : ❌ Erreur persiste
+
+### Vérifications effectuées (toutes OK)
+- ✅ Table `tournaments` existe avec bonnes colonnes
+- ✅ Enum `tournament_format` existe (single_elimination, double_elimination, consolation)
+- ✅ Enum `tournament_status` existe (draft, registration, seeding, active, completed)
+- ✅ Tournoi "Test" existe dans la DB (id: a81b5e26-58e4-4322-b3ac-9cd65a8ffc18)
+- ✅ Build Next.js passe sans erreurs
+- ✅ Route `/tournaments/[tournamentId]` générée correctement
+
+### Erreurs Console Observées
+```
+Failed to load resource: /api/tournaments/a81b5e26-58e4-4322-b3ac-9cd65a8ffc18 - 404
+```
+
+### Hypothèses Restantes à Tester
+1. **Problème Netlify Functions** : La fonction API n'est pas déployée correctement
+2. **Problème de routing Netlify** : Les routes dynamiques API ne sont pas gérées
+3. **Problème d'authentification** : Session non transmise correctement
+4. **Problème de CORS/Headers** : Requête bloquée avant d'atteindre l'API
