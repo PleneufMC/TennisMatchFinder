@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -20,7 +21,20 @@ import {
   AlertCircle,
   Loader2,
   Crown,
+  Trash2,
+  Settings,
 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { TournamentBracket, ParticipantsList } from '@/components/tournaments';
 import type { Tournament, TournamentParticipant, TournamentBracket as BracketType } from '@/lib/tournaments/types';
 import { format, formatDistanceToNow, isBefore, isAfter } from 'date-fns';
@@ -84,7 +98,10 @@ export default function TournamentDetailPage({ params }: { params: PageParams })
   const [myParticipation, setMyParticipation] = useState<TournamentParticipant | null>(null);
   const [loading, setLoading] = useState(true);
   const [registering, setRegistering] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const { data: session } = useSession();
 
   useEffect(() => {
     async function fetchTournamentDetails() {
@@ -107,6 +124,19 @@ export default function TournamentDetailPage({ params }: { params: PageParams })
         setParticipants(data.participants || []);
         setIsRegistered(data.isRegistered || false);
         setMyParticipation(data.myParticipation);
+        
+        // Vérifier si l'utilisateur est admin
+        if (session?.user?.id) {
+          try {
+            const profileRes = await fetch('/api/profile');
+            if (profileRes.ok) {
+              const profileData = await profileRes.json();
+              setIsAdmin(profileData.isAdmin || false);
+            }
+          } catch {
+            // Ignorer les erreurs de profil
+          }
+        }
       } catch (err) {
         console.error('Erreur:', err);
         setError('Erreur de connexion');
@@ -116,7 +146,7 @@ export default function TournamentDetailPage({ params }: { params: PageParams })
     }
 
     fetchTournamentDetails();
-  }, [params.tournamentId]);
+  }, [params.tournamentId, session?.user?.id]);
 
   async function handleRegister() {
     if (!tournament) return;
@@ -194,6 +224,28 @@ export default function TournamentDetailPage({ params }: { params: PageParams })
       setError(err.message);
     } finally {
       setRegistering(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!tournament) return;
+
+    try {
+      setDeleting(true);
+      const res = await fetch(`/api/tournaments/${tournament.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Erreur lors de la suppression');
+      }
+
+      // Rediriger vers la liste des tournois
+      router.push('/tournaments');
+    } catch (err: any) {
+      setError(err.message);
+      setDeleting(false);
     }
   }
 
@@ -304,6 +356,38 @@ export default function TournamentDetailPage({ params }: { params: PageParams })
               Inscrit
               {myParticipation?.seed && ` - Seed #${myParticipation.seed}`}
             </Badge>
+          )}
+          
+          {/* Admin Actions */}
+          {isAdmin && (tournament.status === 'draft' || tournament.status === 'registration' || tournament.status === 'cancelled') && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm" disabled={deleting}>
+                  {deleting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Supprimer
+                    </>
+                  )}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Supprimer le tournoi ?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Cette action est irréversible. Le tournoi &quot;{tournament.name}&quot; et toutes ses données (participants, matchs) seront définitivement supprimés.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Annuler</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+                    Supprimer définitivement
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           )}
         </div>
       </div>
