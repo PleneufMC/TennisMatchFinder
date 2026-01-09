@@ -38,34 +38,27 @@ export async function GET(
 
     const { tournamentId } = await params;
 
-    // Debug: Log tournamentId
-    console.log('Fetching tournament:', tournamentId);
-
     const tournament = await getTournamentById(tournamentId);
     if (!tournament) {
       return NextResponse.json({ error: 'Tournoi non trouvé' }, { status: 404 });
     }
 
-    console.log('Tournament found:', tournament.name);
-
-    // Récupérer le bracket complet - avec gestion d'erreur
+    // Récupérer le bracket - graceful fallback si erreur
     let bracket = null;
     try {
       bracket = await getTournamentBracket(tournamentId);
-      console.log('Bracket fetched successfully');
     } catch (bracketError) {
       console.error('Error fetching bracket:', bracketError);
-      // Continue without bracket
+      // Continue with null bracket
     }
     
-    // Récupérer les participants - avec gestion d'erreur
+    // Récupérer les participants - graceful fallback si erreur
     let participants: any[] = [];
     try {
       participants = await getParticipants(tournamentId);
-      console.log('Participants fetched:', participants.length);
     } catch (participantsError) {
       console.error('Error fetching participants:', participantsError);
-      // Continue without participants
+      // Continue with empty participants
     }
 
     // Vérifier si le joueur actuel est inscrit

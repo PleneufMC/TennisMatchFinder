@@ -139,7 +139,45 @@ Les données retournées pourraient contenir des types non-sérialisables (Date,
 
 ---
 
-## Prochaines Actions
+## ✅ SOLUTION TROUVÉE (2026-01-09)
+
+### Cause Racine
+Les fonctions `getTournamentBracket()` et/ou `getParticipants()` crashaient silencieusement 
+pour un tournoi en statut `draft` (sans matchs ni participants).
+
+### Solution
+Ajouter des try-catch autour des appels à ces fonctions pour gérer gracieusement les erreurs :
+
+```typescript
+// Récupérer le bracket - graceful fallback si erreur
+let bracket = null;
+try {
+  bracket = await getTournamentBracket(tournamentId);
+} catch (bracketError) {
+  console.error('Error fetching bracket:', bracketError);
+  // Continue with null bracket
+}
+
+// Récupérer les participants - graceful fallback si erreur
+let participants: any[] = [];
+try {
+  participants = await getParticipants(tournamentId);
+} catch (participantsError) {
+  console.error('Error fetching participants:', participantsError);
+  // Continue with empty participants
+}
+```
+
+### Commit Final
+`00340fe` - debug(api): Add try-catch around bracket and participants fetch
+
+### Leçon Apprise
+Toujours wrapper les appels de service dans des try-catch dans les API routes,
+surtout quand les données peuvent être vides ou dans un état intermédiaire.
+
+---
+
+## Prochaines Actions (Complétées)
 
 1. **Obtenir le Response Body** de l'erreur 500 dans DevTools
 2. **Vérifier les logs Netlify** : Netlify Dashboard → Functions → Logs
