@@ -74,6 +74,8 @@ export async function POST(request: NextRequest) {
       eloRangeMax,
       division,
       matchesPerPlayer,
+      promotionSpots,
+      relegationSpots,
     } = body;
 
     // Validation
@@ -97,6 +99,8 @@ export async function POST(request: NextRequest) {
       eloRangeMax,
       division,
       matchesPerPlayer,
+      promotionSpots,
+      relegationSpots,
       createdBy: player.id,
     });
 

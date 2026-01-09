@@ -50,6 +50,8 @@ export async function createBoxLeague(params: CreateBoxLeagueParams): Promise<Bo
     eloRangeMax,
     division = 1,
     matchesPerPlayer = 5,
+    promotionSpots = 1,
+    relegationSpots = 1,
     createdBy,
   } = params;
 
@@ -68,6 +70,8 @@ export async function createBoxLeague(params: CreateBoxLeagueParams): Promise<Bo
       eloRangeMax: eloRangeMax || null,
       division,
       matchesPerPlayer,
+      promotionSpots,
+      relegationSpots,
       status: 'draft',
       createdBy,
     })

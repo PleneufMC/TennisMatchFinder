@@ -114,6 +114,8 @@ export interface CreateBoxLeagueParams {
   eloRangeMax?: number;
   division?: number;
   matchesPerPlayer?: number;
+  promotionSpots?: number;
+  relegationSpots?: number;
   createdBy: string;
 }
 
