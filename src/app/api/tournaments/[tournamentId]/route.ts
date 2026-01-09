@@ -1,14 +1,15 @@
 /**
  * API Routes pour un Tournoi spécifique
- * GET   /api/tournaments/[tournamentId] - Détails du tournoi + bracket
- * PATCH /api/tournaments/[tournamentId] - Mettre à jour le statut (admin)
+ * GET    /api/tournaments/[tournamentId] - Détails du tournoi + bracket
+ * PATCH  /api/tournaments/[tournamentId] - Mettre à jour le statut (admin)
+ * DELETE /api/tournaments/[tournamentId] - Supprimer le tournoi (admin)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { players, tournamentParticipants } from '@/lib/db/schema';
+import { players, tournamentParticipants, tournaments, tournamentMatches } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 import {
   getTournamentById,
@@ -21,18 +22,26 @@ import type { TournamentStatus } from '@/lib/tournaments';
 
 export const dynamic = 'force-dynamic';
 
-interface RouteParams {
-  params: Promise<{ tournamentId: string }>;
+// Extraction du tournamentId depuis l'URL pour Next.js 14
+function getTournamentIdFromUrl(request: NextRequest): string {
+  const url = new URL(request.url);
+  const pathParts = url.pathname.split('/');
+  // URL format: /api/tournaments/[tournamentId]
+  const tournamentIdIndex = pathParts.findIndex(part => part === 'tournaments') + 1;
+  return pathParts[tournamentIdIndex] || '';
 }
 
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
-    const { tournamentId } = await params;
+    const tournamentId = getTournamentIdFromUrl(request);
+    if (!tournamentId) {
+      return NextResponse.json({ error: 'ID tournoi manquant' }, { status: 400 });
+    }
 
     const tournament = await getTournamentById(tournamentId);
     if (!tournament) {
@@ -88,7 +97,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function PATCH(request: NextRequest, { params }: RouteParams) {
+export async function PATCH(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -109,7 +118,11 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    const { tournamentId } = await params;
+    const tournamentId = getTournamentIdFromUrl(request);
+    if (!tournamentId) {
+      return NextResponse.json({ error: 'ID tournoi manquant' }, { status: 400 });
+    }
+
     const body = await request.json();
 
     const tournament = await getTournamentById(tournamentId);
@@ -173,6 +186,78 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     );
   } catch (error) {
     console.error('Erreur PATCH /api/tournaments/[id]:', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Erreur serveur' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+
+    // Vérifier que l'utilisateur est admin
+    const [player] = await db
+      .select()
+      .from(players)
+      .where(eq(players.id, session.user.id))
+      .limit(1);
+
+    if (!player?.isAdmin) {
+      return NextResponse.json(
+        { error: 'Seuls les administrateurs peuvent supprimer les tournois' },
+        { status: 403 }
+      );
+    }
+
+    const tournamentId = getTournamentIdFromUrl(request);
+    if (!tournamentId) {
+      return NextResponse.json({ error: 'ID tournoi manquant' }, { status: 400 });
+    }
+
+    const tournament = await getTournamentById(tournamentId);
+    if (!tournament) {
+      return NextResponse.json({ error: 'Tournoi non trouvé' }, { status: 404 });
+    }
+
+    // Vérifier que le tournoi appartient au même club
+    if (tournament.clubId !== player.clubId) {
+      return NextResponse.json(
+        { error: 'Ce tournoi n\'appartient pas à votre club' },
+        { status: 403 }
+      );
+    }
+
+    // Interdire la suppression des tournois en cours ou terminés
+    if (tournament.status === 'active' || tournament.status === 'completed') {
+      return NextResponse.json(
+        { error: 'Impossible de supprimer un tournoi en cours ou terminé' },
+        { status: 400 }
+      );
+    }
+
+    // Supprimer dans l'ordre : matchs -> participants -> tournoi
+    // Les contraintes ON DELETE CASCADE devraient gérer ça automatiquement
+    // mais on le fait explicitement pour plus de sécurité
+    await db
+      .delete(tournamentMatches)
+      .where(eq(tournamentMatches.tournamentId, tournamentId));
+
+    await db
+      .delete(tournamentParticipants)
+      .where(eq(tournamentParticipants.tournamentId, tournamentId));
+
+    await db
+      .delete(tournaments)
+      .where(eq(tournaments.id, tournamentId));
+
+    return NextResponse.json({ success: true, message: 'Tournoi supprimé' });
+  } catch (error) {
+    console.error('Erreur DELETE /api/tournaments/[id]:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Erreur serveur' },
       { status: 500 }
