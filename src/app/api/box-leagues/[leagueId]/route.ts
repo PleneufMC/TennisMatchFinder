@@ -3,10 +3,14 @@
  * 
  * GET - Récupère les détails d'une Box League (classement, matchs)
  * PATCH - Met à jour le statut (admin only)
+ * DELETE - Supprime une Box League (admin only, si draft/registration/cancelled)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerPlayer } from '@/lib/auth-helpers';
+import { db } from '@/lib/db';
+import { boxLeagues, boxLeagueParticipants, boxLeagueMatches } from '@/lib/db/schema';
+import { eq } from 'drizzle-orm';
 import {
   getBoxLeagueById,
   getLeagueStandings,
@@ -114,6 +118,59 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     console.error('Error updating box league status:', error);
     return NextResponse.json(
       { error: 'Erreur lors de la mise à jour du statut' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  try {
+    const player = await getServerPlayer();
+    if (!player) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+
+    if (!player.isAdmin) {
+      return NextResponse.json(
+        { error: 'Seuls les administrateurs peuvent supprimer des Box Leagues' },
+        { status: 403 }
+      );
+    }
+
+    const { leagueId } = await params;
+
+    const league = await getBoxLeagueById(leagueId);
+    if (!league) {
+      return NextResponse.json({ error: 'Box League non trouvée' }, { status: 404 });
+    }
+
+    // Vérifier que la league appartient au club du joueur
+    if (league.clubId !== player.clubId) {
+      return NextResponse.json({ error: 'Accès non autorisé' }, { status: 403 });
+    }
+
+    // Ne permettre la suppression que pour certains statuts
+    const deletableStatuses = ['draft', 'registration', 'cancelled'];
+    if (!deletableStatuses.includes(league.status)) {
+      return NextResponse.json(
+        { error: 'Impossible de supprimer une Box League en cours ou terminée' },
+        { status: 400 }
+      );
+    }
+
+    // Supprimer les matchs, participants puis la league (cascade devrait fonctionner, mais on le fait explicitement)
+    await db.delete(boxLeagueMatches).where(eq(boxLeagueMatches.leagueId, leagueId));
+    await db.delete(boxLeagueParticipants).where(eq(boxLeagueParticipants.leagueId, leagueId));
+    await db.delete(boxLeagues).where(eq(boxLeagues.id, leagueId));
+
+    return NextResponse.json({
+      success: true,
+      message: 'Box League supprimée avec succès',
+    });
+  } catch (error) {
+    console.error('Error deleting box league:', error);
+    return NextResponse.json(
+      { error: 'Erreur lors de la suppression de la Box League' },
       { status: 500 }
     );
   }

@@ -52,12 +52,16 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
     <>
       {/* Overlay */}
       <div
-        className="fixed inset-0 z-50 bg-black/50 md:hidden"
+        className="fixed inset-0 z-[100] bg-black/50 md:hidden"
         onClick={onClose}
+        aria-hidden="true"
       />
 
       {/* Menu */}
-      <div className="fixed inset-y-0 left-0 z-50 w-72 bg-card shadow-lg md:hidden animate-slide-in-right">
+      <div 
+        className="fixed inset-y-0 left-0 z-[101] w-72 bg-card shadow-lg md:hidden transform transition-transform duration-300 ease-in-out"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
         <div className="flex h-16 items-center justify-between border-b px-4">
           <div className="flex items-center space-x-2">
             <span className="text-2xl">🎾</span>
@@ -68,7 +72,7 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
           </Button>
         </div>
 
-        <nav className="p-4 space-y-1">
+        <nav className="p-4 space-y-1 overflow-y-auto max-h-[calc(100vh-4rem)]">
           {navItems.map((item) => {
             const isActive =
               pathname === item.href ||
@@ -79,13 +83,14 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'flex items-center space-x-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors',
+                  'flex items-center space-x-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors touch-manipulation',
                   isActive
                     ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground active:bg-muted'
                 )}
+                onClick={onClose}
               >
-                <item.icon className="h-5 w-5" />
+                <item.icon className="h-5 w-5 flex-shrink-0" />
                 <span>{item.label}</span>
               </Link>
             );

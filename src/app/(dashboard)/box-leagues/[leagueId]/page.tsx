@@ -22,7 +22,20 @@ import {
   Target,
   AlertCircle,
   Loader2,
+  Trash2,
 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { useSession } from 'next-auth/react';
 import { StandingsTable, MatchList } from '@/components/box-leagues';
 import type { BoxLeague, BoxLeagueStanding, BoxLeagueMatch } from '@/lib/box-leagues/types';
 import { format, formatDistanceToNow, isBefore } from 'date-fns';
@@ -60,7 +73,28 @@ export default function BoxLeagueDetailPage({ params }: { params: PageParams }) 
   const [isRegistered, setIsRegistered] = useState(false);
   const [loading, setLoading] = useState(true);
   const [registering, setRegistering] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { data: session } = useSession();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Check if user is admin
+  useEffect(() => {
+    async function checkAdmin() {
+      try {
+        const res = await fetch('/api/profile');
+        if (res.ok) {
+          const data = await res.json();
+          setIsAdmin(data.player?.isAdmin || false);
+        }
+      } catch (err) {
+        console.error('Error checking admin status:', err);
+      }
+    }
+    if (session) {
+      checkAdmin();
+    }
+  }, [session]);
 
   useEffect(() => {
     async function fetchLeagueDetails() {
@@ -121,6 +155,28 @@ export default function BoxLeagueDetailPage({ params }: { params: PageParams }) 
       setError(err.message);
     } finally {
       setRegistering(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!league) return;
+
+    try {
+      setDeleting(true);
+      const res = await fetch(`/api/box-leagues/${league.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Erreur lors de la suppression');
+      }
+
+      router.push('/box-leagues');
+      router.refresh();
+    } catch (err: any) {
+      setError(err.message);
+      setDeleting(false);
     }
   }
 
@@ -201,6 +257,42 @@ export default function BoxLeagueDetailPage({ params }: { params: PageParams }) 
               <CheckCircle className="h-3 w-3 mr-1" />
               Inscrit
             </Badge>
+          )}
+          {/* Bouton suppression admin */}
+          {isAdmin && ['draft', 'registration', 'cancelled'].includes(league.status) && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm" className="gap-2">
+                  <Trash2 className="h-4 w-4" />
+                  Supprimer
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Supprimer la Box League ?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Cette action est irréversible. La Box League "{league.name}" et toutes ses données (participants, matchs) seront supprimées.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Annuler</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDelete}
+                    disabled={deleting}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {deleting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Suppression...
+                      </>
+                    ) : (
+                      'Supprimer'
+                    )}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           )}
         </div>
       </div>
