@@ -85,8 +85,14 @@ export async function GET(
     });
   } catch (error) {
     console.error('Erreur GET /api/tournaments/[id]:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Erreur serveur inconnue';
+    const errorStack = error instanceof Error ? error.stack : undefined;
     return NextResponse.json(
-      { error: 'Erreur serveur' },
+      { 
+        error: 'Erreur serveur', 
+        details: errorMessage,
+        stack: process.env.NODE_ENV === 'development' ? errorStack : undefined 
+      },
       { status: 500 }
     );
   }
