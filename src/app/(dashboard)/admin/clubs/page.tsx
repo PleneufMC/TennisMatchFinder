@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { getServerPlayer } from '@/lib/auth-helpers';
 import { getAllClubs, getClubStats } from '@/lib/db/queries';
 import { CreateClubDialog } from '@/components/admin/create-club-dialog';
+import { DeleteClubButton } from '@/components/admin/delete-club-button';
 
 export const metadata: Metadata = {
   title: 'Gestion des clubs',
@@ -120,6 +121,12 @@ export default async function AdminClubsPage() {
                         Voir page inscription
                       </Link>
                     </Button>
+                    <DeleteClubButton 
+                      clubId={club.id}
+                      clubName={club.name}
+                      playersCount={club.playersCount}
+                      isOwnClub={club.id === player.clubId}
+                    />
                   </div>
                 </div>
               ))}
