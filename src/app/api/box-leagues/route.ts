@@ -27,13 +27,19 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status') as BoxLeagueStatus | null;
     const myLeagues = searchParams.get('my') === 'true';
 
-    let leagues;
-    if (myLeagues) {
-      // Récupérer uniquement les leagues auxquelles le joueur participe
-      leagues = await getPlayerActiveLeagues(player.id);
-    } else {
-      // Récupérer toutes les leagues du club
-      leagues = await getBoxLeaguesByClub(player.clubId, status || undefined);
+    let leagues: Awaited<ReturnType<typeof getBoxLeaguesByClub>> = [];
+    try {
+      if (myLeagues) {
+        // Récupérer uniquement les leagues auxquelles le joueur participe
+        leagues = await getPlayerActiveLeagues(player.id);
+      } else {
+        // Récupérer toutes les leagues du club
+        leagues = await getBoxLeaguesByClub(player.clubId, status || undefined);
+      }
+    } catch (dbError) {
+      // Si la table n'existe pas encore ou autre erreur DB, retourner un array vide
+      console.error('Database error fetching box leagues:', dbError);
+      leagues = [];
     }
 
     return NextResponse.json({ leagues });
