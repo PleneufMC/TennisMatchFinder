@@ -22,26 +22,21 @@ import type { TournamentStatus } from '@/lib/tournaments';
 
 export const dynamic = 'force-dynamic';
 
-// Extraction du tournamentId depuis l'URL pour Next.js 14
-function getTournamentIdFromUrl(request: NextRequest): string {
-  const url = new URL(request.url);
-  const pathParts = url.pathname.split('/');
-  // URL format: /api/tournaments/[tournamentId]
-  const tournamentIdIndex = pathParts.findIndex(part => part === 'tournaments') + 1;
-  return pathParts[tournamentIdIndex] || '';
+interface RouteParams {
+  params: Promise<{ tournamentId: string }>;
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest,
+  { params }: RouteParams
+) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
-    const tournamentId = getTournamentIdFromUrl(request);
-    if (!tournamentId) {
-      return NextResponse.json({ error: 'ID tournoi manquant' }, { status: 400 });
-    }
+    const { tournamentId } = await params;
 
     const tournament = await getTournamentById(tournamentId);
     if (!tournament) {
@@ -97,7 +92,10 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function PATCH(request: NextRequest) {
+export async function PATCH(
+  request: NextRequest,
+  { params }: RouteParams
+) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -118,11 +116,7 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const tournamentId = getTournamentIdFromUrl(request);
-    if (!tournamentId) {
-      return NextResponse.json({ error: 'ID tournoi manquant' }, { status: 400 });
-    }
-
+    const { tournamentId } = await params;
     const body = await request.json();
 
     const tournament = await getTournamentById(tournamentId);
@@ -193,7 +187,10 @@ export async function PATCH(request: NextRequest) {
   }
 }
 
-export async function DELETE(request: NextRequest) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: RouteParams
+) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -214,10 +211,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const tournamentId = getTournamentIdFromUrl(request);
-    if (!tournamentId) {
-      return NextResponse.json({ error: 'ID tournoi manquant' }, { status: 400 });
-    }
+    const { tournamentId } = await params;
 
     const tournament = await getTournamentById(tournamentId);
     if (!tournament) {
@@ -241,8 +235,6 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Supprimer dans l'ordre : matchs -> participants -> tournoi
-    // Les contraintes ON DELETE CASCADE devraient gérer ça automatiquement
-    // mais on le fait explicitement pour plus de sécurité
     await db
       .delete(tournamentMatches)
       .where(eq(tournamentMatches.tournamentId, tournamentId));
