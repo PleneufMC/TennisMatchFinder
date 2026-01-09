@@ -2,6 +2,11 @@
 
 Plateforme SaaS de mise en relation pour joueurs de tennis avec système de classement ELO innovant.
 
+[![Netlify Status](https://api.netlify.com/api/v1/badges/your-badge-id/deploy-status)](https://app.netlify.com/sites/tennismatchfinder/deploys)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/PleneufMC/TennisMatchFinder)
+
+> **v1.1.0** - Janvier 2026 | [Voir le changelog](docs/CHANGELOG_2026-01-09.md)
+
 ## 🌟 Fonctionnalités
 
 ### Système ELO innovant
@@ -28,6 +33,20 @@ Plateforme SaaS de mise en relation pour joueurs de tennis avec système de clas
 - Classements séparés
 - Forums dédiés
 - Configuration personnalisable
+
+### Tournois 🏆
+- Création et gestion de tournois par les admins
+- Format élimination directe (single elimination)
+- Génération automatique des brackets
+- Inscription avec frais d'entrée optionnel (Stripe)
+- Suivi des matchs en temps réel
+
+### Box Leagues 📊
+- Compétitions mensuelles par niveau ELO
+- Poules de 4-6 joueurs
+- Système de points (victoire: 3pts, nul: 1pt, défaite: 0pt)
+- Promotion/relégation automatique entre divisions
+- Classement avec tendances
 
 ## 🛠 Stack technique
 
@@ -120,7 +139,7 @@ L'application est accessible sur http://localhost:3000
 
 - **Production**: https://tennismatchfinder.net
 - **Preview**: https://tennismatchfinder.netlify.app
-- **GitHub**: https://github.com/your-org/tennismatchfinder
+- **GitHub**: https://github.com/PleneufMC/TennisMatchFinder
 
 ## 📊 API Webhooks N8N
 
@@ -158,9 +177,12 @@ GET /api/webhooks/events?clubId=uuid&since=2024-01-01T00:00:00Z
 
 - [ ] Notifications push
 - [ ] Application mobile (React Native)
-- [ ] Tournois et compétitions
+- [x] ~~Tournois et compétitions~~ ✅ Implémenté
+- [x] ~~Box Leagues~~ ✅ Implémenté
 - [ ] Statistiques avancées avec graphiques
 - [ ] Export PDF des profils
+- [ ] Intégration calendrier (Google Calendar, Apple)
+- [ ] Mode hors-ligne (PWA)
 
 ## 📄 Licence
 
@@ -169,3 +191,22 @@ Propriétaire - Tous droits réservés
 ## 👥 Équipe
 
 Développé pour la communauté tennis 🎾
+
+---
+
+## 📚 Documentation
+
+| Document | Description |
+|----------|-------------|
+| [CHANGELOG_2026-01-09.md](docs/CHANGELOG_2026-01-09.md) | Dernières mises à jour |
+| [RAPPORT_AUDIT_COMPLET_2026-01-08.md](docs/RAPPORT_AUDIT_COMPLET_2026-01-08.md) | Audit technique complet |
+| [SCHEMA_MODELE_DONNEES.md](docs/SCHEMA_MODELE_DONNEES.md) | Schéma base de données |
+| [RECOMMANDATIONS_PRIORISEES.md](docs/RECOMMANDATIONS_PRIORISEES.md) | Roadmap priorisée |
+| [MATRICE_FEATURES.csv](docs/MATRICE_FEATURES.csv) | Matrice des fonctionnalités |
+
+---
+
+<p align="center">
+  <strong>🎾 TennisMatchFinder</strong><br>
+  <em>Trouvez votre prochain adversaire</em>
+</p>
