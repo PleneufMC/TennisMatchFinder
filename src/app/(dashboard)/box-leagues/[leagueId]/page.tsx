@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -48,8 +48,7 @@ const getStatusConfig = (status: string): StatusConfigType => {
   return config ?? STATUS_CONFIG.draft;
 };
 
-export default function BoxLeagueDetailPage({ params }: { params: Promise<PageParams> }) {
-  const resolvedParams = use(params);
+export default function BoxLeagueDetailPage({ params }: { params: PageParams }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const showRegister = searchParams.get('register') === 'true';
@@ -67,7 +66,7 @@ export default function BoxLeagueDetailPage({ params }: { params: Promise<PagePa
     async function fetchLeagueDetails() {
       try {
         setLoading(true);
-        const res = await fetch(`/api/box-leagues/${resolvedParams.leagueId}`);
+        const res = await fetch(`/api/box-leagues/${params.leagueId}`);
         
         if (!res.ok) {
           if (res.status === 404) {
@@ -93,7 +92,7 @@ export default function BoxLeagueDetailPage({ params }: { params: Promise<PagePa
     }
 
     fetchLeagueDetails();
-  }, [resolvedParams.leagueId]);
+  }, [params.leagueId]);
 
   async function handleRegister() {
     if (!league) return;
