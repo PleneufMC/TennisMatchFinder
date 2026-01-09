@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { X, Trophy, Swords, Users, MessageSquare, MessageCircle, User, LayoutDashboard, Award, Zap, Medal, Crown } from 'lucide-react';
@@ -28,10 +28,15 @@ const navItems = [
 
 export function MobileNav({ isOpen, onClose }: MobileNavProps) {
   const pathname = usePathname();
+  const previousPathname = useRef(pathname);
 
-  // Fermer le menu quand on change de page
+  // Fermer le menu UNIQUEMENT quand le pathname change (navigation)
   useEffect(() => {
-    onClose();
+    // Ne fermer que si le pathname a réellement changé (pas au premier rendu)
+    if (previousPathname.current !== pathname && previousPathname.current !== '') {
+      onClose();
+    }
+    previousPathname.current = pathname;
   }, [pathname, onClose]);
 
   // Bloquer le scroll quand le menu est ouvert
