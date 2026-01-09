@@ -63,6 +63,7 @@ export default function DashboardLayout({
       <MobileNav
         isOpen={mobileNavOpen}
         onClose={() => setMobileNavOpen(false)}
+        isAdmin={player.isAdmin}
       />
     </div>
   );
