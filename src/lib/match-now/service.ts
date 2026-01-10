@@ -209,6 +209,100 @@ export async function getAvailablePlayers(
 }
 
 /**
+ * Calcule la distance en km entre deux points GPS (formule de Haversine)
+ */
+function calculateDistance(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
+  const R = 6371; // Rayon de la Terre en km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+/**
+ * Récupère les joueurs disponibles par proximité géographique (cross-club)
+ */
+export async function getAvailablePlayersByProximity(
+  currentPlayerId: string,
+  currentPlayerElo: number,
+  latitude: number,
+  longitude: number,
+  radiusKm: number = 20
+): Promise<(MatchNowAvailability & { distance: number })[]> {
+  const now = new Date();
+
+  // Récupérer toutes les disponibilités actives avec coordonnées
+  const results = await db
+    .select({
+      availability: matchNowAvailability,
+      player: {
+        id: players.id,
+        fullName: players.fullName,
+        avatarUrl: players.avatarUrl,
+        currentElo: players.currentElo,
+        city: players.city,
+        latitude: players.latitude,
+        longitude: players.longitude,
+      },
+    })
+    .from(matchNowAvailability)
+    .innerJoin(players, eq(matchNowAvailability.playerId, players.id))
+    .where(and(
+      eq(matchNowAvailability.isActive, true),
+      gte(matchNowAvailability.availableUntil, now),
+      ne(matchNowAvailability.playerId, currentPlayerId)
+    ))
+    .orderBy(desc(matchNowAvailability.createdAt));
+
+  // Filtrer par distance et ELO
+  const filteredResults = results
+    .filter((r) => {
+      // Vérifier les coordonnées GPS
+      if (!r.player.latitude || !r.player.longitude) return false;
+      
+      // Calculer la distance
+      const distance = calculateDistance(
+        latitude,
+        longitude,
+        parseFloat(r.player.latitude),
+        parseFloat(r.player.longitude)
+      );
+      
+      // Vérifier si dans le rayon
+      if (distance > radiusKm) return false;
+
+      // Vérifier la compatibilité ELO
+      const { eloMin, eloMax } = r.availability;
+      if (eloMin !== null && currentPlayerElo < eloMin) return false;
+      if (eloMax !== null && currentPlayerElo > eloMax) return false;
+
+      return true;
+    })
+    .map((r) => ({
+      ...r.availability,
+      player: r.player,
+      distance: calculateDistance(
+        latitude,
+        longitude,
+        parseFloat(r.player.latitude!),
+        parseFloat(r.player.longitude!)
+      ),
+    }))
+    .sort((a, b) => a.distance - b.distance); // Trier par distance
+
+  return filteredResults as (MatchNowAvailability & { distance: number })[];
+}
+
+/**
  * Répond à une disponibilité
  */
 export async function respondToAvailability(
