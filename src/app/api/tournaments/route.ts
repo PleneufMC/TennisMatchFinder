@@ -36,6 +36,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Joueur non trouvé' }, { status: 404 });
     }
 
+    // Si le joueur n'a pas de club
+    if (!player.clubId) {
+      return NextResponse.json({ tournaments: [] });
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const status = searchParams.get('status') as TournamentStatus | null;
     const my = searchParams.get('my') === 'true';
@@ -90,9 +95,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Joueur non trouvé' }, { status: 404 });
     }
 
-    if (!player.isAdmin) {
+    if (!player.isAdmin || !player.clubId) {
       return NextResponse.json(
-        { error: 'Seuls les administrateurs peuvent créer des tournois' },
+        { error: 'Seuls les administrateurs de club peuvent créer des tournois' },
         { status: 403 }
       );
     }

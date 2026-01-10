@@ -16,7 +16,7 @@ import type { ChatRoom as ChatRoomType, ChatMessage, Player } from '@/lib/db/sch
 interface ChatRoomProps {
   room: ChatRoomType;
   messages: (ChatMessage & { sender: Player | null })[];
-  currentPlayer: { id: string; fullName: string; avatarUrl?: string | null; clubId: string };
+  currentPlayer: { id: string; fullName: string; avatarUrl?: string | null; clubId: string | null };
   members: Player[];
   chatTitle: string;
 }
@@ -57,7 +57,7 @@ export function ChatRoom({
     setMessages((prev) => [...prev, newMsg]);
   }, []);
 
-  // Connect to Pusher
+  // Connect to Pusher (clubId is guaranteed to exist since chat access requires a club)
   const {
     isConnected,
     isSubscribed,
@@ -66,7 +66,7 @@ export function ChatRoom({
     sendTypingIndicator,
     error: pusherError,
   } = usePusherChat({
-    clubId: currentPlayer.clubId,
+    clubId: currentPlayer.clubId || '',
     roomId: room.id,
     currentPlayerId: currentPlayer.id,
     onNewMessage: handleNewMessage,

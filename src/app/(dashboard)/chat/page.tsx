@@ -24,6 +24,31 @@ export default async function ChatPage() {
     redirect('/login');
   }
 
+  // Si le joueur n'a pas de club, afficher un message
+  if (!player.clubId) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            <MessageCircle className="h-8 w-8" />
+            Chat du club
+          </h1>
+          <p className="text-muted-foreground">
+            Rejoignez un club pour accéder aux salons de discussion
+          </p>
+        </div>
+        <Card>
+          <CardContent className="p-6 text-center">
+            <p className="text-muted-foreground">
+              Vous n&apos;êtes pas encore affilié à un club. 
+              Rejoignez un club pour accéder au chat.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   // Récupérer les salons du club
   const sections = await getClubSectionsWithUnread(player.clubId, player.id);
 

@@ -13,6 +13,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
+    if (!player.clubId) {
+      return NextResponse.json({ error: 'Vous devez appartenir à un club' }, { status: 403 });
+    }
+
     const body = await request.json();
     const { email, name } = body;
 

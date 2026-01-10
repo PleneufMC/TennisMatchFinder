@@ -40,6 +40,11 @@ export default async function ThreadPage({ params }: ThreadPageProps) {
     redirect('/login');
   }
 
+  // Si le joueur n'a pas de club, il ne peut pas accéder aux threads
+  if (!player.clubId) {
+    redirect('/forum');
+  }
+
   const { threadId } = await params;
 
   // Récupérer le thread avec l'auteur

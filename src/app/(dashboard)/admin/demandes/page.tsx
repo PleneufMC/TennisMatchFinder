@@ -55,8 +55,8 @@ export default async function AdminJoinRequestsPage({
     redirect('/login');
   }
 
-  // Vérifier que l'utilisateur est admin
-  if (!player.isAdmin) {
+  // Vérifier que l'utilisateur est admin et a un club
+  if (!player.isAdmin || !player.clubId) {
     redirect('/dashboard');
   }
 

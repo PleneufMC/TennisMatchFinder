@@ -24,6 +24,35 @@ export default async function NouveauMatchPage() {
     redirect('/login');
   }
 
+  // Si le joueur n'a pas de club, il ne peut pas enregistrer un match club
+  if (!player.clubId) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" asChild>
+            <Link href="/matchs">
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold">Enregistrer un match</h1>
+            <p className="text-muted-foreground">
+              Rejoignez un club pour enregistrer des matchs
+            </p>
+          </div>
+        </div>
+        <Card>
+          <CardContent className="p-6 text-center">
+            <p className="text-muted-foreground">
+              Vous n&apos;êtes pas encore affilié à un club. 
+              Rejoignez un club pour enregistrer vos matchs.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   // Récupérer la liste des adversaires potentiels (autres joueurs du club)
   const allPlayers = await getPlayersByClub(player.clubId, { activeOnly: true });
   const opponents = allPlayers.filter((p) => p.id !== player.id);

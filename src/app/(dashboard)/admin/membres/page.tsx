@@ -27,7 +27,7 @@ export default async function MembresPage() {
     redirect('/login');
   }
 
-  if (!player.isAdmin) {
+  if (!player.isAdmin || !player.clubId) {
     redirect('/dashboard');
   }
 

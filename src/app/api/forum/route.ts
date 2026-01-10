@@ -28,8 +28,8 @@ export async function GET(request: NextRequest) {
       where: eq(players.id, session.user.id),
     });
 
-    if (!player) {
-      return NextResponse.json({ error: 'Joueur non trouvé' }, { status: 404 });
+    if (!player || !player.clubId) {
+      return NextResponse.json({ error: 'Joueur non trouvé ou non affilié à un club' }, { status: 404 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -82,8 +82,8 @@ export async function POST(request: NextRequest) {
       where: eq(players.id, session.user.id),
     });
 
-    if (!player) {
-      return NextResponse.json({ error: 'Joueur non trouvé' }, { status: 404 });
+    if (!player || !player.clubId) {
+      return NextResponse.json({ error: 'Joueur non trouvé ou non affilié à un club' }, { status: 404 });
     }
 
     // Parser et valider les données

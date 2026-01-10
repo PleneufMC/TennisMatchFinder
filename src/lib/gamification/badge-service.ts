@@ -372,7 +372,7 @@ async function checkKingOfClub(playerId: string): Promise<boolean> {
     .where(eq(players.id, playerId))
     .limit(1);
 
-  if (!player[0]) return false;
+  if (!player[0] || !player[0].clubId) return false;
 
   // Compter les joueurs avec un ELO supérieur dans le même club
   const result = await db

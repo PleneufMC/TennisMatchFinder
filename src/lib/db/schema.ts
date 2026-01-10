@@ -172,8 +172,8 @@ export const players = pgTable(
       .primaryKey()
       .references(() => users.id, { onDelete: 'cascade' }),
     clubId: uuid('club_id')
-      .notNull()
-      .references(() => clubs.id, { onDelete: 'cascade' }),
+      .references(() => clubs.id, { onDelete: 'set null' }), // Nullable - joueur non affilié
+    city: varchar('city', { length: 100 }), // Ville du joueur (pour non affiliés)
     fullName: varchar('full_name', { length: 100 }).notNull(),
     avatarUrl: text('avatar_url'),
     phone: varchar('phone', { length: 20 }),

@@ -25,6 +25,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
+    // Si le joueur n'a pas de club
+    if (!player.clubId) {
+      return NextResponse.json({
+        myAvailability: null,
+        availablePlayers: [],
+        totalAvailable: 0,
+      });
+    }
+
     // Récupérer ma disponibilité active
     const myAvailability = await getActiveAvailability(player.id);
 
@@ -57,6 +66,10 @@ export async function POST(request: NextRequest) {
     const player = await getServerPlayer();
     if (!player) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+
+    if (!player.clubId) {
+      return NextResponse.json({ error: 'Vous devez appartenir à un club' }, { status: 403 });
     }
 
     const body = await request.json();
