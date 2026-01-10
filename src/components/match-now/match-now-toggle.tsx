@@ -3,11 +3,10 @@
 import { useState, useEffect } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Zap, Clock, X, Users } from 'lucide-react';
+import { Zap, Clock, X, Users, MapPin, Building2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
@@ -20,6 +19,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 
 interface MatchNowAvailability {
@@ -33,10 +39,14 @@ interface MatchNowAvailability {
 interface MatchNowToggleProps {
   initialAvailability?: MatchNowAvailability | null;
   availableCount?: number;
+  hasLocation?: boolean;
+  hasClub?: boolean;
   onActivate: (params: {
     durationMinutes: number;
     message?: string;
     gameTypes: string[];
+    searchMode: 'club' | 'proximity';
+    radiusKm?: number;
   }) => Promise<void>;
   onDeactivate: () => Promise<void>;
 }
@@ -44,6 +54,8 @@ interface MatchNowToggleProps {
 export function MatchNowToggle({
   initialAvailability,
   availableCount = 0,
+  hasLocation = false,
+  hasClub = true,
   onActivate,
   onDeactivate,
 }: MatchNowToggleProps) {
@@ -56,6 +68,8 @@ export function MatchNowToggle({
   const [duration, setDuration] = useState(120);
   const [message, setMessage] = useState('');
   const [gameTypes, setGameTypes] = useState<string[]>(['simple']);
+  const [searchMode, setSearchMode] = useState<'club' | 'proximity'>(hasClub ? 'club' : 'proximity');
+  const [radiusKm, setRadiusKm] = useState(20);
 
   // Initialiser avec la disponibilité existante
   useEffect(() => {
@@ -86,7 +100,13 @@ export function MatchNowToggle({
   const handleActivate = async () => {
     setIsLoading(true);
     try {
-      await onActivate({ durationMinutes: duration, message, gameTypes });
+      await onActivate({ 
+        durationMinutes: duration, 
+        message, 
+        gameTypes,
+        searchMode,
+        radiusKm: searchMode === 'proximity' ? radiusKm : undefined,
+      });
       setDialogOpen(false);
     } catch (error) {
       console.error('Error activating:', error);
@@ -209,6 +229,64 @@ export function MatchNowToggle({
                 </DialogHeader>
 
                 <div className="space-y-6 py-4">
+                  {/* Mode de recherche */}
+                  <div className="space-y-3">
+                    <Label>Rechercher des partenaires</Label>
+                    <div className="flex gap-2">
+                      {hasClub && (
+                        <Button
+                          type="button"
+                          variant={searchMode === 'club' ? 'default' : 'outline'}
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => setSearchMode('club')}
+                        >
+                          <Building2 className="w-4 h-4 mr-2" />
+                          Dans mon club
+                        </Button>
+                      )}
+                      <Button
+                        type="button"
+                        variant={searchMode === 'proximity' ? 'default' : 'outline'}
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => setSearchMode('proximity')}
+                        disabled={!hasLocation}
+                      >
+                        <MapPin className="w-4 h-4 mr-2" />
+                        Autour de moi
+                      </Button>
+                    </div>
+                    {!hasLocation && searchMode !== 'club' && (
+                      <p className="text-xs text-amber-600">
+                        Activez la géolocalisation dans votre profil pour utiliser ce mode
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Périmètre (si mode proximité) */}
+                  {searchMode === 'proximity' && (
+                    <div className="space-y-3">
+                      <Label>Périmètre de recherche</Label>
+                      <div className="flex items-center gap-4">
+                        <Slider
+                          value={[radiusKm]}
+                          onValueChange={([value]) => value !== undefined && setRadiusKm(value)}
+                          min={5}
+                          max={50}
+                          step={5}
+                          className="flex-1"
+                        />
+                        <span className="w-16 text-right font-medium">
+                          {radiusKm} km
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Joueurs dans un rayon de {radiusKm} km autour de votre position
+                      </p>
+                    </div>
+                  )}
+
                   {/* Durée */}
                   <div className="space-y-3">
                     <Label>Durée de disponibilité</Label>

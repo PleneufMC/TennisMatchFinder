@@ -647,13 +647,14 @@ export const matchNowAvailability = pgTable(
       .notNull()
       .references(() => players.id, { onDelete: 'cascade' }),
     clubId: uuid('club_id')
-      .notNull()
-      .references(() => clubs.id, { onDelete: 'cascade' }),
+      .references(() => clubs.id, { onDelete: 'cascade' }), // Nullable pour mode proximité
     availableUntil: timestamp('available_until', { mode: 'date' }).notNull(),
     message: varchar('message', { length: 200 }), // "Dispo courts 5-7, niveau intermédiaire+"
     gameTypes: jsonb('game_types').default(['simple']).notNull(), // ['simple', 'double']
     eloMin: integer('elo_min'), // Filtre optionnel ELO minimum
     eloMax: integer('elo_max'), // Filtre optionnel ELO maximum
+    searchMode: varchar('search_mode', { length: 20 }).default('club').notNull(), // 'club' ou 'proximity'
+    radiusKm: integer('radius_km'), // Rayon de recherche en km (mode proximity)
     isActive: boolean('is_active').default(true).notNull(),
     createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),

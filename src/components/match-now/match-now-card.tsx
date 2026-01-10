@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Clock, MessageSquare, Zap, Send } from 'lucide-react';
+import { Clock, MessageSquare, Zap, Send, MapPin } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,11 +17,13 @@ interface MatchNowAvailability {
   availableUntil: string | Date;
   message: string | null;
   gameTypes: string[];
+  distance?: number; // Distance en km (mode proximity)
   player?: {
     id: string;
     fullName: string;
     avatarUrl: string | null;
     currentElo: number;
+    city?: string | null;
   };
 }
 
@@ -30,6 +32,7 @@ interface MatchNowCardProps {
   currentPlayerElo?: number;
   onRespond?: (availabilityId: string, message: string) => Promise<void>;
   isLoading?: boolean;
+  showDistance?: boolean;
 }
 
 export function MatchNowCard({
@@ -37,6 +40,7 @@ export function MatchNowCard({
   currentPlayerElo,
   onRespond,
   isLoading = false,
+  showDistance = false,
 }: MatchNowCardProps) {
   const [showMessageInput, setShowMessageInput] = useState(false);
   const [message, setMessage] = useState('');
@@ -113,6 +117,17 @@ export function MatchNowCard({
             </Badge>
           ))}
         </div>
+
+        {/* Distance (mode proximity) */}
+        {showDistance && availability.distance !== undefined && (
+          <div className="flex items-center gap-2 text-sm text-blue-600">
+            <MapPin className="w-4 h-4" />
+            <span>À {availability.distance.toFixed(1)} km</span>
+            {player.city && (
+              <span className="text-muted-foreground">• {player.city}</span>
+            )}
+          </div>
+        )}
 
         {/* Temps restant */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
