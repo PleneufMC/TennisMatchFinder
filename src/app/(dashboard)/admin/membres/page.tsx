@@ -5,15 +5,15 @@ import { redirect } from 'next/navigation';
 export const dynamic = 'force-dynamic';
 
 import Link from 'next/link';
-import { ArrowLeft, Users, Search, MoreVertical, Shield, ShieldOff, UserX, Mail } from 'lucide-react';
+import { ArrowLeft, Users, Shield } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { PlayerAvatar } from '@/components/ui/avatar';
 import { getServerPlayer } from '@/lib/auth-helpers';
-import { getPlayersByClub } from '@/lib/db/queries';
+import { getPlayersByClub, getAllClubs } from '@/lib/db/queries';
 import { formatRelativeDate } from '@/lib/utils/dates';
+import { MemberActions } from '@/components/admin/member-actions';
 
 export const metadata: Metadata = {
   title: 'Gestion des membres',
@@ -31,9 +31,13 @@ export default async function MembresPage() {
     redirect('/dashboard');
   }
 
-  const allPlayers = await getPlayersByClub(player.clubId, { orderBy: 'name' });
+  const [allPlayers, allClubs] = await Promise.all([
+    getPlayersByClub(player.clubId, { orderBy: 'name' }),
+    getAllClubs(),
+  ]);
   const activePlayers = allPlayers.filter(p => p.isActive);
   const inactivePlayers = allPlayers.filter(p => !p.isActive);
+  const activeClubs = allClubs.filter(c => c.isActive);
 
   return (
     <div className="space-y-6">
@@ -143,6 +147,14 @@ export default async function MembresPage() {
                       }`}>
                         #{allPlayers.filter(p => p.isActive && p.currentElo > member.currentElo).length + 1}
                       </span>
+                      <MemberActions
+                        memberId={member.id}
+                        memberName={member.fullName}
+                        isAdmin={member.isAdmin}
+                        isCurrentUser={member.id === player.id}
+                        clubs={activeClubs}
+                        currentClubId={player.clubId!}
+                      />
                     </div>
                   </div>
                 ))}

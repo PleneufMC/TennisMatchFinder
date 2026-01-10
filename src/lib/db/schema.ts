@@ -10,6 +10,7 @@ import {
   pgEnum,
   index,
   primaryKey,
+  numeric,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import type { AdapterAccount } from 'next-auth/adapters';
@@ -174,6 +175,8 @@ export const players = pgTable(
     clubId: uuid('club_id')
       .references(() => clubs.id, { onDelete: 'set null' }), // Nullable - joueur non affilié
     city: varchar('city', { length: 100 }), // Ville du joueur (pour non affiliés)
+    latitude: numeric('latitude', { precision: 10, scale: 8 }), // Coordonnées GPS
+    longitude: numeric('longitude', { precision: 11, scale: 8 }), // Coordonnées GPS
     fullName: varchar('full_name', { length: 100 }).notNull(),
     avatarUrl: text('avatar_url'),
     phone: varchar('phone', { length: 20 }),
