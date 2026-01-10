@@ -89,21 +89,40 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
-    if (!player.clubId) {
-      return NextResponse.json({ error: 'Vous devez appartenir à un club' }, { status: 403 });
+    const body = await request.json();
+    const { durationMinutes, message, gameTypes, eloMin, eloMax, searchMode, radiusKm } = body;
+
+    // En mode proximité, pas besoin de club
+    // En mode club, il faut avoir un club
+    if (searchMode === 'club' && !player.clubId) {
+      return NextResponse.json({ error: 'Vous devez appartenir à un club pour ce mode' }, { status: 403 });
     }
 
-    const body = await request.json();
-    const { durationMinutes, message, gameTypes, eloMin, eloMax } = body;
+    // En mode proximité, vérifier la géolocalisation
+    if (searchMode === 'proximity') {
+      const [playerData] = await db
+        .select({ latitude: players.latitude, longitude: players.longitude })
+        .from(players)
+        .where(eq(players.id, player.id))
+        .limit(1);
+      
+      if (!playerData?.latitude || !playerData?.longitude) {
+        return NextResponse.json({ 
+          error: 'Activez la géolocalisation dans votre profil pour utiliser ce mode' 
+        }, { status: 400 });
+      }
+    }
 
     const availability = await createMatchNowAvailability({
       playerId: player.id,
-      clubId: player.clubId,
+      clubId: player.clubId, // Peut être null en mode proximité
       durationMinutes: durationMinutes || 120,
       message,
       gameTypes: gameTypes || ['simple'],
       eloMin,
       eloMax,
+      searchMode: searchMode || 'club',
+      radiusKm: radiusKm || 20,
     });
 
     return NextResponse.json({

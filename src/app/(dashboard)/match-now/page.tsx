@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { RefreshCw, Users, Zap, AlertCircle } from 'lucide-react';
+import { RefreshCw, Users, Zap, AlertCircle, MapPin, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -17,11 +17,15 @@ interface MatchNowAvailability {
   message: string | null;
   gameTypes: string[];
   isActive: boolean;
+  searchMode?: 'club' | 'proximity';
+  radiusKm?: number;
+  distance?: number; // En mode proximity
   player?: {
     id: string;
     fullName: string;
     avatarUrl: string | null;
     currentElo: number;
+    city?: string | null;
   };
 }
 
@@ -29,6 +33,8 @@ interface MatchNowData {
   myAvailability: MatchNowAvailability | null;
   availablePlayers: MatchNowAvailability[];
   totalAvailable: number;
+  mode: 'club' | 'proximity';
+  hasLocation: boolean;
 }
 
 export default function MatchNowPage() {
@@ -39,13 +45,21 @@ export default function MatchNowPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [respondingTo, setRespondingTo] = useState<string | null>(null);
+  const [searchMode, setSearchMode] = useState<'club' | 'proximity'>('club');
+  const [radiusKm, setRadiusKm] = useState(20);
 
-  const fetchData = useCallback(async (showRefresh = false) => {
+  const fetchData = useCallback(async (showRefresh = false, mode?: string, radius?: number) => {
     if (showRefresh) setIsRefreshing(true);
     setError(null);
 
     try {
-      const response = await fetch('/api/match-now');
+      const params = new URLSearchParams();
+      params.set('mode', mode || searchMode);
+      if (mode === 'proximity' || searchMode === 'proximity') {
+        params.set('radius', String(radius || radiusKm));
+      }
+      
+      const response = await fetch(`/api/match-now?${params}`);
       if (!response.ok) throw new Error('Erreur lors du chargement');
       
       const result = await response.json();
@@ -57,7 +71,7 @@ export default function MatchNowPage() {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, []);
+  }, [searchMode, radiusKm]);
 
   useEffect(() => {
     fetchData();
@@ -71,6 +85,8 @@ export default function MatchNowPage() {
     durationMinutes: number;
     message?: string;
     gameTypes: string[];
+    searchMode: 'club' | 'proximity';
+    radiusKm?: number;
   }) => {
     const response = await fetch('/api/match-now', {
       method: 'POST',
@@ -79,10 +95,15 @@ export default function MatchNowPage() {
     });
 
     if (!response.ok) {
-      throw new Error('Erreur lors de l\'activation');
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Erreur lors de l\'activation');
     }
 
-    await fetchData();
+    // Mettre à jour le mode de recherche actif
+    setSearchMode(params.searchMode);
+    if (params.radiusKm) setRadiusKm(params.radiusKm);
+    
+    await fetchData(false, params.searchMode, params.radiusKm);
   };
 
   const handleDeactivate = async () => {
@@ -177,9 +198,45 @@ export default function MatchNowPage() {
       <MatchNowToggle
         initialAvailability={data?.myAvailability}
         availableCount={data?.totalAvailable || 0}
+        hasLocation={data?.hasLocation || false}
+        hasClub={!!player?.clubId}
         onActivate={handleActivate}
         onDeactivate={handleDeactivate}
       />
+
+      {/* Sélecteur de mode de recherche */}
+      <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg">
+        <span className="text-sm text-muted-foreground mr-2">Afficher :</span>
+        <Button
+          variant={searchMode === 'club' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => {
+            setSearchMode('club');
+            fetchData(true, 'club');
+          }}
+          disabled={!player?.clubId}
+        >
+          <Building2 className="w-4 h-4 mr-2" />
+          Mon club
+        </Button>
+        <Button
+          variant={searchMode === 'proximity' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => {
+            setSearchMode('proximity');
+            fetchData(true, 'proximity', radiusKm);
+          }}
+          disabled={!data?.hasLocation}
+        >
+          <MapPin className="w-4 h-4 mr-2" />
+          {radiusKm} km autour de moi
+        </Button>
+        {!data?.hasLocation && (
+          <span className="text-xs text-amber-600 ml-2">
+            Activez la géolocalisation dans votre profil
+          </span>
+        )}
+      </div>
 
       {/* Liste des joueurs disponibles */}
       <div className="space-y-4">
@@ -187,6 +244,12 @@ export default function MatchNowPage() {
           <h2 className="text-lg font-semibold flex items-center gap-2">
             <Users className="w-5 h-5" />
             Joueurs disponibles
+            {searchMode === 'proximity' && (
+              <Badge variant="outline" className="ml-2">
+                <MapPin className="w-3 h-3 mr-1" />
+                {radiusKm} km
+              </Badge>
+            )}
           </h2>
           {data && data.availablePlayers.length > 0 && (
             <Badge variant="secondary" className="bg-green-100 text-green-700">
@@ -204,6 +267,7 @@ export default function MatchNowPage() {
                 currentPlayerElo={player.currentElo}
                 onRespond={handleRespond}
                 isLoading={respondingTo === availability.id}
+                showDistance={searchMode === 'proximity'}
               />
             ))}
           </div>
@@ -212,8 +276,9 @@ export default function MatchNowPage() {
             <Zap className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
             <h3 className="font-medium mb-2">Personne n&apos;est disponible pour le moment</h3>
             <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              Soyez le premier ! Activez votre disponibilité et les autres membres 
-              avec un niveau similaire seront notifiés.
+              {searchMode === 'proximity' 
+                ? `Aucun joueur disponible dans un rayon de ${radiusKm} km.`
+                : 'Soyez le premier ! Activez votre disponibilité et les autres membres avec un niveau similaire seront notifiés.'}
             </p>
           </div>
         )}

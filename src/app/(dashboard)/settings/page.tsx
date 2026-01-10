@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { LocationSettings } from '@/components/profile/location-settings';
 
 export const dynamic = 'force-dynamic';
 
@@ -128,6 +129,9 @@ export default async function SettingsPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Géolocalisation */}
+        <LocationSettings />
 
         {/* Apparence */}
         <Card>

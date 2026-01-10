@@ -22,12 +22,14 @@ const DEFAULT_ELO_RANGE = 100;
 export interface MatchNowAvailability {
   id: string;
   playerId: string;
-  clubId: string;
+  clubId: string | null;
   availableUntil: Date;
   message: string | null;
   gameTypes: string[];
   eloMin: number | null;
   eloMax: number | null;
+  searchMode: 'club' | 'proximity' | null;
+  radiusKm: number | null;
   isActive: boolean;
   createdAt: Date;
   player?: {
@@ -35,6 +37,7 @@ export interface MatchNowAvailability {
     fullName: string;
     avatarUrl: string | null;
     currentElo: number;
+    city?: string | null;
   };
 }
 
@@ -55,12 +58,14 @@ export interface MatchNowResponse {
 
 export interface CreateAvailabilityParams {
   playerId: string;
-  clubId: string;
+  clubId: string | null;
   durationMinutes?: number;
   message?: string;
   gameTypes?: string[];
   eloMin?: number;
   eloMax?: number;
+  searchMode?: 'club' | 'proximity';
+  radiusKm?: number;
 }
 
 // ============================================
@@ -81,6 +86,8 @@ export async function createMatchNowAvailability(
     gameTypes = ['simple'],
     eloMin,
     eloMax,
+    searchMode = 'club',
+    radiusKm = 20,
   } = params;
 
   // Désactiver les disponibilités précédentes du joueur
@@ -106,6 +113,8 @@ export async function createMatchNowAvailability(
       gameTypes,
       eloMin: eloMin || null,
       eloMax: eloMax || null,
+      searchMode,
+      radiusKm: searchMode === 'proximity' ? radiusKm : null,
       isActive: true,
     })
     .returning();
@@ -114,8 +123,11 @@ export async function createMatchNowAvailability(
     throw new Error('Erreur lors de la création de la disponibilité');
   }
 
-  // Notifier les joueurs compatibles
-  await notifyCompatiblePlayers(newAvailability.id, playerId, clubId);
+  // Notifier les joueurs compatibles (seulement en mode club)
+  if (searchMode === 'club' && clubId) {
+    await notifyCompatiblePlayers(newAvailability.id, playerId, clubId);
+  }
+  // TODO: En mode proximité, notifier par géolocalisation
 
   return newAvailability as MatchNowAvailability;
 }
