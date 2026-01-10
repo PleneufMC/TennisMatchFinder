@@ -357,6 +357,7 @@ export const authOptions: NextAuthOptions = {
         
         // Fetch player data from database
         try {
+          // Note: city field may not exist yet if migration hasn't been applied
           const playerResult = await db
             .select({
               id: players.id,
@@ -364,7 +365,6 @@ export const authOptions: NextAuthOptions = {
               avatarUrl: players.avatarUrl,
               currentElo: players.currentElo,
               clubId: players.clubId,
-              city: players.city,
               isAdmin: players.isAdmin,
               isVerified: players.isVerified,
             })
@@ -394,7 +394,6 @@ export const authOptions: NextAuthOptions = {
               avatarUrl: player.avatarUrl,
               currentElo: player.currentElo,
               clubId: player.clubId,
-              city: player.city,
               clubName: club?.name || '',
               clubSlug: club?.slug || '',
               isAdmin: player.isAdmin,
