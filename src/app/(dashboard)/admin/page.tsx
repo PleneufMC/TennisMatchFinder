@@ -5,11 +5,29 @@ import { redirect } from 'next/navigation';
 export const dynamic = 'force-dynamic';
 
 import Link from 'next/link';
-import { Settings, UserPlus, Users, BarChart3, Bell, Shield, Hash, Building2 } from 'lucide-react';
+import { Settings, UserPlus, Users, BarChart3, Bell, Shield, Hash, Building2, Globe } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { getServerPlayer } from '@/lib/auth-helpers';
 import { countPendingJoinRequests, getPlayersByClub, getClubSections, getAllClubs } from '@/lib/db/queries';
+import { db } from '@/lib/db';
+import { users } from '@/lib/db/schema';
+import { eq } from 'drizzle-orm';
+
+// Liste des emails des super admins
+const SUPER_ADMIN_EMAILS = [
+  'music.music@free.fr',
+];
+
+async function isSuperAdmin(playerId: string): Promise<boolean> {
+  const [result] = await db
+    .select({ email: users.email })
+    .from(users)
+    .where(eq(users.id, playerId))
+    .limit(1);
+  
+  return !!(result && SUPER_ADMIN_EMAILS.includes(result.email?.toLowerCase() || ''));
+}
 
 export const metadata: Metadata = {
   title: 'Administration',
@@ -27,6 +45,9 @@ export default async function AdminPage() {
   if (!player.isAdmin || !player.clubId) {
     redirect('/dashboard');
   }
+
+  // Vérifier si super admin
+  const superAdmin = await isSuperAdmin(player.id);
 
   // Récupérer les statistiques
   const [pendingRequests, allPlayers, sections, allClubs] = await Promise.all([
@@ -89,6 +110,17 @@ export default async function AdminPage() {
       icon: Settings,
     },
   ];
+
+  // Liens super admin (visibles uniquement pour les super admins)
+  const superAdminLinks = superAdmin ? [
+    {
+      href: '/admin/tous-les-joueurs',
+      title: 'Tous les joueurs',
+      description: 'Gérer tous les joueurs de la plateforme',
+      icon: Globe,
+      badgeVariant: 'outline' as const,
+    },
+  ] : [];
 
   return (
     <div className="space-y-6">
@@ -175,6 +207,40 @@ export default async function AdminPage() {
           </CardHeader>
         </Card>
       </div>
+
+      {/* Section Super Admin */}
+      {superAdminLinks.length > 0 && (
+        <>
+          <div className="pt-4">
+            <h2 className="text-xl font-semibold flex items-center gap-2 text-amber-600">
+              <Globe className="h-5 w-5" />
+              Super Administration
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Fonctionnalités réservées aux super administrateurs
+            </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {superAdminLinks.map((link) => (
+              <Link key={link.href} href={link.href}>
+                <Card className="h-full transition-colors hover:bg-amber-50 dark:hover:bg-amber-950/20 border-amber-200 dark:border-amber-800">
+                  <CardHeader className="flex flex-row items-center gap-4 space-y-0">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/50">
+                      <link.icon className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <div className="flex-1">
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        {link.title}
+                      </CardTitle>
+                      <CardDescription>{link.description}</CardDescription>
+                    </div>
+                  </CardHeader>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
