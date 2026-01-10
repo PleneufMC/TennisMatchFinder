@@ -26,7 +26,7 @@ export default async function StatistiquesPage() {
     redirect('/login');
   }
 
-  if (!player.isAdmin) {
+  if (!player.isAdmin || !player.clubId) {
     redirect('/dashboard');
   }
 

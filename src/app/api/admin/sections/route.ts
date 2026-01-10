@@ -11,6 +11,10 @@ export async function GET() {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
+    if (!player.clubId) {
+      return NextResponse.json({ sections: [] });
+    }
+
     const sections = await getClubSections(player.clubId);
 
     return NextResponse.json({ sections });
@@ -32,7 +36,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
-    if (!player.isAdmin) {
+    if (!player.isAdmin || !player.clubId) {
       return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
     }
 

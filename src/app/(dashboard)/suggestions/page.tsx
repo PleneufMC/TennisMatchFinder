@@ -29,6 +29,31 @@ export default async function SuggestionsPage() {
     redirect('/login');
   }
 
+  // Si le joueur n'a pas de club
+  if (!player.clubId) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            <Users className="h-8 w-8" />
+            Trouver un adversaire
+          </h1>
+          <p className="text-muted-foreground">
+            Rejoignez un club pour trouver des adversaires
+          </p>
+        </div>
+        <Card>
+          <CardContent className="p-6 text-center">
+            <p className="text-muted-foreground">
+              Vous n&apos;êtes pas encore affilié à un club. 
+              Rejoignez un club pour recevoir des suggestions d&apos;adversaires.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   // Récupérer tous les joueurs actifs du club et l'historique des matchs
   const [allPlayers, matchHistory] = await Promise.all([
     getPlayersByClub(player.clubId, { activeOnly: true }),

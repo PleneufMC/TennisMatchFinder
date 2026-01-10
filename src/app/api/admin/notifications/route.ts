@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
       .where(eq(players.id, session.user.id))
       .limit(1);
 
-    if (!player || !player.isAdmin) {
+    if (!player || !player.isAdmin || !player.clubId) {
       return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
     }
 

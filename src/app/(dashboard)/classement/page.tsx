@@ -27,6 +27,31 @@ export default async function ClassementPage() {
     redirect('/login');
   }
 
+  // Si le joueur n'a pas de club, afficher un message
+  if (!player.clubId) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            <Trophy className="h-8 w-8 text-yellow-500" />
+            Classement
+          </h1>
+          <p className="text-muted-foreground">
+            Rejoignez un club pour voir le classement
+          </p>
+        </div>
+        <Card>
+          <CardContent className="p-6 text-center">
+            <p className="text-muted-foreground">
+              Vous n&apos;êtes pas encore affilié à un club. 
+              Rejoignez un club pour voir le classement ELO des membres.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   // Récupérer le classement du club
   const players = await getClubRanking(player.clubId);
 

@@ -364,6 +364,7 @@ export const authOptions: NextAuthOptions = {
               avatarUrl: players.avatarUrl,
               currentElo: players.currentElo,
               clubId: players.clubId,
+              city: players.city,
               isAdmin: players.isAdmin,
               isVerified: players.isVerified,
             })
@@ -373,17 +374,19 @@ export const authOptions: NextAuthOptions = {
           
           if (playerResult[0]) {
             const player = playerResult[0];
-            // Fetch club info
-            const clubResult = await db
-              .select({
-                name: clubs.name,
-                slug: clubs.slug,
-              })
-              .from(clubs)
-              .where(eq(clubs.id, player.clubId))
-              .limit(1);
-            
-            const club = clubResult[0];
+            // Fetch club info only if player has a club
+            let club: { name: string; slug: string } | undefined;
+            if (player.clubId) {
+              const clubResult = await db
+                .select({
+                  name: clubs.name,
+                  slug: clubs.slug,
+                })
+                .from(clubs)
+                .where(eq(clubs.id, player.clubId))
+                .limit(1);
+              club = clubResult[0];
+            }
             
             (session.user as any).player = {
               id: player.id,
@@ -391,6 +394,7 @@ export const authOptions: NextAuthOptions = {
               avatarUrl: player.avatarUrl,
               currentElo: player.currentElo,
               clubId: player.clubId,
+              city: player.city,
               clubName: club?.name || '',
               clubSlug: club?.slug || '',
               isAdmin: player.isAdmin,

@@ -56,8 +56,8 @@ export default async function PlayerProfilePage({ params }: PageProps) {
     notFound();
   }
   
-  // Vérifier que le joueur est du même club
-  if (player.clubId !== currentPlayer.clubId) {
+  // Vérifier que le joueur est du même club (si le joueur courant a un club)
+  if (currentPlayer.clubId && player.clubId !== currentPlayer.clubId) {
     notFound();
   }
 

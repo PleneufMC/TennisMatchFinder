@@ -39,8 +39,8 @@ export async function GET(
       where: eq(players.id, session.user.id),
     });
 
-    if (!player) {
-      return NextResponse.json({ error: 'Joueur non trouvé' }, { status: 404 });
+    if (!player || !player.clubId) {
+      return NextResponse.json({ error: 'Joueur non trouvé ou non affilié à un club' }, { status: 404 });
     }
 
     // Récupérer le thread
@@ -114,8 +114,8 @@ export async function POST(
       where: eq(players.id, session.user.id),
     });
 
-    if (!player) {
-      return NextResponse.json({ error: 'Joueur non trouvé' }, { status: 404 });
+    if (!player || !player.clubId) {
+      return NextResponse.json({ error: 'Joueur non trouvé ou non affilié à un club' }, { status: 404 });
     }
 
     // Vérifier que le thread existe et appartient au club
@@ -198,8 +198,8 @@ export async function PATCH(
       where: eq(players.id, session.user.id),
     });
 
-    if (!player) {
-      return NextResponse.json({ error: 'Joueur non trouvé' }, { status: 404 });
+    if (!player || !player.clubId) {
+      return NextResponse.json({ error: 'Joueur non trouvé ou non affilié à un club' }, { status: 404 });
     }
 
     // Récupérer le thread
@@ -279,8 +279,8 @@ export async function DELETE(
       where: eq(players.id, session.user.id),
     });
 
-    if (!player) {
-      return NextResponse.json({ error: 'Joueur non trouvé' }, { status: 404 });
+    if (!player || !player.clubId) {
+      return NextResponse.json({ error: 'Joueur non trouvé ou non affilié à un club' }, { status: 404 });
     }
 
     // Récupérer le thread

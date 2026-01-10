@@ -32,10 +32,11 @@ export async function GET(request: NextRequest) {
       if (myLeagues) {
         // Récupérer uniquement les leagues auxquelles le joueur participe
         leagues = await getPlayerActiveLeagues(player.id);
-      } else {
+      } else if (player.clubId) {
         // Récupérer toutes les leagues du club
         leagues = await getBoxLeaguesByClub(player.clubId, status || undefined);
       }
+      // Si pas de clubId, retourner un array vide
     } catch (dbError) {
       // Si la table n'existe pas encore ou autre erreur DB, retourner un array vide
       console.error('Database error fetching box leagues:', dbError);
@@ -59,10 +60,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
-    // Vérifier si le joueur est admin
-    if (!player.isAdmin) {
+    // Vérifier si le joueur est admin et a un club
+    if (!player.isAdmin || !player.clubId) {
       return NextResponse.json(
-        { error: 'Seuls les administrateurs peuvent créer des Box Leagues' },
+        { error: 'Seuls les administrateurs de club peuvent créer des Box Leagues' },
         { status: 403 }
       );
     }

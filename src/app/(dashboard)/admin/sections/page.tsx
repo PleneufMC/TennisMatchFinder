@@ -25,8 +25,8 @@ export default async function AdminSectionsPage() {
     redirect('/login');
   }
 
-  // Vérifier que l'utilisateur est admin
-  if (!player.isAdmin) {
+  // Vérifier que l'utilisateur est admin et a un club
+  if (!player.isAdmin || !player.clubId) {
     redirect('/dashboard');
   }
 

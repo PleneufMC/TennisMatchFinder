@@ -47,8 +47,8 @@ export default async function ChatRoomPage({
   // Pour les sections de club, vérifier que le joueur appartient au même club
   // et l'ajouter automatiquement comme membre s'il ne l'est pas déjà
   if (room.isSection) {
-    if (room.clubId !== player.clubId) {
-      // Le joueur n'appartient pas au club de cette section
+    if (!player.clubId || room.clubId !== player.clubId) {
+      // Le joueur n'a pas de club ou n'appartient pas au club de cette section
       redirect('/chat');
     }
     

@@ -17,7 +17,7 @@ export async function POST(
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
-    if (!player.isAdmin) {
+    if (!player.isAdmin || !player.clubId) {
       return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
     }
 
@@ -32,11 +32,16 @@ export async function POST(
       .where(eq(users.id, result.player.id))
       .limit(1);
     
-    const [clubInfo] = await db
-      .select({ name: clubs.name })
-      .from(clubs)
-      .where(eq(clubs.id, result.player.clubId))
-      .limit(1);
+    // Ne récupérer le club que si le joueur a un clubId
+    let clubInfo: { name: string } | undefined;
+    if (result.player.clubId) {
+      const [club] = await db
+        .select({ name: clubs.name })
+        .from(clubs)
+        .where(eq(clubs.id, result.player.clubId))
+        .limit(1);
+      clubInfo = club;
+    }
 
     // Envoyer un email de bienvenue au nouveau membre
     if (userInfo?.email && clubInfo?.name) {
