@@ -1,7 +1,7 @@
 'use client';
 
 import Script from 'next/script';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 
 // Typage global pour gtag
@@ -184,8 +184,78 @@ export function useGoogleAnalytics() {
     });
   };
 
+  // ===== ÉVÉNEMENTS DE CONVERSION MARKETING =====
+  // Pour les campagnes d'acquisition (Google Ads, Meta Ads)
+  
+  const trackSignupStarted = (source: 'landing_hero' | 'landing_cta' | 'pricing_page' | 'navbar' | 'footer') => {
+    trackEvent('signup_started', {
+      event_category: 'conversion',
+      event_label: source,
+      value: 1,
+    });
+  };
+
+  const trackSignupCompleted = (clubSlug: string, method: 'email' | 'magic_link' = 'magic_link') => {
+    trackEvent('signup_completed', {
+      event_category: 'conversion',
+      event_label: clubSlug,
+      method,
+      value: 10, // Valeur de conversion pour Google Ads
+    });
+  };
+
+  const trackFirstMatchCreated = (eloGained: number) => {
+    trackEvent('first_match_created', {
+      event_category: 'activation',
+      event_label: 'match_recorded',
+      elo_gained: eloGained,
+      value: 5,
+    });
+  };
+
+  const trackMatchNowActivated = () => {
+    trackEvent('match_now_activated', {
+      event_category: 'engagement',
+      event_label: 'availability_set',
+    });
+  };
+
+  const trackEloViewed = (playerElo: number) => {
+    trackEvent('elo_viewed', {
+      event_category: 'engagement',
+      event_label: 'ranking_consulted',
+      player_elo: playerElo,
+    });
+  };
+
+  const trackLandingPageView = (variant?: string, utmSource?: string, utmMedium?: string, utmCampaign?: string) => {
+    trackEvent('landing_page_view', {
+      event_category: 'acquisition',
+      page_variant: variant || 'default',
+      utm_source: utmSource,
+      utm_medium: utmMedium,
+      utm_campaign: utmCampaign,
+    });
+  };
+
+  const trackCtaClicked = (ctaName: string, ctaLocation: string) => {
+    trackEvent('cta_clicked', {
+      event_category: 'engagement',
+      cta_name: ctaName,
+      cta_location: ctaLocation,
+    });
+  };
+
+  const trackPricingViewed = (tier?: string) => {
+    trackEvent('pricing_viewed', {
+      event_category: 'monetization',
+      tier_viewed: tier || 'all',
+    });
+  };
+
   return {
     trackEvent,
+    // Événements produit existants
     trackMatchProposal,
     trackMatchResult,
     trackBadgeEarned,
@@ -193,8 +263,14 @@ export function useGoogleAnalytics() {
     trackSignup,
     trackClubJoin,
     trackTournamentRegister,
+    // Nouveaux événements de conversion marketing
+    trackSignupStarted,
+    trackSignupCompleted,
+    trackFirstMatchCreated,
+    trackMatchNowActivated,
+    trackEloViewed,
+    trackLandingPageView,
+    trackCtaClicked,
+    trackPricingViewed,
   };
 }
-
-// Import manquant
-import { useState } from 'react';
