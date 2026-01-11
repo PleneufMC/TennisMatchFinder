@@ -41,6 +41,7 @@ export function RegisterForm({ clubSlug = 'mccc', clubName = 'MCCC' }: RegisterF
   const handleSubmit = async (data: RegisterInput) => {
     setIsLoading(true);
     // Track signup started
+    console.log('[GA4] trackSignupStarted: register_form');
     trackSignupStarted('register_form');
     try {
       // Enregistrer via l'API (crée une demande d'adhésion)
@@ -59,6 +60,7 @@ export function RegisterForm({ clubSlug = 'mccc', clubName = 'MCCC' }: RegisterF
       setRegisteredEmail(data.email);
       setRegistrationComplete(true);
       // Track signup completed
+      console.log('[GA4] trackSignupCompleted:', clubSlug);
       trackSignupCompleted(clubSlug, 'magic_link');
       toast.success('Demande envoyée !', {
         description: 'Un administrateur va valider votre inscription.',

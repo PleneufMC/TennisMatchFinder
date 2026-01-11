@@ -56,14 +56,18 @@ export function SignupCtaButton({
 }) {
   const { trackSignupStarted } = useGoogleAnalytics();
 
+  const handleClick = () => {
+    console.log('[GA4] trackSignupStarted:', source);
+    trackSignupStarted(source);
+  };
+
   return (
     <Button
       size="lg"
       className={className || "bg-amber-500 hover:bg-amber-600 text-white shadow-lg"}
       asChild
-      onClick={() => trackSignupStarted(source)}
     >
-      <Link href="/register" onClick={() => trackSignupStarted(source)}>
+      <Link href="/register" onClick={handleClick}>
         Rejoindre gratuitement
         <ArrowRight className="ml-2 h-5 w-5" />
       </Link>
