@@ -187,7 +187,7 @@ export function useGoogleAnalytics() {
   // ===== ÉVÉNEMENTS DE CONVERSION MARKETING =====
   // Pour les campagnes d'acquisition (Google Ads, Meta Ads)
   
-  const trackSignupStarted = (source: 'landing_hero' | 'landing_cta' | 'pricing_page' | 'navbar' | 'footer') => {
+  const trackSignupStarted = (source: 'landing_hero' | 'landing_cta' | 'pricing_page' | 'navbar' | 'footer' | 'register_form' | 'join_club') => {
     trackEvent('signup_started', {
       event_category: 'conversion',
       event_label: source,
