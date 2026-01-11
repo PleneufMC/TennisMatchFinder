@@ -4,6 +4,7 @@ import { ArrowRight, Trophy, Users, TrendingUp, MessageSquare, Zap, Shield, Cloc
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { SignupCtaButton } from '@/components/tracking/cta-button';
 
 // Configuration Early Bird
 const EARLY_BIRD_END_DATE = new Date('2026-06-30T23:59:59');
@@ -74,12 +75,7 @@ export default function HomePage() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-amber-500 hover:bg-amber-600 text-white shadow-lg" asChild>
-              <Link href="/register">
-                Rejoindre gratuitement
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
-            </Button>
+            <SignupCtaButton source="landing_hero" />
             <Button size="lg" variant="outline" className="bg-white/10 backdrop-blur border-white/30 text-white hover:bg-white/20" asChild>
               <Link href="/join/mccc">Rejoindre le club MCCC</Link>
             </Button>

@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { registerSchema, type RegisterInput } from '@/lib/validations/auth';
+import { useGoogleAnalytics } from '@/components/google-analytics';
 
 interface RegisterFormProps {
   clubSlug?: string;
@@ -25,6 +26,7 @@ export function RegisterForm({ clubSlug = 'mccc', clubName = 'MCCC' }: RegisterF
   const [isLoading, setIsLoading] = useState(false);
   const [registrationComplete, setRegistrationComplete] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState('');
+  const { trackSignupStarted, trackSignupCompleted } = useGoogleAnalytics();
 
   const form = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
@@ -38,6 +40,8 @@ export function RegisterForm({ clubSlug = 'mccc', clubName = 'MCCC' }: RegisterF
 
   const handleSubmit = async (data: RegisterInput) => {
     setIsLoading(true);
+    // Track signup started
+    trackSignupStarted('register_form');
     try {
       // Enregistrer via l'API (crée une demande d'adhésion)
       const response = await fetch('/api/auth/register', {
@@ -54,6 +58,8 @@ export function RegisterForm({ clubSlug = 'mccc', clubName = 'MCCC' }: RegisterF
 
       setRegisteredEmail(data.email);
       setRegistrationComplete(true);
+      // Track signup completed
+      trackSignupCompleted(clubSlug, 'magic_link');
       toast.success('Demande envoyée !', {
         description: 'Un administrateur va valider votre inscription.',
       });
