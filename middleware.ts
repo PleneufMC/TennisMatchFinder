@@ -16,6 +16,12 @@ export default withAuth(
           '/register',
           '/join',
           '/api/auth',
+          '/pricing',
+          '/privacy',
+          '/terms',
+          '/cookies',
+          '/mentions-legales',
+          '/strategie-digitale',
         ];
 
         const isPublicPath = publicPaths.some(path => 
