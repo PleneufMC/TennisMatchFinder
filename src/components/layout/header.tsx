@@ -21,17 +21,7 @@ import { Button } from '@/components/ui/button';
 import { PlayerAvatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 
-interface PlayerData {
-  id: string;
-  fullName: string;
-  avatarUrl: string | null;
-  currentElo: number;
-  clubId: string;
-  clubName: string;
-  clubSlug: string;
-  isAdmin: boolean;
-  isVerified: boolean;
-}
+import type { PlayerData } from '@/types/player';
 
 interface HeaderProps {
   player: PlayerData;

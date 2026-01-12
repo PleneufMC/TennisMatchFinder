@@ -1,17 +1,6 @@
 import type { DefaultSession, DefaultUser } from 'next-auth';
 import type { DefaultJWT } from 'next-auth/jwt';
-
-interface PlayerData {
-  id: string;
-  fullName: string;
-  avatarUrl: string | null;
-  currentElo: number;
-  clubId: string;
-  clubName: string;
-  clubSlug: string;
-  isAdmin: boolean;
-  isVerified: boolean;
-}
+import type { PlayerData } from './player';
 
 declare module 'next-auth' {
   interface Session {

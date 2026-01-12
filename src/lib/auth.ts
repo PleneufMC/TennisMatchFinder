@@ -342,10 +342,15 @@ export const authOptions: NextAuthOptions = {
   },
 
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       // Add user id to JWT token on first sign in
       if (user) {
         token.id = user.id;
+        token.email = user.email;
+      }
+      // Ensure token always has id from sub (NextAuth standard)
+      if (!token.id && token.sub) {
+        token.id = token.sub;
       }
       return token;
     },
@@ -353,7 +358,15 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       // Add user id from JWT to session
       if (session.user && token) {
-        session.user.id = token.id as string;
+        // Get user ID from token (try multiple sources)
+        const userId = (token.id || token.sub) as string;
+        
+        if (!userId) {
+          console.error('[Auth] No user ID in token:', { token });
+          return session;
+        }
+        
+        session.user.id = userId;
         
         // Fetch player data from database
         try {
@@ -369,7 +382,7 @@ export const authOptions: NextAuthOptions = {
               isVerified: players.isVerified,
             })
             .from(players)
-            .where(eq(players.id, token.id as string))
+            .where(eq(players.id, userId))
             .limit(1);
           
           if (playerResult[0]) {
@@ -400,9 +413,11 @@ export const authOptions: NextAuthOptions = {
               isAdmin: player.isAdmin,
               isVerified: player.isVerified,
             };
+          } else {
+            console.log('[Auth] No player found for user:', userId);
           }
         } catch (error) {
-          console.error('Failed to fetch player data:', error);
+          console.error('[Auth] Failed to fetch player data:', error);
         }
       }
       return session;
