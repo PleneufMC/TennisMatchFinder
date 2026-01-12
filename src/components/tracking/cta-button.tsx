@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useGoogleAnalytics } from '@/components/google-analytics';
+import { useMetaPixel } from '@/components/meta-pixel';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 
@@ -27,12 +28,15 @@ export function TrackedCtaButton({
   showArrow = true,
 }: TrackedCtaButtonProps) {
   const { trackSignupStarted, trackCtaClicked } = useGoogleAnalytics();
+  const { trackLead, trackViewContent } = useMetaPixel();
 
   const handleClick = () => {
     if (trackingAction === 'signup_started') {
       trackSignupStarted(trackingSource);
+      trackLead(trackingSource); // Meta Pixel Lead event
     } else {
       trackCtaClicked(children?.toString() || 'CTA', trackingSource);
+      trackViewContent(children?.toString() || 'CTA', trackingSource);
     }
   };
 
@@ -55,10 +59,12 @@ export function SignupCtaButton({
   source?: 'landing_hero' | 'landing_cta' | 'pricing_page' | 'navbar' | 'footer';
 }) {
   const { trackSignupStarted } = useGoogleAnalytics();
+  const { trackLead } = useMetaPixel();
 
   const handleClick = () => {
     console.log('[GA4] trackSignupStarted:', source);
     trackSignupStarted(source);
+    trackLead(source); // Meta Pixel Lead event
   };
 
   return (

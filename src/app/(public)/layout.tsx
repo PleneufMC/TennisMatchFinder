@@ -83,6 +83,11 @@ export default function PublicLayout({
                     Témoignages
                   </Link>
                 </li>
+                <li>
+                  <Link href="/strategie-digitale" className="hover:text-foreground">
+                    Stratégie Marketing
+                  </Link>
+                </li>
               </ul>
             </div>
 
