@@ -342,30 +342,39 @@ export const authOptions: NextAuthOptions = {
   },
 
   callbacks: {
-    async jwt({ token, user, account }) {
+    async jwt({ token, user, account, trigger }) {
+      console.log('[Auth JWT] Trigger:', trigger, 'User:', user?.id, 'Token sub:', token.sub);
+      
       // Add user id to JWT token on first sign in
       if (user) {
         token.id = user.id;
         token.email = user.email;
+        console.log('[Auth JWT] Setting token.id from user:', user.id);
       }
       // Ensure token always has id from sub (NextAuth standard)
       if (!token.id && token.sub) {
         token.id = token.sub;
+        console.log('[Auth JWT] Setting token.id from sub:', token.sub);
       }
+      
+      console.log('[Auth JWT] Final token.id:', token.id);
       return token;
     },
 
     async session({ session, token }) {
+      console.log('[Auth Session] Called with token:', { id: token.id, sub: token.sub, email: token.email });
+      
       // Add user id from JWT to session
       if (session.user && token) {
         // Get user ID from token (try multiple sources)
         const userId = (token.id || token.sub) as string;
         
         if (!userId) {
-          console.error('[Auth] No user ID in token:', { token });
+          console.error('[Auth Session] No user ID in token:', { token });
           return session;
         }
         
+        console.log('[Auth Session] Setting session.user.id:', userId);
         session.user.id = userId;
         
         // Fetch player data from database
