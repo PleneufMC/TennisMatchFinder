@@ -22,6 +22,7 @@ export default withAuth(
           '/cookies',
           '/mentions-legales',
           '/strategie-digitale',
+          '/debug-session', // Temporary for debugging
         ];
 
         const isPublicPath = publicPaths.some(path => 

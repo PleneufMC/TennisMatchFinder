@@ -377,7 +377,8 @@ export const authOptions: NextAuthOptions = {
     },
 
     async session({ session, token }) {
-      console.log('[Auth Session] Called with token:', { id: token.id, sub: token.sub, email: token.email });
+      const startTime = Date.now();
+      console.log('[Auth Session] START - token:', JSON.stringify({ id: token.id, sub: token.sub, email: token.email }));
       
       // Add user id from JWT to session
       if (session.user && token) {
@@ -385,15 +386,16 @@ export const authOptions: NextAuthOptions = {
         const userId = (token.id || token.sub) as string;
         
         if (!userId) {
-          console.error('[Auth Session] No user ID in token:', { token });
+          console.error('[Auth Session] ERROR - No user ID in token');
           return session;
         }
         
-        console.log('[Auth Session] Setting session.user.id:', userId);
         session.user.id = userId;
+        console.log('[Auth Session] User ID set:', userId);
         
         // Fetch player data from database
         try {
+          console.log('[Auth Session] Fetching player from DB...');
           const playerResult = await db
             .select({
               id: players.id,
@@ -409,8 +411,12 @@ export const authOptions: NextAuthOptions = {
             .where(eq(players.id, userId))
             .limit(1);
           
+          console.log('[Auth Session] DB result:', playerResult.length, 'players found');
+          
           if (playerResult[0]) {
             const player = playerResult[0];
+            console.log('[Auth Session] Player found:', { id: player.id, fullName: player.fullName, clubId: player.clubId });
+            
             // Fetch club info only if player has a club
             let club: { name: string; slug: string } | undefined;
             if (player.clubId) {
@@ -423,9 +429,12 @@ export const authOptions: NextAuthOptions = {
                 .where(eq(clubs.id, player.clubId))
                 .limit(1);
               club = clubResult[0];
+              console.log('[Auth Session] Club found:', club?.name);
+            } else {
+              console.log('[Auth Session] Player has no club (independent player)');
             }
             
-            (session.user as any).player = {
+            const playerData = {
               id: player.id,
               fullName: player.fullName,
               avatarUrl: player.avatarUrl,
@@ -437,13 +446,22 @@ export const authOptions: NextAuthOptions = {
               isAdmin: player.isAdmin,
               isVerified: player.isVerified,
             };
+            
+            (session.user as any).player = playerData;
+            console.log('[Auth Session] SUCCESS - Player attached to session');
           } else {
-            console.log('[Auth] No player found for user:', userId);
+            console.log('[Auth Session] WARNING - No player found for user:', userId);
+            // Set empty player to differentiate from "loading" state
+            (session.user as any).player = null;
           }
         } catch (error) {
-          console.error('[Auth] Failed to fetch player data:', error);
+          console.error('[Auth Session] ERROR - DB fetch failed:', error);
+          // Don't crash, just log
+          (session.user as any).player = null;
         }
       }
+      
+      console.log('[Auth Session] END - Duration:', Date.now() - startTime, 'ms, hasPlayer:', !!(session.user as any)?.player);
       return session;
     },
 
