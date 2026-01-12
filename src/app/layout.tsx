@@ -6,6 +6,7 @@ import { SessionProvider } from '@/components/providers/session-provider';
 import { Toaster } from '@/components/ui/toast';
 import { CookieBanner } from '@/components/cookie-banner';
 import { GoogleAnalyticsWithConsent } from '@/components/google-analytics';
+import { MetaPixelWithConsent } from '@/components/meta-pixel';
 import './globals.css';
 
 const inter = Inter({
@@ -95,6 +96,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || '';
+  const metaPixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID || '';
 
   return (
     <html lang="fr" suppressHydrationWarning>
@@ -113,6 +115,12 @@ export default function RootLayout({
             {gaId && (
               <Suspense fallback={null}>
                 <GoogleAnalyticsWithConsent measurementId={gaId} />
+              </Suspense>
+            )}
+            {/* Meta Pixel (Facebook) - conditionnel au consentement */}
+            {metaPixelId && (
+              <Suspense fallback={null}>
+                <MetaPixelWithConsent pixelId={metaPixelId} />
               </Suspense>
             )}
           </ThemeProvider>

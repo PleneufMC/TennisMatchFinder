@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { registerSchema, type RegisterInput } from '@/lib/validations/auth';
 import { useGoogleAnalytics } from '@/components/google-analytics';
+import { useMetaPixel } from '@/components/meta-pixel';
 
 interface RegisterFormProps {
   clubSlug?: string;
@@ -27,6 +28,7 @@ export function RegisterForm({ clubSlug = 'mccc', clubName = 'MCCC' }: RegisterF
   const [registrationComplete, setRegistrationComplete] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState('');
   const { trackSignupStarted, trackSignupCompleted } = useGoogleAnalytics();
+  const { trackLead, trackCompleteRegistration } = useMetaPixel();
 
   const form = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
@@ -40,9 +42,10 @@ export function RegisterForm({ clubSlug = 'mccc', clubName = 'MCCC' }: RegisterF
 
   const handleSubmit = async (data: RegisterInput) => {
     setIsLoading(true);
-    // Track signup started
+    // Track signup started (GA4 + Meta Pixel)
     console.log('[GA4] trackSignupStarted: register_form');
     trackSignupStarted('register_form');
+    trackLead('register_form'); // Meta Pixel Lead event
     try {
       // Enregistrer via l'API (crée une demande d'adhésion)
       const response = await fetch('/api/auth/register', {
@@ -59,9 +62,10 @@ export function RegisterForm({ clubSlug = 'mccc', clubName = 'MCCC' }: RegisterF
 
       setRegisteredEmail(data.email);
       setRegistrationComplete(true);
-      // Track signup completed
+      // Track signup completed (GA4 + Meta Pixel)
       console.log('[GA4] trackSignupCompleted:', clubSlug);
       trackSignupCompleted(clubSlug, 'magic_link');
+      trackCompleteRegistration(clubSlug, 'magic_link'); // Meta Pixel CompleteRegistration
       toast.success('Demande envoyée !', {
         description: 'Un administrateur va valider votre inscription.',
       });
