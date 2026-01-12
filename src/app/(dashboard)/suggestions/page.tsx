@@ -161,7 +161,7 @@ export default async function SuggestionsPage() {
                   {/* Tags */}
                   {suggestion.tags.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-2">
-                      {suggestion.tags.map((tag) => (
+                      {suggestion.tags.map((tag: string) => (
                         <Badge key={tag} variant="secondary" className="text-xs">
                           {tag}
                         </Badge>
