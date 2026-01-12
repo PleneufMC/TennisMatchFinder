@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
@@ -17,21 +17,49 @@ export default function DashboardLayout({
   const router = useRouter();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const { player, isLoading, isAuthenticated } = usePlayer();
-  const [shouldRedirect, setShouldRedirect] = useState(false);
+  const hasRedirected = useRef(false);
+  const initialLoadComplete = useRef(false);
+
+  // Debug logging
+  useEffect(() => {
+    console.log('[Dashboard Layout] State:', { isLoading, isAuthenticated, hasPlayer: !!player });
+  }, [isLoading, isAuthenticated, player]);
 
   // Handle redirections after render to avoid hydration issues
+  // Only redirect after initial load is complete AND we're sure user is not authenticated
   useEffect(() => {
-    if (!isLoading) {
+    // Don't do anything while loading
+    if (isLoading) {
+      return;
+    }
+
+    // Mark initial load as complete
+    if (!initialLoadComplete.current) {
+      initialLoadComplete.current = true;
+      console.log('[Dashboard Layout] Initial load complete:', { isAuthenticated, hasPlayer: !!player });
+    }
+
+    // Only redirect once, and only after initial load
+    if (hasRedirected.current) {
+      return;
+    }
+
+    // Give a small delay to ensure session is fully loaded
+    const timer = setTimeout(() => {
+      if (hasRedirected.current) return;
+      
       if (!isAuthenticated) {
-        // Not logged in -> redirect to login
-        console.log('[Dashboard] Not authenticated, redirecting to login');
+        console.log('[Dashboard] Not authenticated after delay, redirecting to login');
+        hasRedirected.current = true;
         router.push('/login');
       } else if (!player) {
-        // Logged in but no player profile -> redirect to onboarding
-        console.log('[Dashboard] Authenticated but no player, redirecting to onboarding');
+        console.log('[Dashboard] Authenticated but no player after delay, redirecting to onboarding');
+        hasRedirected.current = true;
         router.push('/onboarding');
       }
-    }
+    }, 500); // 500ms delay to ensure session is loaded
+
+    return () => clearTimeout(timer);
   }, [isLoading, isAuthenticated, player, router]);
 
   // Affichage pendant le chargement
