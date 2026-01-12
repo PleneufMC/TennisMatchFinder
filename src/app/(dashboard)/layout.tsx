@@ -32,9 +32,14 @@ export default function DashboardLayout({
     );
   }
 
-  // Redirection si pas de profil
-  if (error || !player) {
-    redirect('/login');
+  // Redirection si pas de profil player
+  // Note: Si l'utilisateur est connecté mais n'a pas de profil player,
+  // il doit compléter son profil via onboarding
+  if (!player) {
+    // Check if there's a session (user is logged in)
+    // If logged in but no player, redirect to onboarding
+    // This handles the case where user signed up via magic link directly
+    redirect('/onboarding');
   }
 
   return (
