@@ -10,7 +10,7 @@ Créer une expérience "single-player mode" qui apporte de la valeur **avant** d
 
 ---
 
-## 📋 Sprint 1 : Customisation Club & UX Premium (Semaine 1-2)
+## 📋 Sprint 1 : Customisation Club & UX Premium (Semaine 1-2) ✅
 
 ### 1.1 Personnalisation visuelle par club
 - [x] Image banner club (terre battue MCCC ajoutée)
@@ -35,7 +35,7 @@ Créer une expérience "single-player mode" qui apporte de la valeur **avant** d
 
 ---
 
-## 📋 Sprint 2 : Single-Player Mode (Semaine 2-3)
+## 📋 Sprint 2 : Single-Player Mode (Semaine 2-3) ✅
 
 ### 2.1 Tracking de matchs manuel
 - [x] Bouton "Enregistrer un match" rapide
@@ -43,6 +43,7 @@ Créer une expérience "single-player mode" qui apporte de la valeur **avant** d
 - [x] Adversaire : membre du club
 - [x] Date, validation par l'adversaire
 - [x] Système de confirmation de match
+- [x] **Sélection du format de match** (1 set, 2 sets, 3 sets, super TB) ✨ NEW
 
 ### 2.2 Statistiques personnelles
 - [x] Dashboard stats individuel
@@ -100,7 +101,42 @@ Créer une expérience "single-player mode" qui apporte de la valeur **avant** d
 
 ---
 
-## 📋 Sprint 4 : Réputation & Social (Semaine 4-5)
+## 📋 Sprint 3.5 : Coefficient ELO par Format ✅ NEW (13 janvier 2026)
+
+### USP vs Playtomic - Système ELO équitable 🎯
+
+- [x] **Coefficients par format de match** :
+  | Format | Coefficient | Justification |
+  |--------|-------------|---------------|
+  | 1 set | ×0.50 | Haute variance statistique |
+  | 2 sets | ×0.80 | Format amateur standard |
+  | 3 sets | ×1.00 | Impact complet |
+  | Super TB | ×0.30 | Très aléatoire |
+
+- [x] **Modificateur de marge de victoire** :
+  | Écart | Modificateur | Exemple |
+  |-------|--------------|---------|
+  | ≥5 jeux | ×1.15 | 6-0, 6-1 |
+  | 3-4 jeux | ×1.05 | 6-3, 6-2 |
+  | 2 jeux | ×1.00 | 6-4 |
+  | ≤1 jeu | ×0.90 | 7-6, 7-5 |
+
+- [x] **Composants UI** :
+  - `MatchFormatSelector.tsx` - Sélection intuitive avec indicateurs visuels
+  - `EloBreakdownModal.tsx` - Explication détaillée du calcul (transparence totale)
+
+- [x] **Schema DB** :
+  - ENUM `match_format` créé
+  - Colonne `match_format` ajoutée à `matches`
+  - Colonnes `format_coefficient`, `margin_modifier` ajoutées à `elo_history`
+
+- [x] **API** :
+  - `POST /api/matches` accepte `matchFormat` (inféré du score si non fourni)
+  - Response inclut `breakdown` complet pour affichage transparent
+
+---
+
+## 📋 Sprint 4 : Réputation & Social (Semaine 4-5) - EN COURS
 
 ### 4.1 Système de réputation
 - [ ] Évaluation post-match (optionnel)
@@ -147,7 +183,7 @@ Créer une expérience "single-player mode" qui apporte de la valeur **avant** d
 
 ---
 
-## 📋 Sprint 6 : Compétitions (En cours)
+## 📋 Sprint 6 : Compétitions ✅
 
 ### 6.1 Box Leagues
 - [x] Création de poules
@@ -167,7 +203,8 @@ Créer une expérience "single-player mode" qui apporte de la valeur **avant** d
 
 ## 🏗️ Architecture Technique
 
-### Tables DB actuelles (Trophy Case 2.0)
+### Tables DB (mise à jour 13 janvier 2026)
+
 ```sql
 -- Badges Master Table
 CREATE TABLE badges (
@@ -175,8 +212,8 @@ CREATE TABLE badges (
   name VARCHAR(100) NOT NULL,
   description TEXT NOT NULL,
   criteria TEXT NOT NULL,
-  category badge_category NOT NULL, -- 'milestone', 'achievement', 'social', 'special'
-  tier badge_tier NOT NULL, -- 'common', 'rare', 'epic', 'legendary'
+  category badge_category NOT NULL,
+  tier badge_tier NOT NULL,
   icon VARCHAR(50) NOT NULL,
   icon_color VARCHAR(20),
   sort_order INTEGER NOT NULL DEFAULT 0,
@@ -186,7 +223,7 @@ CREATE TABLE badges (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Player Badges (badges débloqués)
+-- Player Badges
 CREATE TABLE player_badges (
   id UUID PRIMARY KEY,
   player_id UUID REFERENCES players(id) ON DELETE CASCADE,
@@ -196,17 +233,34 @@ CREATE TABLE player_badges (
   earned_at TIMESTAMP DEFAULT NOW(),
   seen_at TIMESTAMP
 );
+
+-- Matches (avec format)
+ALTER TABLE matches ADD COLUMN match_format match_format NOT NULL DEFAULT 'two_sets';
+-- ENUM: 'one_set', 'two_sets', 'three_sets', 'super_tiebreak'
+
+-- ELO History (avec breakdown)
+ALTER TABLE elo_history 
+ADD COLUMN format_coefficient DECIMAL(3,2),
+ADD COLUMN margin_modifier DECIMAL(3,2);
 ```
 
-### API Routes créées
+### API Routes (complètes)
+
 ```
-POST /api/matches                    -- Créer un match
-POST /api/matches/[matchId]/confirm  -- Confirmer + check badges
-GET  /api/matches/[matchId]/elo-breakdown -- Détail calcul ELO
-GET  /api/badges                     -- Badges du joueur
-POST /api/badges/[badgeId]/seen      -- Marquer badge vu
-POST /api/onboarding                 -- Créer profil joueur
-GET  /api/gamification               -- Stats gamification
+# Matchs
+POST /api/matches                         -- Créer un match (avec matchFormat)
+POST /api/matches/[matchId]/confirm       -- Confirmer + check badges
+GET  /api/matches/[matchId]/elo-breakdown -- Détail calcul ELO complet
+
+# Badges
+GET  /api/badges                          -- Badges du joueur
+POST /api/badges/[badgeId]/seen           -- Marquer badge vu
+
+# Gamification
+GET  /api/gamification                    -- Stats gamification
+
+# Onboarding
+POST /api/onboarding                      -- Créer profil joueur
 ```
 
 ---
@@ -215,60 +269,74 @@ GET  /api/gamification               -- Stats gamification
 
 | Sprint | Métrique cible | Statut |
 |--------|----------------|--------|
-| 1 | Design score NPS >7/10 sur 5 testeurs | ✅ |
-| 2 | 80% des matchs trackables en <30 sec | ✅ |
-| 3 | 16 badges disponibles, 3+ gagnables jour 1 | ✅ |
-| 4 | Taux de suggestion acceptée >20% | En cours |
-| 5 | Conversion freemium >3% | À faire |
+| 1 | Design score NPS >7/10 sur 5 testeurs | ✅ Complété |
+| 2 | 80% des matchs trackables en <30 sec | ✅ Complété |
+| 3 | 16 badges disponibles, 3+ gagnables jour 1 | ✅ Complété |
+| 3.5 | Coefficient ELO par format fonctionnel | ✅ Complété |
+| 4 | Taux de suggestion acceptée >20% | 🔄 En cours |
+| 5 | Conversion freemium >3% | ⏳ À faire |
 
 ---
 
-## 🚀 Fonctionnalités livrées récemment
+## 🚀 Fonctionnalités livrées - 13 janvier 2026
 
-### 13 janvier 2026 - Trophy Case 2.0 🏆
+### 🎾 Coefficient ELO par Format (USP majeur)
+- ✅ Système de coefficients équitable (1 set ×0.5 → 3 sets ×1.0)
+- ✅ Modificateur de marge de victoire (6-0 ≠ 7-6)
+- ✅ Composant `MatchFormatSelector` avec indicateurs visuels
+- ✅ Modal `EloBreakdownModal` pour transparence totale
+- ✅ API enrichie avec breakdown complet
+- ✅ Migration SQL préparée pour Neon
+
+### 🏆 Trophy Case 2.0 (Gamification complète)
 - ✅ Migration DB badges exécutée sur Neon
 - ✅ 16 badges avec système de tiers (common → legendary)
 - ✅ UI complète : BadgeCard, BadgeGrid, BadgeUnlockModal
 - ✅ Célébration avec confetti pour badges epic/legendary
 - ✅ Backward-compatible (graceful degradation)
 
-### 13 janvier 2026 - Onboarding & API
+### 📱 Onboarding & API
 - ✅ Onboarding guidé en 5 écrans (`/onboarding`)
 - ✅ API ELO Breakdown détaillée
 - ✅ Fix route dynamique `[matchId]` vs `[id]`
 
 ---
 
-## 📁 Structure fichiers créés (Trophy Case 2.0)
+## 📁 Structure fichiers créés (13 janvier 2026)
 
 ```
 src/
 ├── app/
 │   ├── (auth)/
 │   │   └── onboarding/
-│   │       └── page.tsx              -- Onboarding 5 étapes
+│   │       └── page.tsx                    -- Onboarding 5 étapes
 │   ├── (dashboard)/
 │   │   └── achievements/
-│   │       └── page.tsx              -- Page Trophy Case
+│   │       └── page.tsx                    -- Page Trophy Case
 │   └── api/
 │       ├── badges/
-│       │   ├── route.ts              -- GET badges joueur
-│       │   └── [badgeId]/
-│       │       └── seen/route.ts     -- POST marquer vu
+│       │   ├── route.ts                    -- GET badges joueur
+│       │   └── [badgeId]/seen/route.ts     -- POST marquer vu
 │       ├── matches/
+│       │   ├── route.ts                    -- POST avec matchFormat
 │       │   └── [matchId]/
-│       │       ├── confirm/route.ts  -- Avec check badges
-│       │       └── elo-breakdown/route.ts
+│       │       ├── confirm/route.ts        -- Avec check badges
+│       │       └── elo-breakdown/route.ts  -- Détail calcul ELO
 │       └── onboarding/
-│           └── route.ts              -- Création profil
+│           └── route.ts                    -- Création profil
+│
 ├── components/
+│   ├── elo/
+│   │   └── elo-breakdown-modal.tsx         -- Modal transparence ELO ✨ NEW
 │   ├── gamification/
-│   │   ├── BadgeCard.tsx             -- Carte badge (3 états)
-│   │   ├── BadgeGrid.tsx             -- Grille filtrée
-│   │   ├── BadgeProgressBar.tsx      -- Barre progression
-│   │   ├── BadgeUnlockModal.tsx      -- Modal célébration
-│   │   ├── badge-notification.tsx    -- Toast notification
-│   │   └── trophy-case.tsx           -- Composant principal
+│   │   ├── BadgeCard.tsx
+│   │   ├── BadgeGrid.tsx
+│   │   ├── BadgeProgressBar.tsx
+│   │   ├── BadgeUnlockModal.tsx
+│   │   ├── badge-notification.tsx
+│   │   └── trophy-case.tsx
+│   ├── matches/
+│   │   └── match-format-selector.tsx       -- Sélecteur format ✨ NEW
 │   └── onboarding/
 │       ├── OnboardingFlow.tsx
 │       ├── WelcomeStep.tsx
@@ -276,20 +344,38 @@ src/
 │       ├── LevelStep.tsx
 │       ├── AvailabilityStep.tsx
 │       └── FirstMatchStep.tsx
+│
 ├── lib/
 │   ├── db/
-│   │   ├── schema.ts                 -- Tables badges + playerBadges
-│   │   └── seed-badges.ts            -- Script seed
+│   │   ├── schema.ts                       -- Tables + ENUM match_format
+│   │   └── seed-badges.ts
+│   ├── elo/                                -- Module ELO refactorisé ✨ NEW
+│   │   ├── index.ts
+│   │   ├── calculator.ts                   -- Calcul avec coefficients
+│   │   ├── format-coefficients.ts          -- Constantes & helpers
+│   │   ├── modifiers.ts
+│   │   └── types.ts
 │   └── gamification/
-│       ├── badges.ts                 -- 16 BADGE_DEFINITIONS
-│       ├── badge-checker.ts          -- Service vérification
-│       ├── streaks.ts                -- Weekly streaks
-│       ├── challenges.ts             -- Défis mensuels
-│       └── index.ts                  -- Exports
+│       ├── badges.ts
+│       ├── badge-checker.ts
+│       ├── streaks.ts
+│       ├── challenges.ts
+│       └── index.ts
+│
 └── migrations/
-    └── trophy-case-2.0.sql           -- Script SQL Neon
+    ├── trophy-case-2.0.sql                 -- Badges (exécuté)
+    └── match-format-coefficients.sql       -- Format ELO ✨ NEW (à exécuter)
 ```
 
 ---
 
-*Dernière mise à jour : 13 janvier 2026*
+## 🔜 Prochaines étapes prioritaires
+
+1. **Exécuter migration SQL** `match-format-coefficients.sql` sur Neon
+2. **Intégrer MatchFormatSelector** dans le formulaire de saisie de match
+3. **Sprint 4** : Système de réputation post-match
+4. **Sprint 5** : Intégration Stripe pour monétisation
+
+---
+
+*Dernière mise à jour : 13 janvier 2026 - 17h00*
