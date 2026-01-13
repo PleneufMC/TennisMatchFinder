@@ -14,73 +14,89 @@ Créer une expérience "single-player mode" qui apporte de la valeur **avant** d
 
 ### 1.1 Personnalisation visuelle par club
 - [x] Image banner club (terre battue MCCC ajoutée)
-- [ ] Afficher le banner sur le dashboard
+- [x] Afficher le banner sur le dashboard
 - [ ] Couleurs personnalisables par club (primary color)
-- [ ] Logo club dans le header
+- [x] Logo club dans le header
 - [ ] Page d'accueil club publique (`/club/mccc`)
 
 ### 1.2 Design "Luxury Discretion"
-- [ ] Refonte header avec banner club
+- [x] Refonte header avec banner club
 - [ ] Typography premium (Inter → système + accent font)
 - [ ] Palette de couleurs terre battue (ocre, blanc, vert)
-- [ ] Animations subtiles (Framer Motion)
-- [ ] Mode sombre raffiné
+- [x] Animations subtiles (Framer Motion)
+- [x] Mode sombre raffiné
 
 ### 1.3 Profil joueur enrichi
-- [ ] Section "À propos" étendue
-- [ ] Niveau de jeu détaillé (coup droit, revers, service, volée)
-- [ ] Style de jeu préféré (attaquant, défenseur, tout-terrain)
-- [ ] Équipement (raquette, cordage - optionnel)
+- [x] Section "À propos" étendue
+- [x] Niveau de jeu détaillé (auto-évaluation)
+- [x] Style de jeu préféré (main dominante)
+- [x] Disponibilités (jours/créneaux)
+- [x] Onboarding guidé en 5 écrans (`/onboarding`)
 
 ---
 
 ## 📋 Sprint 2 : Single-Player Mode (Semaine 2-3)
 
 ### 2.1 Tracking de matchs manuel
-- [ ] Bouton "Enregistrer un match" rapide
-- [ ] Saisie score simplifiée (6-4, 6-3)
-- [ ] Adversaire : membre du club OU nom libre
-- [ ] Date, lieu (court), durée
-- [ ] Notes personnelles (optionnel)
+- [x] Bouton "Enregistrer un match" rapide
+- [x] Saisie score simplifiée (6-4, 6-3)
+- [x] Adversaire : membre du club
+- [x] Date, validation par l'adversaire
+- [x] Système de confirmation de match
 
 ### 2.2 Statistiques personnelles
-- [ ] Dashboard stats individuel
-- [ ] Graphique ELO évolution (déjà existant, améliorer)
-- [ ] Win rate global et par période
-- [ ] Adversaires les plus fréquents
-- [ ] Performance par surface (si tracking)
-- [ ] Série en cours (victoires/défaites)
+- [x] Dashboard stats individuel
+- [x] Graphique ELO évolution
+- [x] Win rate global et par période
+- [x] Adversaires les plus fréquents (Rivalités)
+- [x] Série en cours (victoires/défaites - winStreak)
+- [x] API ELO Breakdown (`GET /api/matches/[matchId]/elo-breakdown`)
 
 ### 2.3 Historique complet
-- [ ] Liste tous les matchs joués
-- [ ] Filtres : période, adversaire, résultat
+- [x] Liste tous les matchs joués
+- [x] Filtres : période, adversaire, résultat
 - [ ] Export CSV (pour les data lovers)
 
 ---
 
-## 📋 Sprint 3 : Gamification (Semaine 3-4)
+## 📋 Sprint 3 : Gamification - Trophy Case 2.0 ✅ (Semaine 3-4)
 
-### 3.1 Système de badges
-- [ ] Schéma DB : `player_badges`, `badge_definitions`
-- [ ] Badges de progression :
-  - 🎾 "Premier Match" - Premier match enregistré
-  - 🔥 "En Feu" - 3 victoires consécutives
-  - ⭐ "Série de 5" - 5 victoires consécutives
-  - 🏆 "10 Victoires" - 10 matchs gagnés
-  - 🎯 "Régulier" - 10 matchs en 1 mois
-  - 🤝 "Social" - 5 adversaires différents
-  - 📈 "Progression" - +100 ELO en 1 mois
+### 3.1 Système de badges - **COMPLÉTÉ** ✅
+- [x] Schéma DB : `badges` (table master) + `player_badges` (FK)
+- [x] 16 badges répartis en 4 catégories :
+  - **Milestones (5)** : First Rally, Getting Started, Habitué, Passionné, Century
+  - **Achievements (4)** : Hot Streak, On Fire, Giant Killer, Rising Star
+  - **Social (4)** : Social Butterfly, Pilier du Club, Rival Master, Comité d'accueil
+  - **Special (4)** : King of Club, Founding Member, Champion, Roi de la Poule
+- [x] Système de tiers (Common → Rare → Epic → Legendary)
+- [x] Badges dynamiques (King of Club peut être perdu)
+- [x] Migration SQL exécutée sur Neon ✅
 
-### 3.2 Streaks & Défis
-- [ ] Streak de jours consécutifs avec activité
-- [ ] Défi hebdomadaire : "Jouez 3 matchs cette semaine"
+### 3.2 UI Trophy Case 2.0 - **COMPLÉTÉ** ✅
+- [x] `BadgeCard.tsx` - 3 états (locked/unlocked/just_unlocked)
+- [x] `BadgeGrid.tsx` - Filtrage par catégorie + progression
+- [x] `BadgeUnlockModal.tsx` - Célébration avec confetti 🎉
+- [x] `BadgeProgressBar.tsx` - Barre de progression
+- [x] `TrophyCase.tsx` - Page complète refactorisée
+- [x] Styling par tier (couleurs, gradients, animations)
+
+### 3.3 Backend Badges - **COMPLÉTÉ** ✅
+- [x] `badge-checker.ts` - Service de vérification automatique
+- [x] Triggers : `match_completed`, `elo_changed`, `tournament_won`, `box_league_won`
+- [x] `GET /api/badges` - Récupérer les badges
+- [x] `POST /api/badges/[badgeId]/seen` - Marquer comme vu
+- [x] Intégration dans `POST /api/matches/[matchId]/confirm`
+- [x] Backward-compatible (gestion erreurs si migration pas faite)
+
+### 3.4 Streaks & Défis
+- [x] Weekly Streak (semaines consécutives avec matchs)
+- [x] Défis mensuels (`/achievements`)
 - [ ] Objectifs personnalisables
 
-### 3.3 Classement club amélioré
-- [ ] Classement ELO avec variations (+/-) 
-- [ ] Filtres : Tous, ce mois, cette semaine
-- [ ] Position et écart avec joueur précédent/suivant
-- [ ] "Votre rival" : joueur ELO le plus proche
+### 3.5 Classement club amélioré
+- [x] Classement ELO avec variations (+/-) 
+- [x] Position et écart avec joueur précédent/suivant
+- [x] "King of Club" : badge pour le #1
 
 ---
 
@@ -95,28 +111,24 @@ Créer une expérience "single-player mode" qui apporte de la valeur **avant** d
 - [ ] Affichage discret sur le profil
 
 ### 4.2 Suggestions intelligentes
-- [ ] "Partenaires recommandés" basé sur :
-  - ELO proche (±100)
-  - Disponibilités compatibles
-  - Style de jeu complémentaire
-- [ ] "Joueurs actifs cette semaine"
+- [x] "Partenaires recommandés" basé sur ELO proche
+- [x] Disponibilités compatibles (Match Now)
+- [ ] Style de jeu complémentaire
+- [x] "Joueurs actifs cette semaine"
 - [ ] "Nouveaux membres à accueillir"
 
 ### 4.3 Notifications
-- [ ] Nouveau match proposé près de votre niveau
-- [ ] Quelqu'un veut jouer maintenant
+- [x] Nouveau match proposé
+- [x] Match Now - quelqu'un veut jouer
 - [ ] Rappel : "Vous n'avez pas joué depuis 7 jours"
-- [ ] Badge débloqué
+- [x] Badge débloqué (notification in-app)
 
 ---
 
 ## 📋 Sprint 5 : Monétisation & Admin (Semaine 5-6)
 
 ### 5.1 Tiers et restrictions
-- [ ] Définir limites tier Gratuit :
-  - 3 recherches partenaire/semaine
-  - 5 conversations chat actives
-  - Historique 10 derniers matchs
+- [ ] Définir limites tier Gratuit
 - [ ] Implémentation soft paywall
 - [ ] Page pricing (`/pricing`)
 
@@ -127,149 +139,157 @@ Créer une expérience "single-player mode" qui apporte de la valeur **avant** d
 - [ ] Période d'essai 30 jours
 
 ### 5.3 Admin club avancé
-- [ ] Dashboard analytics club
-  - Membres actifs / inactifs
-  - Matchs organisés / semaine
-  - Engagement chat
+- [x] Dashboard admin club
+- [x] Gestion membres (approbation, rôles)
+- [ ] Analytics club (membres actifs/inactifs)
 - [ ] Export données membres
-- [ ] Personnalisation club (banner, couleurs, description)
+- [x] Personnalisation club (banner, description)
+
+---
+
+## 📋 Sprint 6 : Compétitions (En cours)
+
+### 6.1 Box Leagues
+- [x] Création de poules
+- [x] Gestion des participants
+- [x] Matchs de poule
+- [x] Classement par poule
+- [x] Badge "Roi de la Poule"
+
+### 6.2 Tournois
+- [x] Création tournoi (bracket)
+- [x] Inscription participants
+- [x] Gestion matchs tournoi
+- [x] Badge "Champion"
+- [ ] Tableau dynamique en temps réel
 
 ---
 
 ## 🏗️ Architecture Technique
 
-### Nouvelles tables DB
+### Tables DB actuelles (Trophy Case 2.0)
 ```sql
--- Badges
-CREATE TABLE badge_definitions (
-  id UUID PRIMARY KEY,
-  code VARCHAR(50) UNIQUE NOT NULL,
+-- Badges Master Table
+CREATE TABLE badges (
+  id VARCHAR(50) PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
-  description TEXT,
-  icon VARCHAR(10), -- emoji
-  category VARCHAR(50), -- 'progression', 'social', 'achievement'
-  criteria JSONB NOT NULL, -- conditions d'obtention
+  description TEXT NOT NULL,
+  criteria TEXT NOT NULL,
+  category badge_category NOT NULL, -- 'milestone', 'achievement', 'social', 'special'
+  tier badge_tier NOT NULL, -- 'common', 'rare', 'epic', 'legendary'
+  icon VARCHAR(50) NOT NULL,
+  icon_color VARCHAR(20),
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  is_dynamic BOOLEAN NOT NULL DEFAULT false,
+  max_progress INTEGER,
   created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Player Badges (badges débloqués)
 CREATE TABLE player_badges (
   id UUID PRIMARY KEY,
-  player_id UUID REFERENCES players(id),
-  badge_id UUID REFERENCES badge_definitions(id),
+  player_id UUID REFERENCES players(id) ON DELETE CASCADE,
+  badge_id VARCHAR(50) REFERENCES badges(id) ON DELETE CASCADE,
+  progress INTEGER NOT NULL DEFAULT 0,
+  seen BOOLEAN NOT NULL DEFAULT false,
   earned_at TIMESTAMP DEFAULT NOW(),
-  UNIQUE(player_id, badge_id)
-);
-
--- Évaluations
-CREATE TABLE match_ratings (
-  id UUID PRIMARY KEY,
-  match_id UUID REFERENCES matches(id),
-  rater_id UUID REFERENCES players(id),
-  rated_id UUID REFERENCES players(id),
-  punctuality INTEGER CHECK (punctuality BETWEEN 1 AND 5),
-  fair_play INTEGER CHECK (fair_play BETWEEN 1 AND 5),
-  friendliness INTEGER CHECK (friendliness BETWEEN 1 AND 5),
-  created_at TIMESTAMP DEFAULT NOW(),
-  UNIQUE(match_id, rater_id)
-);
-
--- Abonnements
-CREATE TABLE subscriptions (
-  id UUID PRIMARY KEY,
-  player_id UUID REFERENCES players(id),
-  stripe_customer_id VARCHAR(255),
-  stripe_subscription_id VARCHAR(255),
-  plan VARCHAR(50) NOT NULL, -- 'free', 'premium', 'pro'
-  status VARCHAR(50) NOT NULL, -- 'active', 'canceled', 'past_due'
-  current_period_start TIMESTAMP,
-  current_period_end TIMESTAMP,
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
+  seen_at TIMESTAMP
 );
 ```
 
-### API Routes à créer
+### API Routes créées
 ```
-POST /api/matches/record     -- Enregistrer match manuel
-GET  /api/stats/personal     -- Stats personnelles
-GET  /api/badges/available   -- Badges disponibles
-POST /api/ratings            -- Évaluer un partenaire
-GET  /api/suggestions        -- Partenaires suggérés
-POST /api/subscriptions      -- Créer abonnement Stripe
+POST /api/matches                    -- Créer un match
+POST /api/matches/[matchId]/confirm  -- Confirmer + check badges
+GET  /api/matches/[matchId]/elo-breakdown -- Détail calcul ELO
+GET  /api/badges                     -- Badges du joueur
+POST /api/badges/[badgeId]/seen      -- Marquer badge vu
+POST /api/onboarding                 -- Créer profil joueur
+GET  /api/gamification               -- Stats gamification
 ```
 
 ---
 
 ## 📊 KPIs par Sprint
 
-| Sprint | Métrique cible |
-|--------|----------------|
-| 1 | Design score NPS >7/10 sur 5 testeurs |
-| 2 | 80% des matchs trackables en <30 sec |
-| 3 | 3+ badges gagnables dès le premier jour |
-| 4 | Taux de suggestion acceptée >20% |
-| 5 | Conversion freemium >3% |
+| Sprint | Métrique cible | Statut |
+|--------|----------------|--------|
+| 1 | Design score NPS >7/10 sur 5 testeurs | ✅ |
+| 2 | 80% des matchs trackables en <30 sec | ✅ |
+| 3 | 16 badges disponibles, 3+ gagnables jour 1 | ✅ |
+| 4 | Taux de suggestion acceptée >20% | En cours |
+| 5 | Conversion freemium >3% | À faire |
 
 ---
 
-## 🚀 Quick Wins Immédiats
+## 🚀 Fonctionnalités livrées récemment
 
-### Cette semaine
-1. ✅ Image banner MCCC ajoutée
-2. [ ] Afficher banner sur dashboard
-3. [ ] Améliorer page profil (plus de détails)
-4. [ ] Bouton "Enregistrer un match" visible
+### 13 janvier 2026 - Trophy Case 2.0 🏆
+- ✅ Migration DB badges exécutée sur Neon
+- ✅ 16 badges avec système de tiers (common → legendary)
+- ✅ UI complète : BadgeCard, BadgeGrid, BadgeUnlockModal
+- ✅ Célébration avec confetti pour badges epic/legendary
+- ✅ Backward-compatible (graceful degradation)
 
-### Semaine prochaine
-1. [ ] Stats personnelles basiques
-2. [ ] 3 premiers badges
-3. [ ] Classement avec variations ELO
+### 13 janvier 2026 - Onboarding & API
+- ✅ Onboarding guidé en 5 écrans (`/onboarding`)
+- ✅ API ELO Breakdown détaillée
+- ✅ Fix route dynamique `[matchId]` vs `[id]`
 
 ---
 
-## 📁 Structure fichiers à créer
+## 📁 Structure fichiers créés (Trophy Case 2.0)
 
 ```
 src/
 ├── app/
+│   ├── (auth)/
+│   │   └── onboarding/
+│   │       └── page.tsx              -- Onboarding 5 étapes
 │   ├── (dashboard)/
-│   │   ├── stats/
-│   │   │   └── page.tsx          -- Stats personnelles
-│   │   ├── matchs/
-│   │   │   └── enregistrer/
-│   │   │       └── page.tsx      -- Enregistrer match
-│   │   └── badges/
-│   │       └── page.tsx          -- Mes badges
-│   ├── pricing/
-│   │   └── page.tsx              -- Page tarifs
+│   │   └── achievements/
+│   │       └── page.tsx              -- Page Trophy Case
 │   └── api/
-│       ├── matches/
-│       │   └── record/route.ts   -- API enregistrement
-│       ├── stats/
-│       │   └── route.ts          -- API stats
 │       ├── badges/
-│       │   └── route.ts          -- API badges
-│       └── subscriptions/
-│           └── route.ts          -- API Stripe
+│       │   ├── route.ts              -- GET badges joueur
+│       │   └── [badgeId]/
+│       │       └── seen/route.ts     -- POST marquer vu
+│       ├── matches/
+│       │   └── [matchId]/
+│       │       ├── confirm/route.ts  -- Avec check badges
+│       │       └── elo-breakdown/route.ts
+│       └── onboarding/
+│           └── route.ts              -- Création profil
 ├── components/
-│   ├── stats/
-│   │   ├── elo-chart.tsx
-│   │   ├── win-rate-card.tsx
-│   │   └── match-history.tsx
-│   ├── badges/
-│   │   ├── badge-card.tsx
-│   │   └── badge-grid.tsx
-│   └── club/
-│       ├── club-banner.tsx
-│       └── club-header.tsx
-└── lib/
-    ├── badges/
-    │   ├── definitions.ts        -- Définitions badges
-    │   └── check-earned.ts       -- Vérification critères
-    └── stripe/
-        └── client.ts             -- Config Stripe
+│   ├── gamification/
+│   │   ├── BadgeCard.tsx             -- Carte badge (3 états)
+│   │   ├── BadgeGrid.tsx             -- Grille filtrée
+│   │   ├── BadgeProgressBar.tsx      -- Barre progression
+│   │   ├── BadgeUnlockModal.tsx      -- Modal célébration
+│   │   ├── badge-notification.tsx    -- Toast notification
+│   │   └── trophy-case.tsx           -- Composant principal
+│   └── onboarding/
+│       ├── OnboardingFlow.tsx
+│       ├── WelcomeStep.tsx
+│       ├── ProfileStep.tsx
+│       ├── LevelStep.tsx
+│       ├── AvailabilityStep.tsx
+│       └── FirstMatchStep.tsx
+├── lib/
+│   ├── db/
+│   │   ├── schema.ts                 -- Tables badges + playerBadges
+│   │   └── seed-badges.ts            -- Script seed
+│   └── gamification/
+│       ├── badges.ts                 -- 16 BADGE_DEFINITIONS
+│       ├── badge-checker.ts          -- Service vérification
+│       ├── streaks.ts                -- Weekly streaks
+│       ├── challenges.ts             -- Défis mensuels
+│       └── index.ts                  -- Exports
+└── migrations/
+    └── trophy-case-2.0.sql           -- Script SQL Neon
 ```
 
 ---
 
-*Dernière mise à jour : 7 janvier 2026*
+*Dernière mise à jour : 13 janvier 2026*
