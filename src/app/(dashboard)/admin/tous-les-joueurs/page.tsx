@@ -16,12 +16,7 @@ import { players, clubs } from '@/lib/db/schema';
 import { eq, desc, sql } from 'drizzle-orm';
 import { formatRelativeDate } from '@/lib/utils/dates';
 import { SuperAdminPlayerActions } from '@/components/admin/super-admin-player-actions';
-
-// Liste des emails des super admins
-const SUPER_ADMIN_EMAILS = [
-  'music.music@free.fr',
-  // Ajouter d'autres emails si nécessaire
-];
+import { isSuperAdminEmail } from '@/lib/constants/admins';
 
 export const metadata: Metadata = {
   title: 'Gestion de tous les joueurs',
@@ -58,7 +53,7 @@ async function isSuperAdmin(playerId: string): Promise<boolean> {
     .where(eq(players.id, playerId))
     .limit(1);
   
-  return !!(user && SUPER_ADMIN_EMAILS.includes(user.email?.toLowerCase() || ''));
+  return isSuperAdminEmail(user?.email);
 }
 
 export default async function TousLesJoueursPage() {

@@ -8,12 +8,7 @@ import { getServerPlayer } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { players, clubs, users, notifications } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
-
-// Liste des emails des super admins
-const SUPER_ADMIN_EMAILS = [
-  'music.music@free.fr',
-  // Ajouter d'autres emails si nécessaire
-];
+import { isSuperAdminEmail } from '@/lib/constants/admins';
 
 async function isSuperAdmin(playerId: string): Promise<boolean> {
   const [result] = await db
@@ -22,7 +17,7 @@ async function isSuperAdmin(playerId: string): Promise<boolean> {
     .where(eq(users.id, playerId))
     .limit(1);
   
-  return !!(result && SUPER_ADMIN_EMAILS.includes(result.email?.toLowerCase() || ''));
+  return isSuperAdminEmail(result?.email);
 }
 
 export async function POST(request: NextRequest) {
