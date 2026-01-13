@@ -25,8 +25,11 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
-  Mail
+  Mail,
+  Info
 } from 'lucide-react';
+import { MatchFormatSelector } from '@/components/matches/match-format-selector';
+import { type MatchFormat, inferFormatFromScore, FORMAT_LABELS } from '@/lib/elo/format-coefficients';
 
 interface Opponent {
   id: string;
@@ -60,6 +63,7 @@ export function MatchForm({ currentPlayer, opponents, clubId }: MatchFormProps) 
   // Données du match
   const [winner, setWinner] = useState<WinnerType | null>(null);
   const [score, setScore] = useState('');
+  const [matchFormat, setMatchFormat] = useState<MatchFormat>('two_sets');
   const [playedAt, setPlayedAt] = useState(new Date().toISOString().split('T')[0]);
   const [gameType, setGameType] = useState<'simple' | 'double'>('simple');
   const [surface, setSurface] = useState<string>('');
@@ -80,16 +84,40 @@ export function MatchForm({ currentPlayer, opponents, clubId }: MatchFormProps) 
       o.fullName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Validation du score
-  const validateScore = (scoreStr: string): boolean => {
-    // Format attendu: "6-4 6-2" ou "6-4 3-6 7-5" ou "7-6(5) 6-4"
-    const setPattern = /^\d-\d(\(\d+\))?$/;
+  // Validation du score en fonction du format
+  const validateScore = (scoreStr: string, format: MatchFormat): boolean => {
     const sets = scoreStr.trim().split(/\s+/);
+    if (sets.length === 0) return false;
     
-    if (sets.length < 2 || sets.length > 3) return false;
+    // Vérifier le nombre de sets selon le format
+    const expectedSets: Record<MatchFormat, { min: number; max: number }> = {
+      one_set: { min: 1, max: 1 },
+      two_sets: { min: 2, max: 2 },
+      three_sets: { min: 2, max: 3 },
+      super_tiebreak: { min: 2, max: 3 },
+    };
     
-    return sets.every((set) => {
-      // Vérifier le format de base
+    const { min, max } = expectedSets[format];
+    if (sets.length < min || sets.length > max) return false;
+    
+    // Valider chaque set
+    return sets.every((set, index) => {
+      // Pour le super tie-break, le dernier set peut être un tie-break à 10
+      if (format === 'super_tiebreak' && index === sets.length - 1 && sets.length > 2) {
+        // Format super tie-break: 10-8, 11-9, etc.
+        const stbMatch = set.match(/^(\d+)-(\d+)$/);
+        if (stbMatch) {
+          const [, g1, g2] = stbMatch;
+          const s1 = parseInt(g1 || '0');
+          const s2 = parseInt(g2 || '0');
+          // Un des deux doit avoir au moins 10 points et gagner par 2
+          if ((s1 >= 10 || s2 >= 10) && Math.abs(s1 - s2) >= 2) {
+            return true;
+          }
+        }
+      }
+      
+      // Vérifier le format de base d'un set normal
       const match = set.match(/^(\d)-(\d)(\((\d+)\))?$/);
       if (!match) return false;
       
@@ -102,13 +130,30 @@ export function MatchForm({ currentPlayer, opponents, clubId }: MatchFormProps) 
       if (g1 === 6 && g2 <= 4) return true;
       if (g2 === 6 && g1 <= 4) return true;
       if ((g1 === 7 && g2 === 5) || (g1 === 5 && g2 === 7)) return true;
-      if ((g1 === 7 && g2 === 6) || (g1 === 6 && g2 === 7)) {
-        // Tie-break optionnel
-        return true;
-      }
+      if ((g1 === 7 && g2 === 6) || (g1 === 6 && g2 === 7)) return true;
       
       return false;
     });
+  };
+
+  // Auto-inférer le format quand le score change
+  const handleScoreChange = (newScore: string) => {
+    setScore(newScore);
+    // Suggérer un format basé sur le score entré
+    if (newScore.trim()) {
+      const inferred = inferFormatFromScore(newScore);
+      setMatchFormat(inferred);
+    }
+  };
+
+  // Message d'aide pour le format de score
+  const getScoreHelpText = (format: MatchFormat): string => {
+    switch (format) {
+      case 'one_set': return 'Exemples: 6-4, 6-3, 7-6(5)';
+      case 'two_sets': return 'Exemples: 6-4 6-2, 7-5 6-3';
+      case 'three_sets': return 'Exemples: 6-4 3-6 7-5';
+      case 'super_tiebreak': return 'Exemples: 6-4 4-6 10-8';
+    }
   };
 
   // Déterminer le vainqueur à partir du score
@@ -142,8 +187,8 @@ export function MatchForm({ currentPlayer, opponents, clubId }: MatchFormProps) 
       return;
     }
 
-    if (!validateScore(score)) {
-      setError('Format de score invalide. Exemples: "6-4 6-2", "6-4 3-6 7-5", "7-6(5) 6-4"');
+    if (!validateScore(score, matchFormat)) {
+      setError(`Format de score invalide pour un match en ${FORMAT_LABELS[matchFormat]}. ${getScoreHelpText(matchFormat)}`);
       return;
     }
 
@@ -161,6 +206,7 @@ export function MatchForm({ currentPlayer, opponents, clubId }: MatchFormProps) 
           opponentId: selectedOpponent.id,
           winnerId,
           score,
+          matchFormat,
           gameType,
           surface: surface || null,
           playedAt,
@@ -418,18 +464,29 @@ export function MatchForm({ currentPlayer, opponents, clubId }: MatchFormProps) 
             </div>
           </div>
 
+          {/* Format du match */}
+          <MatchFormatSelector 
+            value={matchFormat} 
+            onChange={setMatchFormat} 
+          />
+
           {/* Score */}
           <div className="space-y-2">
             <Label htmlFor="score">Score</Label>
             <Input
               id="score"
-              placeholder="6-4 6-2"
+              placeholder={matchFormat === 'one_set' ? '6-4' : matchFormat === 'super_tiebreak' ? '6-4 4-6 10-8' : '6-4 6-2'}
               value={score}
-              onChange={(e) => setScore(e.target.value)}
-              className={!score || validateScore(score) ? '' : 'border-red-500'}
+              onChange={(e) => handleScoreChange(e.target.value)}
+              className={!score || validateScore(score, matchFormat) ? '' : 'border-red-500'}
             />
-            {score && !validateScore(score) && (
-              <p className="text-sm text-red-500">Format invalide</p>
+            {score && !validateScore(score, matchFormat) ? (
+              <p className="text-sm text-red-500">Format invalide. {getScoreHelpText(matchFormat)}</p>
+            ) : (
+              <p className="text-sm text-muted-foreground flex items-center gap-1">
+                <Info className="h-3 w-3" />
+                {getScoreHelpText(matchFormat)}
+              </p>
             )}
           </div>
 
@@ -494,7 +551,7 @@ export function MatchForm({ currentPlayer, opponents, clubId }: MatchFormProps) 
             </Button>
             <Button
               onClick={handleSubmit}
-              disabled={isSubmitting || !winner || !score || !validateScore(score)}
+              disabled={isSubmitting || !winner || !score || !validateScore(score, matchFormat)}
               className="flex-1"
             >
               {isSubmitting ? (
