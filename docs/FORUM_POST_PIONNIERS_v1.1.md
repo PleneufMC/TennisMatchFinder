@@ -1,6 +1,6 @@
 # 🎾 Post Forum — Mise à jour v1.1 "Open Club"
 
-**Titre** : 🚀 Mise à jour v1.1 — L'Open Club est là + nouveautés !
+**Titre** : 🚀 Mise à jour v1.1 — L'Open Club est là + corrections !
 
 ---
 
@@ -58,16 +58,18 @@ Un grand merci à ceux qui ont signalé ces problèmes ! 🙏
 
 ### 📅 Ce qui arrive bientôt
 
-On bosse sur des intégrations qui vont vous simplifier la vie :
-
-**Février 2026 :**
+**Février 2026 — Intégrations :**
 - 📅 **Google Calendar** — Vos matchs directement dans votre agenda
 - 💬 **WhatsApp** — Invitations et notifications via WhatsApp
 
-**Mars 2026 :**
-- 🚀 **Lancement pub** — On passe à la vitesse supérieure
+**Mars-Avril 2026 — Croissance :**
+- 🚀 Lancement des campagnes pub
 - 🎯 Objectif : **100 nouveaux joueurs en 30 jours**
-- 📈 Objectif Q2 : **1000 joueurs sur la plateforme**
+- 📈 Objectif trimestre : **1000 joueurs sur la plateforme**
+
+**Plus tard en 2026 :**
+- 🗺️ **Classements par département** — Comparez-vous aux joueurs de votre région !
+- 🏆 Tournois inter-clubs
 
 ---
 
@@ -85,9 +87,7 @@ Vous êtes les **Pionniers**. Votre avis compte énormément pour la suite.
 
 ---
 
-### 📌 Version actuelle : v1.1
-
-On a aussi corrigé le numéro de version qui affichait "v1.0" alors qu'on a bien évolué depuis le lancement. 
+### 📌 Version : v1.1
 
 ---
 
