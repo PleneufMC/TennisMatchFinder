@@ -8,13 +8,13 @@
  * - PRERELEASE : alpha, beta, rc (release candidate)
  */
 
-export const APP_VERSION = '0.9.0-beta';
+export const APP_VERSION = '1.1.0';
 
 export const VERSION_INFO = {
   version: APP_VERSION,
-  name: 'Pionniers',
+  name: 'Open Club',
   releaseDate: '2026-01-13',
-  description: 'Version beta pour les premiers utilisateurs',
+  description: 'Introduction de l\'Open Club et des Box Leagues',
 };
 
 /**
