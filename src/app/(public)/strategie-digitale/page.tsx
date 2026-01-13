@@ -1442,7 +1442,7 @@ export default function StrategieDigitalePage() {
               <span className="font-medium">Document préparé par Lyra</span>
             </div>
             <div className="text-sm text-muted-foreground">
-              Stratégie Digitale TennisMatchFinder • Version 1.0 — Janvier 2026
+              Stratégie Digitale TennisMatchFinder • Version 1.1 — Janvier 2026
               <br />
               Budget : 1 000€ | Objectif : 100 inscrits | Période : 8 semaines
             </div>

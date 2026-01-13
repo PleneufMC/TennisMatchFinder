@@ -153,7 +153,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
       {!collapsed && (
         <div className="border-t p-4">
           <p className="text-xs text-muted-foreground text-center">
-            TennisMatchFinder v1.0
+            TennisMatchFinder v0.9.0-beta
           </p>
         </div>
       )}
