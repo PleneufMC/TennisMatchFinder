@@ -164,11 +164,12 @@ export const BADGES: Badge[] = [
   {
     id: 'king_of_club',
     name: 'King of Club',
-    description: 'Atteignez la 1ère place du classement',
+    description: 'Tu es #1 ELO de ton club !',
     icon: 'Crown',
     category: 'special',
     rarity: 'legendary',
     condition: 'Classement #1 du club',
+    // BADGE DYNAMIQUE : peut être retiré si quelqu'un te dépasse
   },
   {
     id: 'club_regular',
@@ -180,6 +181,16 @@ export const BADGES: Badge[] = [
     condition: 'Plus de matchs joués sur 90 jours que tout autre membre',
   },
 ];
+
+// Badge dynamique - peut être perdu
+export const DYNAMIC_BADGES = ['king_of_club'] as const;
+
+/**
+ * Vérifie si un badge est dynamique (peut être retiré)
+ */
+export function isDynamicBadge(badgeId: string): boolean {
+  return DYNAMIC_BADGES.includes(badgeId as typeof DYNAMIC_BADGES[number]);
+}
 
 // ============================================
 // HELPERS

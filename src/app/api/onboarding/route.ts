@@ -4,6 +4,10 @@
  * 
  * Crée un profil joueur pour un utilisateur déjà connecté (via NextAuth)
  * qui n'a pas encore de profil player
+ * 
+ * Supporte le nouveau flow en 5 étapes avec:
+ * - fullName, city, selfAssessedLevel (requis)
+ * - dominantHand, availability, preferences (optionnels)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -12,6 +16,23 @@ import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { players } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { checkAndAwardBadges } from '@/lib/gamification/badge-service';
+
+interface OnboardingPayload {
+  fullName: string;
+  city: string;
+  selfAssessedLevel?: 'débutant' | 'intermédiaire' | 'avancé' | 'expert';
+  dominantHand?: 'right' | 'left' | 'ambidextrous';
+  avatarUrl?: string;
+  availability?: {
+    days: string[];
+    timeSlots: string[];
+  };
+  preferences?: {
+    gameTypes: string[];
+    surfaces: string[];
+  };
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,8 +46,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
-    const { fullName, city, selfAssessedLevel } = body;
+    const body: OnboardingPayload = await request.json();
+    const { 
+      fullName, 
+      city, 
+      selfAssessedLevel,
+      dominantHand,
+      avatarUrl,
+      availability,
+      preferences,
+    } = body;
 
     // Validation basique
     if (!fullName || !city) {
@@ -56,6 +85,15 @@ export async function POST(request: NextRequest) {
       .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(' ');
 
+    // Préparer les données de disponibilité et préférences
+    const playerAvailability = availability || { days: [], timeSlots: [] };
+    const playerPreferences = preferences || { gameTypes: ['simple'], surfaces: [] };
+
+    // Ajouter la main dominante aux préférences si fournie
+    if (dominantHand) {
+      (playerPreferences as Record<string, unknown>).dominantHand = dominantHand;
+    }
+
     // Créer le profil joueur
     const [newPlayer] = await db
       .insert(players)
@@ -64,7 +102,10 @@ export async function POST(request: NextRequest) {
         clubId: null,
         city: normalizedCity,
         fullName: fullName.trim(),
+        avatarUrl: avatarUrl || session.user.image || null,
         selfAssessedLevel: selfAssessedLevel || 'intermédiaire',
+        availability: playerAvailability,
+        preferences: playerPreferences,
         currentElo: 1200,
         bestElo: 1200,
         lowestElo: 1200,
@@ -76,6 +117,14 @@ export async function POST(request: NextRequest) {
         { error: 'Erreur lors de la création du profil' },
         { status: 500 }
       );
+    }
+
+    // Vérifier les badges initiaux (Early Bird si applicable)
+    try {
+      await checkAndAwardBadges(newPlayer.id);
+    } catch (badgeError) {
+      // Ne pas bloquer l'onboarding si les badges échouent
+      console.warn('Badge check failed during onboarding:', badgeError);
     }
 
     return NextResponse.json({
