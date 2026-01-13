@@ -7,7 +7,7 @@
 
 import { db } from '@/lib/db';
 import { players, playerBadges, matches, eloHistory, notifications } from '@/lib/db/schema';
-import { eq, and, gte, desc, sql, ne, count } from 'drizzle-orm';
+import { eq, and, gte, desc, sql } from 'drizzle-orm';
 import { BADGES, type Badge, RARITY_LABELS, isDynamicBadge } from './badges';
 import { updateKingOfClub } from './king-of-club';
 
