@@ -7,8 +7,9 @@
 
 import { db } from '@/lib/db';
 import { players, playerBadges, matches, eloHistory, notifications } from '@/lib/db/schema';
-import { eq, and, gte, desc, sql, ne, count } from 'drizzle-orm';
-import { BADGES, type Badge, RARITY_LABELS } from './badges';
+import { eq, and, gte, desc, sql } from 'drizzle-orm';
+import { BADGES, type Badge, RARITY_LABELS, isDynamicBadge } from './badges';
+import { updateKingOfClub } from './king-of-club';
 
 // Date limite Early Bird
 const EARLY_BIRD_DEADLINE = new Date('2026-06-30T23:59:59');
@@ -451,12 +452,47 @@ async function checkClubRegular(playerId: string): Promise<boolean> {
  */
 export async function triggerBadgeCheckAfterMatch(
   player1Id: string,
-  player2Id: string
+  player2Id: string,
+  clubId?: string
 ): Promise<{ player1Badges: Badge[]; player2Badges: Badge[] }> {
   const [player1Badges, player2Badges] = await Promise.all([
     checkAndAwardBadges(player1Id),
     checkAndAwardBadges(player2Id),
   ]);
 
+  // Mettre à jour le King of Club si on connait le club
+  if (clubId) {
+    try {
+      const kingResult = await updateKingOfClub(clubId);
+      
+      // Ajouter le badge King of Club aux résultats si nouveau
+      if (kingResult.changed && kingResult.newKingId) {
+        const kingBadge = BADGES.find(b => b.id === 'king_of_club');
+        if (kingBadge) {
+          if (kingResult.newKingId === player1Id) {
+            player1Badges.push(kingBadge);
+          } else if (kingResult.newKingId === player2Id) {
+            player2Badges.push(kingBadge);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to update King of Club:', error);
+    }
+  }
+
   return { player1Badges, player2Badges };
+}
+
+/**
+ * Récupère le club d'un joueur
+ */
+export async function getPlayerClubId(playerId: string): Promise<string | null> {
+  const player = await db
+    .select({ clubId: players.clubId })
+    .from(players)
+    .where(eq(players.id, playerId))
+    .limit(1);
+
+  return player[0]?.clubId || null;
 }
