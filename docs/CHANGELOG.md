@@ -2,17 +2,14 @@
 
 Toutes les modifications notables de ce projet sont documentées dans ce fichier.
 
-Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
-et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
-
 ---
 
-## [0.9.0-beta] - 2026-01-13
+## [1.1.0] - 2026-01-13 — "Open Club"
 
 ### 🎉 Nouveautés
 
-#### 🏠 Open Club - Club pour tous !
-- **Nouveau** : Création de l'**Open Club**, un club par défaut pour tous les joueurs sans affiliation
+#### 🏠 Open Club - Le tennis pour tous !
+- **Nouveau** : Création de l'**Open Club**, un club par défaut pour tous les joueurs
 - Les joueurs peuvent s'inscrire sans rejoindre un club spécifique
 - Accès complet au dashboard et aux fonctionnalités pour tous
 - Possibilité de rejoindre un club spécifique ultérieurement
@@ -31,41 +28,28 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
 #### 🎯 Page Stratégie Digitale
 - Nouvelle page `/strategie-digitale` documentant la stratégie marketing
-- Calendrier des campagnes (mi-mars à mi-mai 2026)
+- Calendrier des campagnes
 - Templates d'annonces et briefs influenceurs
-- Dashboard de suivi des KPIs
 
 ### 🐛 Corrections de bugs
 
-#### Authentification
 - **Corrigé** : Problème de connexion pour les joueurs sans club
 - **Corrigé** : Race condition lors du chargement de la session
 - **Corrigé** : Gestion des tokens JWT améliorée
-- **Corrigé** : Types TypeScript pour `clubId: null`
-
-#### Interface utilisateur
 - **Corrigé** : Redirections intempestives vers /login
-- **Corrigé** : Affichage du skeleton pendant le chargement
 - **Corrigé** : Erreurs 404 sur certains assets
-
-### 🔧 Améliorations techniques
-
-- Centralisation de la configuration des super admins
-- Meilleure gestion des erreurs dans les callbacks NextAuth
-- Logging amélioré pour le debugging
-- Documentation technique complète
 
 ### 👑 Administration
 
 - **Nouveau** : Rôle Super Admin pour gérer tous les clubs
-- Accès à la gestion de tous les joueurs (`/admin/tous-les-joueurs`)
+- Accès à la gestion de tous les joueurs
 - Possibilité de changer le club d'un joueur
 
 ---
 
-## [0.8.0-alpha] - 2026-01-01
+## [1.0.0] - Décembre 2025 — Lancement
 
-### 🎉 Nouveautés initiales
+### 🎉 Fonctionnalités de lancement
 
 - Système d'authentification par magic link
 - Profils joueurs avec niveau et disponibilités
@@ -74,27 +58,27 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 - Forum de discussion par club
 - Système de badges et gamification
 - Notifications en temps réel
+- Gestion du club MCCC
 
 ---
 
-## Roadmap
+## 🗺️ Roadmap
 
-### Prochaines versions prévues
+### v1.2.0 — Intégrations (Février 2026)
+- [ ] 📅 Intégration **Google Calendar** (synchronisation des matchs)
+- [ ] 💬 Intégration **WhatsApp** (notifications et invitations)
+- [ ] 📱 Améliorations PWA (notifications push)
 
-#### v0.9.1-beta (Janvier 2026)
-- [ ] Amélioration de l'onboarding
-- [ ] Statistiques personnelles détaillées
-- [ ] Export des données de match
+### v1.3.0 — Croissance (Mars-Avril 2026)
+- [ ] 🚀 Lancement des campagnes publicitaires
+- [ ] 🎯 **Objectif : 100 joueurs en 30 jours**
+- [ ] 📈 **Objectif : 1000 joueurs en 1 trimestre**
+- [ ] 🤝 Partenariats avec clubs et micro-influenceurs
 
-#### v0.10.0-beta (Février 2026)
-- [ ] Application mobile (PWA améliorée)
-- [ ] Notifications push
-- [ ] Chat en temps réel entre joueurs
-
-#### v1.0.0 (Mars 2026)
-- [ ] Lancement officiel
-- [ ] Campagnes marketing actives
-- [ ] Support multi-clubs complet
+### v1.4.0 — Social (Q2 2026)
+- [ ] 💬 Chat en temps réel entre joueurs
+- [ ] 📸 Partage de photos de matchs
+- [ ] 🏅 Classements régionaux
 
 ---
 
