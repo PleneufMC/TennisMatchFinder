@@ -58,9 +58,10 @@ Un grand merci à ceux qui ont signalé ces problèmes ! 🙏
 
 ### 📅 Ce qui arrive bientôt
 
-**Février 2026 — Intégrations :**
+**Février 2026 — Intégrations & International :**
 - 📅 **Google Calendar** — Vos matchs directement dans votre agenda
 - 💬 **WhatsApp** — Invitations et notifications via WhatsApp
+- 🌍 **Version anglaise** — Pour nos amis anglophones et l'expansion internationale !
 
 **Mars-Avril 2026 — Croissance :**
 - 🚀 Lancement des campagnes pub

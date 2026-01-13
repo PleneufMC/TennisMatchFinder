@@ -65,9 +65,10 @@ Toutes les modifications notables de ce projet sont documentées dans ce fichier
 
 ## 🗺️ Roadmap
 
-### v1.2.0 — Intégrations (Février 2026)
+### v1.2.0 — Intégrations & International (Février 2026)
 - [ ] 📅 Intégration **Google Calendar** (synchronisation des matchs)
 - [ ] 💬 Intégration **WhatsApp** (notifications et invitations)
+- [ ] 🌍 **Version anglaise** du site (internationalisation i18n)
 - [ ] 📱 Améliorations notifications push (PWA)
 
 ### v1.3.0 — Croissance (Mars-Avril 2026)
