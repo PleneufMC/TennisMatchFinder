@@ -2,7 +2,8 @@
  * API Route: Inscription avec ville (sans club obligatoire)
  * POST /api/auth/register-city
  * 
- * Crée un joueur avec sa ville, optionnellement avec une demande d'adhésion à un club
+ * Crée un joueur avec sa ville, optionnellement avec une demande d'adhésion à un club.
+ * Si aucun club n'est choisi, le joueur est assigné à l'Open Club par défaut.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -10,6 +11,9 @@ import { db } from '@/lib/db';
 import { users, players, clubs } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { createJoinRequest, hasUserPendingRequest } from '@/lib/db/queries';
+
+// Slug du club par défaut pour les joueurs indépendants
+const OPEN_CLUB_SLUG = 'open-club';
 
 export async function POST(request: NextRequest) {
   try {
@@ -69,12 +73,13 @@ export async function POST(request: NextRequest) {
       userId = newUser.id;
     }
 
-    // Créer le joueur SANS club (ou avec demande de club)
+    // Gérer l'affiliation au club
     let clubId: string | null = null;
     let joinRequestCreated = false;
+    let assignedToOpenClub = false;
 
-    // Si un club est spécifié, créer une demande d'adhésion
-    if (clubSlug) {
+    // Si un club spécifique est demandé (autre que open-club), créer une demande d'adhésion
+    if (clubSlug && clubSlug !== OPEN_CLUB_SLUG) {
       const [club] = await db
         .select()
         .from(clubs)
@@ -94,15 +99,32 @@ export async function POST(request: NextRequest) {
           });
           joinRequestCreated = true;
         }
+        // Le joueur sera assigné au club après validation de sa demande
+        // En attendant, on l'assigne à l'Open Club
       }
     }
 
-    // Créer le profil joueur (sans club affilié)
+    // Récupérer l'Open Club (club par défaut)
+    const [openClub] = await db
+      .select()
+      .from(clubs)
+      .where(eq(clubs.slug, OPEN_CLUB_SLUG))
+      .limit(1);
+
+    if (openClub) {
+      clubId = openClub.id;
+      assignedToOpenClub = true;
+      console.log('[Register] Assigning player to Open Club:', openClub.id);
+    } else {
+      console.warn('[Register] Open Club not found! Player will have no club.');
+    }
+
+    // Créer le profil joueur (assigné à l'Open Club par défaut)
     const [newPlayer] = await db
       .insert(players)
       .values({
         id: userId,
-        clubId: null, // Pas de club par défaut
+        clubId, // Open Club par défaut
         city: city.trim(),
         fullName,
         selfAssessedLevel: selfAssessedLevel || 'intermédiaire',
@@ -119,13 +141,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Construire le message de retour
+    let message = 'Compte créé ! Vous pouvez maintenant vous connecter.';
+    if (joinRequestCreated) {
+      message = 'Compte créé ! Votre demande d\'adhésion a été envoyée. En attendant, vous avez accès à l\'Open Club.';
+    } else if (assignedToOpenClub) {
+      message = 'Compte créé ! Vous faites partie de l\'Open Club. Vous pouvez maintenant vous connecter.';
+    }
+
     return NextResponse.json({
       success: true,
-      message: joinRequestCreated 
-        ? 'Compte créé ! Votre demande d\'adhésion a été envoyée.'
-        : 'Compte créé ! Vous pouvez maintenant vous connecter.',
+      message,
       playerId: newPlayer.id,
       joinRequestCreated,
+      assignedToOpenClub,
     });
   } catch (error) {
     console.error('Registration error:', error);
