@@ -1,448 +1,1212 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TennisMatchFinder - Investor One-Pager</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    body {
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
-      color: #fff;
-      min-height: 100vh;
-      padding: 40px;
-    }
-    
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-    
-    /* Header */
-    .header {
-      text-align: center;
-      margin-bottom: 50px;
-    }
-    
-    .logo {
-      font-size: 3rem;
-      font-weight: 800;
-      background: linear-gradient(90deg, #22c55e, #16a34a);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 10px;
-    }
-    
-    .tagline {
-      font-size: 1.5rem;
-      color: #a1a1aa;
-      margin-bottom: 20px;
-    }
-    
-    .subtitle {
-      font-size: 1.1rem;
-      color: #71717a;
-    }
-    
-    /* Grid */
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 30px;
-      margin-bottom: 40px;
-    }
-    
-    .grid-2 {
-      grid-template-columns: repeat(2, 1fr);
-    }
-    
-    /* Cards */
-    .card {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 16px;
-      padding: 25px;
-    }
-    
-    .card-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-    
-    .card-icon {
-      width: 40px;
-      height: 40px;
-      background: linear-gradient(135deg, #22c55e, #16a34a);
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.2rem;
-    }
-    
-    .card-title {
-      font-size: 1.3rem;
-      font-weight: 600;
-    }
-    
-    .card p {
-      color: #a1a1aa;
-      line-height: 1.6;
-      margin-bottom: 15px;
-    }
-    
-    /* Stats */
-    .stats {
-      display: flex;
-      justify-content: space-around;
-      flex-wrap: wrap;
-      gap: 20px;
-      margin: 40px 0;
-    }
-    
-    .stat {
-      text-align: center;
-    }
-    
-    .stat-value {
-      font-size: 3rem;
-      font-weight: 800;
-      background: linear-gradient(90deg, #22c55e, #4ade80);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    
-    .stat-label {
-      color: #a1a1aa;
-      font-size: 0.9rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    
-    /* Table */
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 15px;
-    }
-    
-    th, td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    
-    th {
-      color: #22c55e;
-      font-weight: 600;
-      font-size: 0.9rem;
-      text-transform: uppercase;
-    }
-    
-    td {
-      color: #d4d4d8;
-    }
-    
-    /* Highlight */
-    .highlight {
-      background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(22, 163, 74, 0.1));
-      border: 1px solid rgba(34, 197, 94, 0.3);
-    }
-    
-    /* List */
-    .feature-list {
-      list-style: none;
-    }
-    
-    .feature-list li {
-      padding: 8px 0;
-      color: #d4d4d8;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    
-    .feature-list li::before {
-      content: "✓";
-      color: #22c55e;
-      font-weight: bold;
-    }
-    
-    /* Progress */
-    .progress-bar {
-      height: 8px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 4px;
-      overflow: hidden;
-      margin: 10px 0;
-    }
-    
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #22c55e, #4ade80);
-      border-radius: 4px;
-    }
-    
-    /* Footer */
-    .footer {
-      text-align: center;
-      margin-top: 50px;
-      padding-top: 30px;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    
-    .footer a {
-      color: #22c55e;
-      text-decoration: none;
-    }
-    
-    .contact {
-      display: flex;
-      justify-content: center;
-      gap: 40px;
-      margin-top: 20px;
-    }
-    
-    .contact-item {
-      color: #a1a1aa;
-    }
-    
-    /* Responsive */
-    @media (max-width: 900px) {
-      .grid {
-        grid-template-columns: 1fr;
-      }
-      .grid-2 {
-        grid-template-columns: 1fr;
-      }
-    }
-    
-    @media print {
-      body {
-        background: white;
-        color: black;
-        padding: 20px;
-      }
-      .card {
-        border: 1px solid #ddd;
-        background: #f9f9f9;
-      }
-      .stat-value, .logo {
-        color: #16a34a;
-        -webkit-text-fill-color: #16a34a;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TennisMatchFinder — Investor Deck</title>
+    <meta name="description" content="Le Strava du Tennis Amateur - Plateforme SaaS de matchmaking intelligent avec système ELO">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-bg: #FAFAF9;
+            --color-surface: #FFFFFF;
+            --color-text: #1C1917;
+            --color-text-muted: #57534E;
+            --color-accent: #16A34A;
+            --color-accent-light: #DCFCE7;
+            --color-accent-dark: #15803D;
+            --color-border: #E7E5E4;
+            --color-clay: #C2410C;
+            --color-clay-light: #FFF7ED;
+            --font-display: 'Fraunces', Georgia, serif;
+            --font-body: 'DM Sans', system-ui, sans-serif;
+            --radius: 12px;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.07);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--color-bg);
+            color: var(--color-text);
+            line-height: 1.6;
+            font-size: 16px;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--color-accent-dark) 0%, var(--color-accent) 50%, #22C55E 100%);
+            color: white;
+            padding: 80px 24px 100px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.5;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 1;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 32px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            opacity: 0.9;
+        }
+
+        .logo-icon {
+            font-size: 1.5rem;
+        }
+
+        h1 {
+            font-family: var(--font-display);
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: 16px;
+            letter-spacing: -0.02em;
+        }
+
+        .tagline {
+            font-size: 1.25rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto 40px;
+        }
+
+        .header-stats {
+            display: flex;
+            justify-content: center;
+            gap: 48px;
+            flex-wrap: wrap;
+        }
+
+        .header-stat {
+            text-align: center;
+        }
+
+        .header-stat-value {
+            font-family: var(--font-display);
+            font-size: 2.5rem;
+            font-weight: 700;
+            display: block;
+        }
+
+        .header-stat-label {
+            font-size: 0.875rem;
+            opacity: 0.8;
+        }
+
+        /* Beta banner */
+        .beta-banner {
+            background: linear-gradient(90deg, #FEF3C7 0%, #FDE68A 100%);
+            color: #92400E;
+            padding: 16px 24px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .beta-banner strong {
+            color: #78350F;
+        }
+
+        /* Main */
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Section */
+        .section {
+            padding: 64px 0;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .section:last-child {
+            border-bottom: none;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .section-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--color-accent-light);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .section-icon.clay {
+            background: var(--color-clay-light);
+        }
+
+        h2 {
+            font-family: var(--font-display);
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        h3 {
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--color-text);
+        }
+
+        p {
+            color: var(--color-text-muted);
+            margin-bottom: 16px;
+        }
+
+        /* Grid layouts */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 32px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--color-surface);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--color-border);
+        }
+
+        .card-highlight {
+            border-color: var(--color-accent);
+            box-shadow: var(--shadow-md), 0 0 0 1px var(--color-accent);
+        }
+
+        .card-icon {
+            font-size: 2rem;
+            margin-bottom: 12px;
+        }
+
+        .card h4 {
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .card p {
+            font-size: 0.9375rem;
+            margin-bottom: 0;
+        }
+
+        /* Pain points */
+        .pain-item {
+            display: flex;
+            gap: 12px;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .pain-item:last-child {
+            border-bottom: none;
+        }
+
+        .pain-icon {
+            color: var(--color-clay);
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .pain-text strong {
+            color: var(--color-text);
+        }
+
+        /* ELO table */
+        .elo-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+
+        .elo-table th,
+        .elo-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .elo-table th {
+            background: var(--color-bg);
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--color-text-muted);
+        }
+
+        .elo-table td {
+            font-size: 0.9375rem;
+        }
+
+        .elo-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--color-accent-light);
+            color: var(--color-accent-dark);
+            padding: 4px 10px;
+            border-radius: 100px;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        /* Feature list */
+        .feature-list {
+            list-style: none;
+        }
+
+        .feature-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+
+        .feature-check {
+            color: var(--color-accent);
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .feature-text {
+            flex: 1;
+        }
+
+        .feature-text strong {
+            color: var(--color-text);
+            display: block;
+        }
+
+        .feature-text span {
+            font-size: 0.875rem;
+            color: var(--color-text-muted);
+        }
+
+        /* Metrics */
+        .metric-card {
+            background: var(--color-surface);
+            border-radius: var(--radius);
+            padding: 20px;
+            text-align: center;
+            border: 1px solid var(--color-border);
+        }
+
+        .metric-value {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--color-accent-dark);
+            display: block;
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: var(--color-text-muted);
+            margin-top: 4px;
+        }
+
+        /* Pricing */
+        .pricing-strategy {
+            background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+            border-radius: var(--radius);
+            padding: 32px;
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        .pricing-strategy h3 {
+            color: #78350F;
+            margin-bottom: 8px;
+        }
+
+        .pricing-strategy p {
+            color: #92400E;
+            margin-bottom: 0;
+            font-size: 1.125rem;
+        }
+
+        .pricing-strategy .date {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            font-weight: 700;
+            color: #78350F;
+            display: block;
+            margin: 16px 0;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-top: 24px;
+        }
+
+        .pricing-card {
+            background: var(--color-surface);
+            border-radius: var(--radius);
+            padding: 32px;
+            border: 2px solid var(--color-border);
+            text-align: center;
+        }
+
+        .pricing-card.featured {
+            border-color: var(--color-accent);
+            position: relative;
+        }
+
+        .pricing-card.featured::before {
+            content: 'Meilleure valeur';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--color-accent);
+            color: white;
+            padding: 4px 16px;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .pricing-tier {
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--color-text-muted);
+            margin-bottom: 8px;
+        }
+
+        .pricing-price {
+            font-family: var(--font-display);
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--color-text);
+        }
+
+        .pricing-price span {
+            font-size: 1rem;
+            font-weight: 400;
+            color: var(--color-text-muted);
+        }
+
+        .pricing-equiv {
+            font-size: 0.875rem;
+            color: var(--color-text-muted);
+            margin-top: 4px;
+        }
+
+        .pricing-features {
+            list-style: none;
+            margin-top: 24px;
+            text-align: left;
+        }
+
+        .pricing-features li {
+            padding: 8px 0;
+            font-size: 0.9375rem;
+            color: var(--color-text-muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pricing-features li::before {
+            content: '✓';
+            color: var(--color-accent);
+            font-weight: 700;
+        }
+
+        /* Competitor table */
+        .competitor-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+            font-size: 0.9375rem;
+        }
+
+        .competitor-table th,
+        .competitor-table td {
+            padding: 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .competitor-table th {
+            background: var(--color-bg);
+            font-weight: 600;
+        }
+
+        .competitor-table tr:hover {
+            background: var(--color-bg);
+        }
+
+        .competitor-name {
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        /* Roadmap */
+        .roadmap-item {
+            display: flex;
+            gap: 24px;
+            padding: 24px 0;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .roadmap-item:last-child {
+            border-bottom: none;
+        }
+
+        .roadmap-date {
+            flex-shrink: 0;
+            width: 120px;
+        }
+
+        .roadmap-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .roadmap-badge.done {
+            background: var(--color-accent-light);
+            color: var(--color-accent-dark);
+        }
+
+        .roadmap-badge.current {
+            background: #FEF3C7;
+            color: #B45309;
+        }
+
+        .roadmap-badge.planned {
+            background: #E0E7FF;
+            color: #4338CA;
+        }
+
+        .roadmap-content h4 {
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .roadmap-content ul {
+            list-style: none;
+            color: var(--color-text-muted);
+        }
+
+        .roadmap-content li {
+            padding: 4px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .roadmap-content li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: var(--color-accent);
+        }
+
+        /* Ask section */
+        .ask-section {
+            background: linear-gradient(135deg, var(--color-accent-dark) 0%, var(--color-accent) 100%);
+            color: white;
+            border-radius: var(--radius);
+            padding: 48px;
+            margin: 48px 0;
+            text-align: center;
+        }
+
+        .ask-section h2 {
+            color: white;
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        .ask-amount {
+            font-family: var(--font-display);
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin: 24px 0;
+        }
+
+        .ask-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-top: 32px;
+            text-align: left;
+        }
+
+        @media (max-width: 768px) {
+            .ask-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .ask-item {
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .ask-item-percent {
+            font-size: 2rem;
+            font-weight: 700;
+            opacity: 0.9;
+        }
+
+        .ask-item-label {
+            font-size: 0.875rem;
+            opacity: 0.8;
+            margin-top: 4px;
+        }
+
+        /* Milestones */
+        .milestone-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 32px;
+        }
+
+        .milestone-card {
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .milestone-timeline {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            opacity: 0.7;
+        }
+
+        .milestone-value {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 8px 0 4px;
+        }
+
+        .milestone-label {
+            font-size: 0.875rem;
+            opacity: 0.8;
+        }
+
+        /* Footer CTA */
+        .footer-cta {
+            background: var(--color-surface);
+            border-radius: var(--radius);
+            padding: 48px;
+            text-align: center;
+            margin: 48px 0;
+            border: 1px solid var(--color-border);
+        }
+
+        .footer-cta h2 {
+            margin-bottom: 16px;
+        }
+
+        .footer-cta p {
+            max-width: 500px;
+            margin: 0 auto 32px;
+        }
+
+        .contact-links {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .contact-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: var(--color-accent);
+            color: white;
+            text-decoration: none;
+            border-radius: 100px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .contact-link:hover {
+            background: var(--color-accent-dark);
+            transform: translateY(-2px);
+        }
+
+        .contact-link.secondary {
+            background: var(--color-bg);
+            color: var(--color-text);
+            border: 1px solid var(--color-border);
+        }
+
+        .contact-link.secondary:hover {
+            background: var(--color-border);
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 48px 24px;
+            color: var(--color-text-muted);
+            font-size: 0.875rem;
+        }
+
+        footer a {
+            color: var(--color-accent);
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .header {
+                padding: 48px 16px 64px;
+            }
+
+            .header-stats {
+                gap: 32px;
+            }
+
+            .section {
+                padding: 48px 0;
+            }
+
+            .ask-section {
+                padding: 32px 24px;
+            }
+
+            .footer-cta {
+                padding: 32px 24px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <!-- Header -->
-    <header class="header">
-      <div class="logo">🎾 TennisMatchFinder</div>
-      <div class="tagline">Le Tinder du Tennis Amateur</div>
-      <div class="subtitle">Plateforme SaaS de matchmaking intelligent pour joueurs de tennis</div>
-    </header>
-    
-    <!-- Key Stats -->
-    <div class="stats">
-      <div class="stat">
-        <div class="stat-value">1.2M</div>
-        <div class="stat-label">Licenciés FFT France</div>
-      </div>
-      <div class="stat">
-        <div class="stat-value">7 000+</div>
-        <div class="stat-label">Clubs de tennis</div>
-      </div>
-      <div class="stat">
-        <div class="stat-value">85%</div>
-        <div class="stat-label">Joueurs loisirs (non compétition)</div>
-      </div>
-      <div class="stat">
-        <div class="stat-value">0</div>
-        <div class="stat-label">Solution de matchmaking ELO</div>
-      </div>
+
+<!-- Beta Banner -->
+<div class="beta-banner">
+    🚀 <strong>Phase Beta</strong> — Acces gratuit a toutes les fonctionnalites jusqu'au <strong>30 juin 2026</strong>
+</div>
+
+<!-- Header -->
+<header class="header">
+    <div class="header-content">
+        <div class="logo">
+            <span class="logo-icon">🎾</span>
+            TennisMatchFinder
+        </div>
+        <h1>Le Strava du Tennis Amateur</h1>
+        <p class="tagline">Plateforme SaaS de matchmaking intelligent avec systeme ELO pour joueurs de tennis loisirs</p>
+        <div class="header-stats">
+            <div class="header-stat">
+                <span class="header-stat-value">1,2M</span>
+                <span class="header-stat-label">Licencies FFT</span>
+            </div>
+            <div class="header-stat">
+                <span class="header-stat-value">7 000+</span>
+                <span class="header-stat-label">Clubs en France</span>
+            </div>
+            <div class="header-stat">
+                <span class="header-stat-value">85%</span>
+                <span class="header-stat-label">Joueurs loisirs</span>
+            </div>
+            <div class="header-stat">
+                <span class="header-stat-value">0</span>
+                <span class="header-stat-label">Solution ELO existante</span>
+            </div>
+        </div>
     </div>
-    
-    <!-- Problem & Solution -->
-    <div class="grid grid-2">
-      <div class="card">
-        <div class="card-header">
-          <div class="card-icon">😤</div>
-          <div class="card-title">Le Problème</div>
+</header>
+
+<main>
+    <!-- Probleme -->
+    <section class="section">
+        <div class="section-header">
+            <div class="section-icon clay">😤</div>
+            <h2>Le Probleme</h2>
         </div>
-        <p><strong>1,2 million de joueurs</strong> organisent encore leurs matchs via WhatsApp et bouche-à-oreille.</p>
-        <ul class="feature-list" style="list-style: none;">
-          <li style="color: #f87171;">❌ Difficile de trouver un partenaire de niveau similaire</li>
-          <li style="color: #f87171;">❌ Pas de suivi de progression hors compétition</li>
-          <li style="color: #f87171;">❌ 2-3h/semaine perdues en coordination</li>
-          <li style="color: #f87171;">❌ 40% de churn la 1ère année faute d'intégration</li>
-        </ul>
-      </div>
-      
-      <div class="card highlight">
-        <div class="card-header">
-          <div class="card-icon">💡</div>
-          <div class="card-title">Notre Solution</div>
+        <p style="font-size: 1.125rem; color: var(--color-text); margin-bottom: 24px;">
+            <strong>1,2 million de joueurs</strong> organisent encore leurs matchs via WhatsApp et bouche-a-oreille.
+        </p>
+        <div class="grid-2">
+            <div>
+                <div class="pain-item">
+                    <span class="pain-icon">❌</span>
+                    <p class="pain-text"><strong>Difficile de trouver un partenaire de niveau similaire</strong><br>Matchs desequilibres, frustration</p>
+                </div>
+                <div class="pain-item">
+                    <span class="pain-icon">❌</span>
+                    <p class="pain-text"><strong>Aucun suivi de progression hors competition</strong><br>Pas de motivation long-terme</p>
+                </div>
+            </div>
+            <div>
+                <div class="pain-item">
+                    <span class="pain-icon">❌</span>
+                    <p class="pain-text"><strong>2-3h/semaine perdues en coordination</strong><br>Friction → abandon</p>
+                </div>
+                <div class="pain-item">
+                    <span class="pain-icon">❌</span>
+                    <p class="pain-text"><strong>40% de churn la 1ere annee</strong><br>Faute d'integration sociale</p>
+                </div>
+            </div>
         </div>
-        <p><strong>Matchmaking intelligent</strong> avec système ELO pour joueurs amateurs.</p>
-        <ul class="feature-list">
-          <li>Système ELO innovant (motivation sans compétition)</li>
-          <li>Suggestion partenaires par niveau/dispo/localisation</li>
-          <li>Proposition de match en 2 clics</li>
-          <li>Chat temps réel intégré (bye bye WhatsApp)</li>
-          <li>Box Leagues (poules de compétition)</li>
-        </ul>
-      </div>
+    </section>
+
+    <!-- Solution -->
+    <section class="section">
+        <div class="section-header">
+            <div class="section-icon">💡</div>
+            <h2>Notre Solution</h2>
+        </div>
+        
+        <h3>Technologie proprietaire : ELO Tennis Loisirs</h3>
+        <p>Le <strong>seul algorithme ELO au monde</strong> adapte au tennis amateur :</p>
+        
+        <div class="card" style="margin: 24px 0; overflow-x: auto;">
+            <table class="elo-table">
+                <thead>
+                    <tr>
+                        <th>Mecanisme</th>
+                        <th>Effet</th>
+                        <th>Benefice</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="elo-badge">+15%</span> Nouvel adversaire</td>
+                        <td>Recompense la diversite</td>
+                        <td>Joueurs decouvrent le club</td>
+                    </tr>
+                    <tr>
+                        <td><span class="elo-badge" style="background: #FEF3C7; color: #B45309;">-5%</span> Repetition</td>
+                        <td>Penalise les matchs routine</td>
+                        <td>Force a sortir de sa zone</td>
+                    </tr>
+                    <tr>
+                        <td><span class="elo-badge">+20%</span> Upset</td>
+                        <td>Recompense les exploits</td>
+                        <td>Motivation a defier les meilleurs</td>
+                    </tr>
+                    <tr>
+                        <td><span class="elo-badge" style="background: #FEF3C7; color: #B45309;">-5/sem</span> Inactivite</td>
+                        <td>Penalise l'inactivite</td>
+                        <td>Retention, engagement regulier</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>Fonctionnalites (toutes implementees ✅)</h3>
+        <div class="grid-3">
+            <div class="card">
+                <div class="card-icon">🎯</div>
+                <h4>Matchmaking intelligent</h4>
+                <p>Score de compatibilite multi-criteres (niveau, dispo, preferences)</p>
+            </div>
+            <div class="card">
+                <div class="card-icon">🏆</div>
+                <h4>Box Leagues</h4>
+                <p>Poules mensuelles avec promotion/relegation automatique</p>
+            </div>
+            <div class="card">
+                <div class="card-icon">🎾</div>
+                <h4>Tournois</h4>
+                <p>Elimination directe, bracket visuel, seeding ELO, paiement Stripe</p>
+            </div>
+            <div class="card">
+                <div class="card-icon">💬</div>
+                <h4>Chat temps reel</h4>
+                <p>Conversations privees et salons club (WebSocket Pusher)</p>
+            </div>
+            <div class="card">
+                <div class="card-icon">🏅</div>
+                <h4>Gamification</h4>
+                <p>Badges, trophees, rivalites, streaks, defis</p>
+            </div>
+            <div class="card">
+                <div class="card-icon">💳</div>
+                <h4>Paiements Stripe</h4>
+                <p>Inscriptions tournois, abonnements Premium integres</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Traction -->
+    <section class="section">
+        <div class="section-header">
+            <div class="section-icon">📈</div>
+            <h2>Traction & Metriques</h2>
+        </div>
+        
+        <div class="grid-2">
+            <div>
+                <h3>Produit</h3>
+                <div class="grid-2" style="gap: 16px;">
+                    <div class="metric-card">
+                        <span class="metric-value">44 300</span>
+                        <span class="metric-label">Lignes de code</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-value">53</span>
+                        <span class="metric-label">Endpoints API</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-value">27</span>
+                        <span class="metric-label">Tables DB</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-value">v1.1</span>
+                        <span class="metric-label">Production</span>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <h3>Objectifs</h3>
+                <ul class="feature-list">
+                    <li>
+                        <span class="feature-check">📍</span>
+                        <div class="feature-text">
+                            <strong>Aujourd'hui</strong>
+                            <span>2 clubs actifs, 15+ utilisateurs</span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="feature-check">🎯</span>
+                        <div class="feature-text">
+                            <strong>30 juin 2026 (fin beta)</strong>
+                            <span>20 clubs, 500 utilisateurs</span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="feature-check">🚀</span>
+                        <div class="feature-text">
+                            <strong>Decembre 2026</strong>
+                            <span>50 clubs, 2 000 utilisateurs</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top: 32px; background: var(--color-accent-light); border-color: var(--color-accent);">
+            <h4 style="color: var(--color-accent-dark);">💡 Innovation : Open Club</h4>
+            <p style="color: var(--color-accent-dark); margin-bottom: 0;">
+                Club virtuel permettant l'<strong>acquisition virale</strong> : inscription en 30 secondes (email + ville), sans friction d'affiliation club. Migration automatique vers club reel si adhesion.
+            </p>
+        </div>
+    </section>
+
+    <!-- Business Model -->
+    <section class="section">
+        <div class="section-header">
+            <div class="section-icon">💰</div>
+            <h2>Business Model</h2>
+        </div>
+
+        <!-- Strategie beta -->
+        <div class="pricing-strategy">
+            <h3>🚀 Strategie d'acquisition</h3>
+            <p>Acces gratuit a toutes les fonctionnalites Premium</p>
+            <span class="date">Jusqu'au 30 juin 2026</span>
+            <p style="margin-top: 8px;">Objectif : atteindre la masse critique avant monetisation</p>
+        </div>
+
+        <h3>Pricing post-beta (juillet 2026)</h3>
+        <div class="pricing-grid">
+            <div class="pricing-card">
+                <div class="pricing-tier">Gratuit</div>
+                <div class="pricing-price">0€</div>
+                <ul class="pricing-features">
+                    <li>3 suggestions/semaine</li>
+                    <li>Stats basiques</li>
+                    <li>Forum (lecture)</li>
+                    <li>Chat limite</li>
+                </ul>
+            </div>
+            <div class="pricing-card">
+                <div class="pricing-tier">Premium Mensuel</div>
+                <div class="pricing-price">9,99€ <span>/mois</span></div>
+                <ul class="pricing-features">
+                    <li>Suggestions illimitees</li>
+                    <li>Analytics complets</li>
+                    <li>Tournois & Box Leagues</li>
+                    <li>Chat illimite</li>
+                    <li>Badge "Membre Verifie"</li>
+                </ul>
+            </div>
+            <div class="pricing-card featured">
+                <div class="pricing-tier">Premium Annuel</div>
+                <div class="pricing-price">99€ <span>/an</span></div>
+                <p class="pricing-equiv">≈ 8,25€/mois — 2 mois offerts</p>
+                <ul class="pricing-features">
+                    <li>Suggestions illimitees</li>
+                    <li>Analytics complets</li>
+                    <li>Tournois & Box Leagues</li>
+                    <li>Chat illimite</li>
+                    <li>Badge "Membre Verifie"</li>
+                </ul>
+            </div>
+        </div>
+
+        <h3 style="margin-top: 48px;">Projections ARR</h3>
+        <div class="grid-3">
+            <div class="metric-card">
+                <span class="metric-value">40K€</span>
+                <span class="metric-label">2026 (H2 — 400 Premium)</span>
+            </div>
+            <div class="metric-card">
+                <span class="metric-value">150K€</span>
+                <span class="metric-label">2027 (1 500 Premium)</span>
+            </div>
+            <div class="metric-card">
+                <span class="metric-value">400K€</span>
+                <span class="metric-label">2028 (4 000 Premium)</span>
+            </div>
+        </div>
+
+        <p style="margin-top: 24px; text-align: center; color: var(--color-text-muted);">
+            <strong>Hypothese :</strong> 5% de conversion gratuit → Premium, ARPU €99/an (plan annuel dominant)
+        </p>
+    </section>
+
+    <!-- Concurrence -->
+    <section class="section">
+        <div class="section-header">
+            <div class="section-icon">🥊</div>
+            <h2>Paysage Concurrentiel</h2>
+        </div>
+
+        <div class="card" style="overflow-x: auto;">
+            <table class="competitor-table">
+                <thead>
+                    <tr>
+                        <th>Concurrent</th>
+                        <th>Forces</th>
+                        <th>Faiblesses</th>
+                        <th>Notre difference</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="competitor-name">Ten'Up (FFT)</td>
+                        <td>Officiel, 730K telechargements</td>
+                        <td>Competiteurs only, UX datee</td>
+                        <td>ELO loisirs, UX moderne</td>
+                    </tr>
+                    <tr>
+                        <td class="competitor-name">Playtomic</td>
+                        <td>2M+ users, leader reservation</td>
+                        <td>Pas de matchmaking intelligent</td>
+                        <td>Matching + ELO vs booking</td>
+                    </tr>
+                    <tr>
+                        <td class="competitor-name">UTR</td>
+                        <td>Standard mondial rating</td>
+                        <td>$149/an, semi-pros</td>
+                        <td>Prix accessible, focus amateur</td>
+                    </tr>
+                    <tr>
+                        <td class="competitor-name">WhatsApp</td>
+                        <td>Gratuit, universel</td>
+                        <td>Aucune structure</td>
+                        <td>Organisation intelligente</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <p style="margin-top: 24px; text-align: center;">
+            <strong>Positionnement unique :</strong> Seule solution combinant <em>ELO dynamique + Gamification + Competitions</em> pour le segment loisirs.
+        </p>
+    </section>
+
+    <!-- Roadmap -->
+    <section class="section">
+        <div class="section-header">
+            <div class="section-icon">🗺️</div>
+            <h2>Roadmap</h2>
+        </div>
+
+        <div class="roadmap-item">
+            <div class="roadmap-date">
+                <span class="roadmap-badge done">✅ Livre</span>
+            </div>
+            <div class="roadmap-content">
+                <h4>v1.1 — Janvier 2026</h4>
+                <ul>
+                    <li>Systeme ELO complet avec modificateurs</li>
+                    <li>Box Leagues + Tournois + Stripe</li>
+                    <li>Chat temps reel + Gamification</li>
+                    <li>Analytics GA4 + Meta Pixel</li>
+                </ul>
+            </div>
+        </div>
+        <div class="roadmap-item">
+            <div class="roadmap-date">
+                <span class="roadmap-badge current">🔄 En cours</span>
+            </div>
+            <div class="roadmap-content">
+                <h4>v1.2 — Fevrier 2026</h4>
+                <ul>
+                    <li>Integration Google Calendar</li>
+                    <li>Notifications WhatsApp</li>
+                    <li>Version anglaise (i18n)</li>
+                </ul>
+            </div>
+        </div>
+        <div class="roadmap-item">
+            <div class="roadmap-date">
+                <span class="roadmap-badge planned">📅 Prevu</span>
+            </div>
+            <div class="roadmap-content">
+                <h4>v1.3-1.4 — Q2-Q3 2026</h4>
+                <ul>
+                    <li>PWA + Push notifications</li>
+                    <li>Classements departementaux</li>
+                    <li>Apps mobiles natives</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demande -->
+    <div class="ask-section">
+        <h2>Levee de Fonds Seed</h2>
+        <div class="ask-amount">150-300K€</div>
+        
+        <div class="ask-grid">
+            <div class="ask-item">
+                <div class="ask-item-percent">50%</div>
+                <div class="ask-item-label">Developpement produit<br><small>CTO, PWA, apps mobiles</small></div>
+            </div>
+            <div class="ask-item">
+                <div class="ask-item-percent">30%</div>
+                <div class="ask-item-label">Marketing & Acquisition<br><small>Sales clubs, content, events</small></div>
+            </div>
+            <div class="ask-item">
+                <div class="ask-item-percent">20%</div>
+                <div class="ask-item-label">Ops & Legal<br><small>RGPD, international, admin</small></div>
+            </div>
+        </div>
+
+        <h3 style="margin-top: 48px; color: white;">Milestones 18 mois</h3>
+        <div class="milestone-grid">
+            <div class="milestone-card">
+                <div class="milestone-timeline">Juin 2026</div>
+                <div class="milestone-value">500</div>
+                <div class="milestone-label">Users (fin beta)</div>
+            </div>
+            <div class="milestone-card">
+                <div class="milestone-timeline">Dec 2026</div>
+                <div class="milestone-value">50</div>
+                <div class="milestone-label">Clubs partenaires</div>
+            </div>
+            <div class="milestone-card">
+                <div class="milestone-timeline">Mi-2027</div>
+                <div class="milestone-value">100K€</div>
+                <div class="milestone-label">ARR</div>
+            </div>
+            <div class="milestone-card">
+                <div class="milestone-timeline">2027</div>
+                <div class="milestone-value">🇧🇪🇨🇭</div>
+                <div class="milestone-label">Expansion</div>
+            </div>
+        </div>
     </div>
-    
-    <!-- Traction & Business Model -->
-    <div class="grid" style="margin-top: 30px;">
-      <div class="card">
-        <div class="card-header">
-          <div class="card-icon">📈</div>
-          <div class="card-title">Traction</div>
+
+    <!-- Contact -->
+    <div class="footer-cta">
+        <h2>🎾 TennisMatchFinder</h2>
+        <p>Le Strava du tennis amateur — Trouvez votre prochain adversaire, progressez, competez.</p>
+        <div class="contact-links">
+            <a href="mailto:pfermanian@gmail.com" class="contact-link">
+                📧 pfermanian@gmail.com
+            </a>
+            <a href="https://tennismatchfinder.net" class="contact-link secondary" target="_blank">
+                🌐 tennismatchfinder.net
+            </a>
         </div>
-        <table>
-          <tr><td>Version</td><td><strong>v1.1 (Production)</strong></td></tr>
-          <tr><td>Clubs actifs</td><td>2</td></tr>
-          <tr><td>Utilisateurs</td><td>15+</td></tr>
-          <tr><td>Features</td><td>MVP complet ✅</td></tr>
-        </table>
-        <p style="margin-top: 15px;"><strong>Objectifs :</strong></p>
-        <p>• 30 jours → 100 joueurs<br>• Q1 2026 → 1 000 joueurs</p>
-      </div>
-      
-      <div class="card">
-        <div class="card-header">
-          <div class="card-icon">💰</div>
-          <div class="card-title">Business Model</div>
-        </div>
-        <table>
-          <tr><th>Tier</th><th>Prix</th></tr>
-          <tr><td>Gratuit</td><td>0€ (acquisition)</td></tr>
-          <tr><td>Premium</td><td>9,99€/mois</td></tr>
-          <tr><td>Club SaaS</td><td>79-149€/mois</td></tr>
-        </table>
-        <p style="margin-top: 15px;"><strong>Projections ARR :</strong></p>
-        <p>2026: 36K€ • 2027: 180K€ • 2028: 480K€</p>
-      </div>
-      
-      <div class="card">
-        <div class="card-header">
-          <div class="card-icon">🏆</div>
-          <div class="card-title">Avantages Clés</div>
-        </div>
-        <ul class="feature-list">
-          <li>Seul système ELO pour joueurs loisirs</li>
-          <li>Architecture multi-tenant scalable</li>
-          <li>Coût acquisition faible (B2B→B2C)</li>
-          <li>Open Club : acquisition virale</li>
-          <li>Infra < 100€/mois</li>
-        </ul>
-      </div>
     </div>
-    
-    <!-- Competition -->
-    <div class="card" style="margin-top: 30px;">
-      <div class="card-header">
-        <div class="card-icon">🥊</div>
-        <div class="card-title">Paysage Concurrentiel</div>
-      </div>
-      <table>
-        <tr>
-          <th>Concurrent</th>
-          <th>Forces</th>
-          <th>Faiblesses</th>
-          <th>Notre différence</th>
-        </tr>
-        <tr>
-          <td><strong>Ten'Up (FFT)</strong></td>
-          <td>Officiel FFT</td>
-          <td>UX datée, compétiteurs only</td>
-          <td>ELO loisirs, UX moderne</td>
-        </tr>
-        <tr>
-          <td><strong>Clubeo</strong></td>
-          <td>Gestion club</td>
-          <td>Généraliste</td>
-          <td>Spécialiste tennis</td>
-        </tr>
-        <tr>
-          <td><strong>WhatsApp</strong></td>
-          <td>Gratuit, universel</td>
-          <td>Aucune structure</td>
-          <td>Organisation intelligente</td>
-        </tr>
-      </table>
-    </div>
-    
-    <!-- Roadmap & Ask -->
-    <div class="grid grid-2" style="margin-top: 30px;">
-      <div class="card">
-        <div class="card-header">
-          <div class="card-icon">🗺️</div>
-          <div class="card-title">Roadmap 2026</div>
-        </div>
-        <p><strong>v1.2 — Février</strong></p>
-        <ul class="feature-list">
-          <li>Intégration Google Calendar</li>
-          <li>Notifications WhatsApp</li>
-          <li>Version anglaise (i18n)</li>
-        </ul>
-        <p style="margin-top: 15px;"><strong>v1.3 — Mars/Avril</strong></p>
-        <ul class="feature-list">
-          <li>Lancement campagnes marketing</li>
-          <li>100 joueurs en 30 jours</li>
-          <li>1 000 joueurs / trimestre</li>
-        </ul>
-        <p style="margin-top: 15px;"><strong>v1.4 — Q2/Q3</strong></p>
-        <ul class="feature-list">
-          <li>Classements départementaux</li>
-          <li>Tournois inter-clubs</li>
-        </ul>
-      </div>
-      
-      <div class="card highlight">
-        <div class="card-header">
-          <div class="card-icon">💸</div>
-          <div class="card-title">Demande : 150-300K€ Seed</div>
-        </div>
-        <table>
-          <tr><th>Allocation</th><th>%</th></tr>
-          <tr><td>Développement produit</td><td>50%</td></tr>
-          <tr><td>Marketing & Acquisition</td><td>30%</td></tr>
-          <tr><td>Ops & Legal</td><td>20%</td></tr>
-        </table>
-        <p style="margin-top: 20px;"><strong>Milestones 18 mois :</strong></p>
-        <ul class="feature-list">
-          <li>1 000 utilisateurs actifs (M6)</li>
-          <li>50 clubs partenaires (M12)</li>
-          <li>100K€ ARR (M18)</li>
-          <li>Expansion Belgique/Suisse</li>
-        </ul>
-      </div>
-    </div>
-    
-    <!-- Footer -->
-    <footer class="footer">
-      <div class="logo" style="font-size: 2rem;">🎾 TennisMatchFinder</div>
-      <p style="color: #a1a1aa; margin-top: 10px;">Trouvez votre prochain adversaire de tennis</p>
-      <div class="contact">
-        <div class="contact-item">📧 pfermanian@gmail.com</div>
-        <div class="contact-item">🌐 <a href="https://tennismatchfinder.net">tennismatchfinder.net</a></div>
-      </div>
-      <p style="color: #52525b; margin-top: 30px; font-size: 0.85rem;">
-        Document investisseur — Janvier 2026 — v1.1
-      </p>
-    </footer>
-  </div>
+</main>
+
+<footer>
+    <p>Document investisseur — Janvier 2026 — v2.1</p>
+    <p style="margin-top: 8px;"><a href="https://tennismatchfinder.net">tennismatchfinder.net</a></p>
+</footer>
+
 </body>
 </html>
