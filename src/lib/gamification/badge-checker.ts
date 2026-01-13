@@ -422,14 +422,19 @@ async function getPlayerStats(playerId: string): Promise<PlayerStats | null> {
 }
 
 async function getPlayerBadges(playerId: string) {
-  return db
-    .select({
-      badgeId: playerBadges.badgeId,
-      progress: playerBadges.progress,
-      earnedAt: playerBadges.earnedAt,
-    })
-    .from(playerBadges)
-    .where(eq(playerBadges.playerId, playerId));
+  try {
+    return await db
+      .select({
+        badgeId: playerBadges.badgeId,
+        progress: playerBadges.progress,
+        earnedAt: playerBadges.earnedAt,
+      })
+      .from(playerBadges)
+      .where(eq(playerBadges.playerId, playerId));
+  } catch (error) {
+    console.warn('[Badge Checker] getPlayerBadges failed, returning empty array:', error);
+    return [];
+  }
 }
 
 async function awardBadge(
@@ -437,17 +442,21 @@ async function awardBadge(
   badgeId: string,
   progress?: number
 ): Promise<void> {
-  const badge = getBadgeById(badgeId);
-  
-  await db.insert(playerBadges).values({
-    playerId,
-    badgeId,
-    progress: progress ?? badge?.maxProgress ?? 0,
-    seen: false,
-    earnedAt: new Date(),
-  });
-  
-  console.log(`🏆 Badge awarded: ${badgeId} to player ${playerId}`);
+  try {
+    const badge = getBadgeById(badgeId);
+    
+    await db.insert(playerBadges).values({
+      playerId,
+      badgeId,
+      progress: progress ?? badge?.maxProgress ?? 0,
+      seen: false,
+      earnedAt: new Date(),
+    });
+    
+    console.log(`🏆 Badge awarded: ${badgeId} to player ${playerId}`);
+  } catch (error) {
+    console.warn('[Badge Checker] awardBadge failed:', error);
+  }
 }
 
 async function updateBadgeProgress(
@@ -455,45 +464,53 @@ async function updateBadgeProgress(
   badgeId: string,
   progress: number
 ): Promise<void> {
-  // Vérifier si une entrée existe déjà
-  const [existing] = await db
-    .select()
-    .from(playerBadges)
-    .where(
-      and(
-        eq(playerBadges.playerId, playerId),
-        eq(playerBadges.badgeId, badgeId)
-      )
-    );
-  
-  if (existing) {
-    // Update progress si supérieur
-    if (progress > existing.progress) {
-      await db
-        .update(playerBadges)
-        .set({ progress })
-        .where(eq(playerBadges.id, existing.id));
+  try {
+    // Vérifier si une entrée existe déjà
+    const [existing] = await db
+      .select()
+      .from(playerBadges)
+      .where(
+        and(
+          eq(playerBadges.playerId, playerId),
+          eq(playerBadges.badgeId, badgeId)
+        )
+      );
+    
+    if (existing) {
+      // Update progress si supérieur
+      if (progress > existing.progress) {
+        await db
+          .update(playerBadges)
+          .set({ progress })
+          .where(eq(playerBadges.id, existing.id));
+      }
     }
+    // Note: on ne crée pas d'entrée si le badge n'est pas encore gagné
+    // La progression est trackée seulement après obtention
+  } catch (error) {
+    console.warn('[Badge Checker] updateBadgeProgress failed:', error);
   }
-  // Note: on ne crée pas d'entrée si le badge n'est pas encore gagné
-  // La progression est trackée seulement après obtention
 }
 
 async function createBadgeNotification(
   playerId: string,
   badgeId: string
 ): Promise<void> {
-  const badge = getBadgeById(badgeId);
-  if (!badge) return;
-  
-  await db.insert(notifications).values({
-    userId: playerId,
-    type: 'badge_earned',
-    title: '🏆 Nouveau badge débloqué !',
-    message: `Tu as obtenu le badge "${badge.name}" - ${badge.description}`,
-    link: '/achievements',
-    data: { badgeId, tier: badge.tier },
-  });
+  try {
+    const badge = getBadgeById(badgeId);
+    if (!badge) return;
+    
+    await db.insert(notifications).values({
+      userId: playerId,
+      type: 'badge_earned',
+      title: '🏆 Nouveau badge débloqué !',
+      message: `Tu as obtenu le badge "${badge.name}" - ${badge.description}`,
+      link: '/achievements',
+      data: { badgeId, tier: badge.tier },
+    });
+  } catch (error) {
+    console.warn('[Badge Checker] createBadgeNotification failed:', error);
+  }
 }
 
 // ============================================
@@ -502,87 +519,112 @@ async function createBadgeNotification(
 
 /**
  * Marque un badge comme "vu" (célébration affichée)
+ * Backward-compatible: ignore silencieusement si la table n'existe pas
  */
 export async function markBadgeAsSeen(
   playerId: string,
   badgeId: string
 ): Promise<void> {
-  await db
-    .update(playerBadges)
-    .set({ 
-      seen: true,
-      seenAt: new Date(),
-    })
-    .where(
-      and(
-        eq(playerBadges.playerId, playerId),
-        eq(playerBadges.badgeId, badgeId)
-      )
-    );
+  try {
+    await db
+      .update(playerBadges)
+      .set({ 
+        seen: true,
+        seenAt: new Date(),
+      })
+      .where(
+        and(
+          eq(playerBadges.playerId, playerId),
+          eq(playerBadges.badgeId, badgeId)
+        )
+      );
+  } catch (error) {
+    console.warn('[Badge Checker] markBadgeAsSeen failed:', error);
+  }
 }
 
 /**
  * Récupère tous les badges non vus pour un joueur
+ * Backward-compatible: retourne tableau vide si la table n'existe pas encore
  */
 export async function getUnseenBadges(playerId: string): Promise<BadgeCheckResult[]> {
-  const unseen = await db
-    .select({
-      badgeId: playerBadges.badgeId,
-      progress: playerBadges.progress,
-    })
-    .from(playerBadges)
-    .where(
-      and(
-        eq(playerBadges.playerId, playerId),
-        eq(playerBadges.seen, false)
-      )
-    );
-  
-  return unseen.map(b => {
-    const badge = getBadgeById(b.badgeId);
-    return {
-      badgeId: b.badgeId,
-      name: badge?.name ?? 'Unknown',
-      tier: badge?.tier ?? 'common',
-      isNew: true,
-      progress: b.progress,
-      maxProgress: badge?.maxProgress,
-    };
-  });
+  try {
+    const unseen = await db
+      .select({
+        badgeId: playerBadges.badgeId,
+        progress: playerBadges.progress,
+      })
+      .from(playerBadges)
+      .where(
+        and(
+          eq(playerBadges.playerId, playerId),
+          eq(playerBadges.seen, false)
+        )
+      );
+    
+    return unseen.map(b => {
+      const badge = getBadgeById(b.badgeId);
+      return {
+        badgeId: b.badgeId,
+        name: badge?.name ?? 'Unknown',
+        tier: badge?.tier ?? 'common',
+        isNew: true,
+        progress: b.progress,
+        maxProgress: badge?.maxProgress,
+      };
+    });
+  } catch (error) {
+    console.warn('[Badge Checker] getUnseenBadges failed, returning empty array:', error);
+    return [];
+  }
 }
 
 /**
  * Récupère tous les badges d'un joueur (pour le Trophy Case)
+ * Backward-compatible: retourne tableau vide si la table n'existe pas encore
  */
 export async function getPlayerBadgesForDisplay(playerId: string) {
-  return db
-    .select({
-      badgeId: playerBadges.badgeId,
-      progress: playerBadges.progress,
-      earnedAt: playerBadges.earnedAt,
-      seen: playerBadges.seen,
-    })
-    .from(playerBadges)
-    .where(eq(playerBadges.playerId, playerId));
+  try {
+    const result = await db
+      .select({
+        badgeId: playerBadges.badgeId,
+        progress: playerBadges.progress,
+        earnedAt: playerBadges.earnedAt,
+        seen: playerBadges.seen,
+      })
+      .from(playerBadges)
+      .where(eq(playerBadges.playerId, playerId));
+    return result;
+  } catch (error) {
+    // Si la table n'existe pas encore ou erreur de structure,
+    // retourne un tableau vide pour ne pas bloquer l'UI
+    console.warn('[Badge Checker] getPlayerBadgesForDisplay failed, returning empty array:', error);
+    return [];
+  }
 }
 
 /**
  * Retire un badge dynamique (ex: King of Club détrôné)
+ * Backward-compatible: ignore silencieusement si la table n'existe pas
  */
 export async function revokeDynamicBadge(
   playerId: string,
   badgeId: string
 ): Promise<void> {
-  await db
-    .delete(playerBadges)
-    .where(
-      and(
-        eq(playerBadges.playerId, playerId),
-        eq(playerBadges.badgeId, badgeId)
-      )
-    );
-  
-  console.log(`👑 Dynamic badge revoked: ${badgeId} from player ${playerId}`);
+  try {
+    await db
+      .delete(playerBadges)
+      .where(
+        and(
+          eq(playerBadges.playerId, playerId),
+          eq(playerBadges.badgeId, badgeId)
+        )
+      );
+    
+    console.log(`👑 Dynamic badge revoked: ${badgeId} from player ${playerId}`);
+  } catch (error) {
+    console.warn('[Badge Checker] revokeDynamicBadge failed:', error);
+  }
 }
 
 /**
