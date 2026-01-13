@@ -28,21 +28,12 @@ export async function POST(request: NextRequest) {
     const adminKey = request.headers.get('x-admin-key');
     const session = await getServerSession(authOptions);
     
-    // TEMPORARY: Allow specific key for initial setup (remove after Open Club is created)
-    const tempSetupKey = 'TMF_SETUP_OPEN_CLUB_2026';
-    
     const isAuthorized = adminKey === process.env.ADMIN_SECRET_KEY || 
-                         adminKey === tempSetupKey ||
                          (session?.user as any)?.player?.isAdmin === true;
-    
-    console.log('[Open Club Auth] adminKey:', adminKey ? 'provided' : 'none');
-    console.log('[Open Club Auth] envKey:', process.env.ADMIN_SECRET_KEY ? 'set' : 'not set');
-    console.log('[Open Club Auth] session admin:', (session?.user as any)?.player?.isAdmin);
-    console.log('[Open Club Auth] isAuthorized:', isAuthorized);
     
     if (!isAuthorized) {
       return NextResponse.json(
-        { error: 'Non autorisé', debug: { hasAdminKey: !!adminKey, hasEnvKey: !!process.env.ADMIN_SECRET_KEY } },
+        { error: 'Non autorisé' },
         { status: 403 }
       );
     }
