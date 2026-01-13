@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TennisMatchFinder - Investor One-Pager</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+      color: #fff;
+      min-height: 100vh;
+      padding: 40px;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 50px;
+    }
+    
+    .logo {
+      font-size: 3rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, #22c55e, #16a34a);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 10px;
+    }
+    
+    .tagline {
+      font-size: 1.5rem;
+      color: #a1a1aa;
+      margin-bottom: 20px;
+    }
+    
+    .subtitle {
+      font-size: 1.1rem;
+      color: #71717a;
+    }
+    
+    /* Grid */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 30px;
+      margin-bottom: 40px;
+    }
+    
+    .grid-2 {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    /* Cards */
+    .card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 25px;
+    }
+    
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    
+    .card-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+    
+    .card-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+    }
+    
+    .card p {
+      color: #a1a1aa;
+      line-height: 1.6;
+      margin-bottom: 15px;
+    }
+    
+    /* Stats */
+    .stats {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin: 40px 0;
+    }
+    
+    .stat {
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 3rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, #22c55e, #4ade80);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .stat-label {
+      color: #a1a1aa;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    /* Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+    
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    th {
+      color: #22c55e;
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+    }
+    
+    td {
+      color: #d4d4d8;
+    }
+    
+    /* Highlight */
+    .highlight {
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(22, 163, 74, 0.1));
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+    
+    /* List */
+    .feature-list {
+      list-style: none;
+    }
+    
+    .feature-list li {
+      padding: 8px 0;
+      color: #d4d4d8;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .feature-list li::before {
+      content: "✓";
+      color: #22c55e;
+      font-weight: bold;
+    }
+    
+    /* Progress */
+    .progress-bar {
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #22c55e, #4ade80);
+      border-radius: 4px;
+    }
+    
+    /* Footer */
+    .footer {
+      text-align: center;
+      margin-top: 50px;
+      padding-top: 30px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .footer a {
+      color: #22c55e;
+      text-decoration: none;
+    }
+    
+    .contact {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-top: 20px;
+    }
+    
+    .contact-item {
+      color: #a1a1aa;
+    }
+    
+    /* Responsive */
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    @media print {
+      body {
+        background: white;
+        color: black;
+        padding: 20px;
+      }
+      .card {
+        border: 1px solid #ddd;
+        background: #f9f9f9;
+      }
+      .stat-value, .logo {
+        color: #16a34a;
+        -webkit-text-fill-color: #16a34a;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">🎾 TennisMatchFinder</div>
+      <div class="tagline">Le Tinder du Tennis Amateur</div>
+      <div class="subtitle">Plateforme SaaS de matchmaking intelligent pour joueurs de tennis</div>
+    </header>
+    
+    <!-- Key Stats -->
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-value">1.2M</div>
+        <div class="stat-label">Licenciés FFT France</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">7 000+</div>
+        <div class="stat-label">Clubs de tennis</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">85%</div>
+        <div class="stat-label">Joueurs loisirs (non compétition)</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">0</div>
+        <div class="stat-label">Solution de matchmaking ELO</div>
+      </div>
+    </div>
+    
+    <!-- Problem & Solution -->
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon">😤</div>
+          <div class="card-title">Le Problème</div>
+        </div>
+        <p><strong>1,2 million de joueurs</strong> organisent encore leurs matchs via WhatsApp et bouche-à-oreille.</p>
+        <ul class="feature-list" style="list-style: none;">
+          <li style="color: #f87171;">❌ Difficile de trouver un partenaire de niveau similaire</li>
+          <li style="color: #f87171;">❌ Pas de suivi de progression hors compétition</li>
+          <li style="color: #f87171;">❌ 2-3h/semaine perdues en coordination</li>
+          <li style="color: #f87171;">❌ 40% de churn la 1ère année faute d'intégration</li>
+        </ul>
+      </div>
+      
+      <div class="card highlight">
+        <div class="card-header">
+          <div class="card-icon">💡</div>
+          <div class="card-title">Notre Solution</div>
+        </div>
+        <p><strong>Matchmaking intelligent</strong> avec système ELO pour joueurs amateurs.</p>
+        <ul class="feature-list">
+          <li>Système ELO innovant (motivation sans compétition)</li>
+          <li>Suggestion partenaires par niveau/dispo/localisation</li>
+          <li>Proposition de match en 2 clics</li>
+          <li>Chat temps réel intégré (bye bye WhatsApp)</li>
+          <li>Box Leagues (poules de compétition)</li>
+        </ul>
+      </div>
+    </div>
+    
+    <!-- Traction & Business Model -->
+    <div class="grid" style="margin-top: 30px;">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon">📈</div>
+          <div class="card-title">Traction</div>
+        </div>
+        <table>
+          <tr><td>Version</td><td><strong>v1.1 (Production)</strong></td></tr>
+          <tr><td>Clubs actifs</td><td>2</td></tr>
+          <tr><td>Utilisateurs</td><td>15+</td></tr>
+          <tr><td>Features</td><td>MVP complet ✅</td></tr>
+        </table>
+        <p style="margin-top: 15px;"><strong>Objectifs :</strong></p>
+        <p>• 30 jours → 100 joueurs<br>• Q1 2026 → 1 000 joueurs</p>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon">💰</div>
+          <div class="card-title">Business Model</div>
+        </div>
+        <table>
+          <tr><th>Tier</th><th>Prix</th></tr>
+          <tr><td>Gratuit</td><td>0€ (acquisition)</td></tr>
+          <tr><td>Premium</td><td>9,99€/mois</td></tr>
+          <tr><td>Club SaaS</td><td>79-149€/mois</td></tr>
+        </table>
+        <p style="margin-top: 15px;"><strong>Projections ARR :</strong></p>
+        <p>2026: 36K€ • 2027: 180K€ • 2028: 480K€</p>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon">🏆</div>
+          <div class="card-title">Avantages Clés</div>
+        </div>
+        <ul class="feature-list">
+          <li>Seul système ELO pour joueurs loisirs</li>
+          <li>Architecture multi-tenant scalable</li>
+          <li>Coût acquisition faible (B2B→B2C)</li>
+          <li>Open Club : acquisition virale</li>
+          <li>Infra < 100€/mois</li>
+        </ul>
+      </div>
+    </div>
+    
+    <!-- Competition -->
+    <div class="card" style="margin-top: 30px;">
+      <div class="card-header">
+        <div class="card-icon">🥊</div>
+        <div class="card-title">Paysage Concurrentiel</div>
+      </div>
+      <table>
+        <tr>
+          <th>Concurrent</th>
+          <th>Forces</th>
+          <th>Faiblesses</th>
+          <th>Notre différence</th>
+        </tr>
+        <tr>
+          <td><strong>Ten'Up (FFT)</strong></td>
+          <td>Officiel FFT</td>
+          <td>UX datée, compétiteurs only</td>
+          <td>ELO loisirs, UX moderne</td>
+        </tr>
+        <tr>
+          <td><strong>Clubeo</strong></td>
+          <td>Gestion club</td>
+          <td>Généraliste</td>
+          <td>Spécialiste tennis</td>
+        </tr>
+        <tr>
+          <td><strong>WhatsApp</strong></td>
+          <td>Gratuit, universel</td>
+          <td>Aucune structure</td>
+          <td>Organisation intelligente</td>
+        </tr>
+      </table>
+    </div>
+    
+    <!-- Roadmap & Ask -->
+    <div class="grid grid-2" style="margin-top: 30px;">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon">🗺️</div>
+          <div class="card-title">Roadmap 2026</div>
+        </div>
+        <p><strong>v1.2 — Février</strong></p>
+        <ul class="feature-list">
+          <li>Intégration Google Calendar</li>
+          <li>Notifications WhatsApp</li>
+          <li>Version anglaise (i18n)</li>
+        </ul>
+        <p style="margin-top: 15px;"><strong>v1.3 — Mars/Avril</strong></p>
+        <ul class="feature-list">
+          <li>Lancement campagnes marketing</li>
+          <li>100 joueurs en 30 jours</li>
+          <li>1 000 joueurs / trimestre</li>
+        </ul>
+        <p style="margin-top: 15px;"><strong>v1.4 — Q2/Q3</strong></p>
+        <ul class="feature-list">
+          <li>Classements départementaux</li>
+          <li>Tournois inter-clubs</li>
+        </ul>
+      </div>
+      
+      <div class="card highlight">
+        <div class="card-header">
+          <div class="card-icon">💸</div>
+          <div class="card-title">Demande : 150-300K€ Seed</div>
+        </div>
+        <table>
+          <tr><th>Allocation</th><th>%</th></tr>
+          <tr><td>Développement produit</td><td>50%</td></tr>
+          <tr><td>Marketing & Acquisition</td><td>30%</td></tr>
+          <tr><td>Ops & Legal</td><td>20%</td></tr>
+        </table>
+        <p style="margin-top: 20px;"><strong>Milestones 18 mois :</strong></p>
+        <ul class="feature-list">
+          <li>1 000 utilisateurs actifs (M6)</li>
+          <li>50 clubs partenaires (M12)</li>
+          <li>100K€ ARR (M18)</li>
+          <li>Expansion Belgique/Suisse</li>
+        </ul>
+      </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="logo" style="font-size: 2rem;">🎾 TennisMatchFinder</div>
+      <p style="color: #a1a1aa; margin-top: 10px;">Trouvez votre prochain adversaire de tennis</p>
+      <div class="contact">
+        <div class="contact-item">📧 pfermanian@gmail.com</div>
+        <div class="contact-item">🌐 <a href="https://tennismatchfinder.net">tennismatchfinder.net</a></div>
+      </div>
+      <p style="color: #52525b; margin-top: 30px; font-size: 0.85rem;">
+        Document investisseur — Janvier 2026 — v1.1
+      </p>
+    </footer>
+  </div>
+</body>
+</html>
