@@ -11,9 +11,10 @@ import { db } from '@/lib/db';
 import { users, players, clubs } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { createJoinRequest, hasUserPendingRequest } from '@/lib/db/queries';
+import { SPECIAL_CLUBS } from '@/lib/constants/admins';
 
 // Slug du club par défaut pour les joueurs indépendants
-const OPEN_CLUB_SLUG = 'open-club';
+const OPEN_CLUB_SLUG = SPECIAL_CLUBS.OPEN_CLUB_SLUG;
 
 export async function POST(request: NextRequest) {
   try {
