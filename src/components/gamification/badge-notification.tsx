@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { type LucideIcon, X, Award, Sparkles, Target, Flame, Trophy, TrendingUp, Sword, Zap, Rocket, Crown, ArrowBigUp, Users, Network, Star, Bird } from 'lucide-react';
+import { type LucideIcon, X, Award, Sparkles, Target, Flame, Trophy, TrendingUp, Sword, Zap, Rocket, Crown, ArrowBigUp, Users, Network, Star, Bird, Activity, Building, Swords, HandHeart, Medal, Calendar, CalendarCheck } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { Badge as BadgeType, RARITY_COLORS, RARITY_LABELS } from '@/lib/gamification/badges';
+import { type BadgeDefinition, RARITY_COLORS, RARITY_LABELS } from '@/lib/gamification/badges';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -26,10 +26,17 @@ const iconMap: Record<string, LucideIcon> = {
   Network,
   Star,
   Bird,
+  Activity,
+  Building,
+  Swords,
+  HandHeart,
+  Medal,
+  Calendar,
+  CalendarCheck,
 };
 
 interface BadgeNotificationProps {
-  badge: BadgeType;
+  badge: BadgeDefinition;
   onDismiss?: () => void;
   autoHide?: boolean;
   autoHideDelay?: number;
@@ -42,22 +49,22 @@ export function BadgeNotification({
   autoHideDelay = 5000,
 }: BadgeNotificationProps) {
   const [isVisible, setIsVisible] = useState(true);
-  const colors = RARITY_COLORS[badge.rarity];
+  const colors = RARITY_COLORS[badge.tier];
 
   // Get the icon component
   const IconComponent = iconMap[badge.icon] || Award;
 
   // Trigger confetti for legendary badges
   useEffect(() => {
-    if (badge.rarity === 'legendary' || badge.rarity === 'epic') {
+    if (badge.tier === 'legendary' || badge.tier === 'epic') {
       confetti({
-        particleCount: badge.rarity === 'legendary' ? 100 : 50,
+        particleCount: badge.tier === 'legendary' ? 100 : 50,
         spread: 70,
         origin: { y: 0.6 },
         colors: ['#f59e0b', '#eab308', '#fcd34d'],
       });
     }
-  }, [badge.rarity]);
+  }, [badge.tier]);
 
   // Auto-hide after delay
   useEffect(() => {
@@ -93,15 +100,15 @@ export function BadgeNotification({
             )}
           >
             {/* Glow effect for rare+ badges */}
-            {(badge.rarity === 'rare' ||
-              badge.rarity === 'epic' ||
-              badge.rarity === 'legendary') && (
+            {(badge.tier === 'rare' ||
+              badge.tier === 'epic' ||
+              badge.tier === 'legendary') && (
               <div
                 className={cn(
                   'absolute inset-0 -z-10 rounded-xl blur-xl opacity-30',
-                  badge.rarity === 'legendary' && 'bg-amber-400',
-                  badge.rarity === 'epic' && 'bg-purple-400',
-                  badge.rarity === 'rare' && 'bg-blue-400'
+                  badge.tier === 'legendary' && 'bg-amber-400',
+                  badge.tier === 'epic' && 'bg-purple-400',
+                  badge.tier === 'rare' && 'bg-blue-400'
                 )}
               />
             )}
@@ -118,7 +125,7 @@ export function BadgeNotification({
                 <IconComponent className={cn('h-8 w-8', colors.text)} />
                 
                 {/* Shine animation for legendary */}
-                {badge.rarity === 'legendary' && (
+                {badge.tier === 'legendary' && (
                   <motion.div
                     className="absolute inset-0 rounded-full bg-gradient-to-tr from-transparent via-white/50 to-transparent"
                     animate={{ rotate: 360 }}
@@ -137,7 +144,7 @@ export function BadgeNotification({
                     variant="outline"
                     className={cn('text-xs', colors.text, colors.border)}
                   >
-                    {RARITY_LABELS[badge.rarity]}
+                    {RARITY_LABELS[badge.tier]}
                   </Badge>
                 </div>
                 <h3 className="font-bold text-lg">{badge.name}</h3>
@@ -165,8 +172,8 @@ export function BadgeNotification({
  * Hook pour gérer les notifications de badges multiples
  */
 export function useBadgeNotifications() {
-  const [queue, setQueue] = useState<BadgeType[]>([]);
-  const [current, setCurrent] = useState<BadgeType | null>(null);
+  const [queue, setQueue] = useState<BadgeDefinition[]>([]);
+  const [current, setCurrent] = useState<BadgeDefinition | null>(null);
 
   useEffect(() => {
     if (!current && queue.length > 0) {
@@ -176,11 +183,11 @@ export function useBadgeNotifications() {
     }
   }, [current, queue]);
 
-  const addBadge = (badge: BadgeType) => {
+  const addBadge = (badge: BadgeDefinition) => {
     setQueue((prev) => [...prev, badge]);
   };
 
-  const addBadges = (badges: BadgeType[]) => {
+  const addBadges = (badges: BadgeDefinition[]) => {
     setQueue((prev) => [...prev, ...badges]);
   };
 

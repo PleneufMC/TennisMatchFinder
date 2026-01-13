@@ -16,7 +16,7 @@ import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { players } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
-import { checkAndAwardBadges } from '@/lib/gamification/badge-service';
+import { checkAndAwardBadges } from '@/lib/gamification/badge-checker';
 
 interface OnboardingPayload {
   fullName: string;
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
 
     // Vérifier les badges initiaux (Early Bird si applicable)
     try {
-      await checkAndAwardBadges(newPlayer.id);
+      await checkAndAwardBadges(newPlayer.id, 'profile_completed');
     } catch (badgeError) {
       // Ne pas bloquer l'onboarding si les badges échouent
       console.warn('Badge check failed during onboarding:', badgeError);

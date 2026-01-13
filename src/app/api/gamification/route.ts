@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerPlayer } from '@/lib/auth-helpers';
 import { getWeeklyStreakInfo } from '@/lib/gamification/streaks';
 import { getPlayerChallengeProgress, getChallengeSummary } from '@/lib/gamification/challenges';
-import { getPlayerBadges } from '@/lib/gamification/badge-service';
+import { getPlayerBadgesForDisplay } from '@/lib/gamification/badge-checker';
 import { BADGES, getBadgeById } from '@/lib/gamification/badges';
 
 /**
@@ -22,16 +22,16 @@ export async function GET() {
       getWeeklyStreakInfo(player.id),
       getPlayerChallengeProgress(player.id),
       getChallengeSummary(player.id),
-      getPlayerBadges(player.id),
+      getPlayerBadgesForDisplay(player.id),
     ]);
 
     // Formater les badges avec les infos complètes
     const formattedBadges = badges.map((b) => {
-      const badgeInfo = getBadgeById(b.badgeType);
+      const badgeInfo = getBadgeById(b.badgeId);
       return {
         ...b,
         category: badgeInfo?.category,
-        rarity: badgeInfo?.rarity,
+        tier: badgeInfo?.tier,
       };
     });
 

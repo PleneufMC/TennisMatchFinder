@@ -1,7 +1,14 @@
 'use client';
 
-import { type LucideIcon, Award, Sparkles, Target, Flame, Trophy, TrendingUp, Sword, Zap, Rocket, Crown, ArrowBigUp, Users, Network, Star, Bird, Calendar, CalendarCheck } from 'lucide-react';
-import { Badge as BadgeType, RARITY_COLORS, RARITY_LABELS } from '@/lib/gamification/badges';
+/**
+ * Badge Card Component (Legacy compatibility wrapper)
+ * 
+ * This wraps the new BadgeCard for backwards compatibility.
+ * New code should import from ./BadgeCard.tsx instead.
+ */
+
+import { type LucideIcon, Award, Sparkles, Target, Flame, Trophy, TrendingUp, Sword, Zap, Rocket, Crown, ArrowBigUp, Users, Network, Star, Bird, Calendar, CalendarCheck, Activity, Building, Swords, HandHeart, Medal } from 'lucide-react';
+import { Badge as BadgeType, RARITY_COLORS, RARITY_LABELS, type BadgeDefinition } from '@/lib/gamification/badges';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -25,10 +32,15 @@ const iconMap: Record<string, LucideIcon> = {
   Bird,
   Calendar,
   CalendarCheck,
+  Activity,
+  Building,
+  Swords,
+  HandHeart,
+  Medal,
 };
 
 interface BadgeCardProps {
-  badge: BadgeType;
+  badge: BadgeDefinition;
   earned?: boolean;
   earnedAt?: Date;
   size?: 'sm' | 'md' | 'lg';
@@ -42,7 +54,8 @@ export function BadgeCard({
   size = 'md',
   showTooltip = true,
 }: BadgeCardProps) {
-  const colors = RARITY_COLORS[badge.rarity];
+  // Use tier instead of rarity (they're equivalent in Trophy Case 2.0)
+  const colors = RARITY_COLORS[badge.tier];
   
   // Get the icon component
   const IconComponent = iconMap[badge.icon] || Award;
@@ -78,7 +91,7 @@ export function BadgeCard({
       />
       
       {/* Shine effect for legendary badges */}
-      {earned && badge.rarity === 'legendary' && (
+      {earned && badge.tier === 'legendary' && (
         <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-transparent via-white/30 to-transparent animate-pulse" />
       )}
     </div>
@@ -98,7 +111,7 @@ export function BadgeCard({
                 variant="outline"
                 className={cn('text-xs', colors.text, colors.border)}
               >
-                {RARITY_LABELS[badge.rarity]}
+                {RARITY_LABELS[badge.tier]}
               </Badge>
             </div>
             <p className="text-sm text-muted-foreground">{badge.description}</p>
@@ -107,9 +120,9 @@ export function BadgeCard({
                 Obtenu le {earnedAt.toLocaleDateString('fr-FR')}
               </p>
             )}
-            {!earned && (
+            {!earned && badge.criteria && (
               <p className="text-xs text-amber-600 dark:text-amber-400">
-                {badge.condition}
+                {badge.criteria}
               </p>
             )}
           </div>

@@ -325,7 +325,7 @@ export default async function ProfilPage() {
       {/* Trophy Case - Full width */}
       <TrophyCase
         earnedBadges={badges.map((b) => ({
-          badgeType: b.badgeType,
+          badgeId: b.badgeId,
           earnedAt: b.earnedAt,
         }))}
         showProgress={true}

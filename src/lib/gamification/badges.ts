@@ -1,196 +1,340 @@
 /**
- * Système de badges TennisMatchFinder
+ * Trophy Case 2.0 - Système de Badges TennisMatchFinder
  * 
- * 16 badges répartis en 4 catégories :
- * - Jalons (milestones) : Progression dans l'utilisation
- * - Exploits (achievements) : Performances exceptionnelles
- * - Social : Engagement communautaire
- * - Spécial : Événements et statuts uniques
+ * 16 badges répartis en 4 catégories avec système de tiers :
+ * - Common (gris) : Badges faciles à obtenir
+ * - Rare (bleu) : Requiert un effort modéré
+ * - Epic (violet) : Accomplissements significatifs
+ * - Legendary (or animé) : Exploits exceptionnels
  */
 
-// Types pour les badges
-export type BadgeCategory = 'milestone' | 'achievement' | 'social' | 'special';
-export type BadgeRarity = 'common' | 'rare' | 'epic' | 'legendary';
+import type { BadgeTier, BadgeCategory } from '@/lib/db/schema';
 
-export interface Badge {
+// ============================================
+// TYPES
+// ============================================
+
+export interface BadgeDefinition {
   id: string;
   name: string;
   description: string;
-  icon: string; // Lucide icon name
+  criteria: string; // Description humaine pour l'UI
   category: BadgeCategory;
-  rarity: BadgeRarity;
-  condition: string; // Description humaine de la condition
-  checkFunction?: string; // Nom de la fonction de vérification
+  tier: BadgeTier;
+  icon: string; // Nom icône Lucide
+  iconColor?: string; // Couleur hex optionnelle
+  sortOrder: number;
+  isDynamic?: boolean; // true = peut être retiré (ex: King of Club)
+  maxProgress?: number; // Pour badges progressifs
+  // Fonction de vérification (nom symbolique)
+  checkFunction?: string;
 }
 
 // ============================================
-// DÉFINITION DES 15 BADGES
+// DÉFINITION DES 16 BADGES
 // ============================================
 
-export const BADGES: Badge[] = [
-  // --- JALONS (5 badges) ---
+export const BADGE_DEFINITIONS: BadgeDefinition[] = [
+  // ----------------------------------------
+  // JALONS (Milestones) - 5 badges
+  // ----------------------------------------
   {
-    id: 'first_match',
-    name: 'Premier Set',
-    description: 'Enregistrez votre premier match',
+    id: 'first-rally',
+    name: 'First Rally',
+    description: 'Premier match enregistré',
+    criteria: 'Enregistrez votre premier match',
+    category: 'milestone',
+    tier: 'common',
     icon: 'Sparkles',
-    category: 'milestone',
-    rarity: 'common',
-    condition: 'matchesPlayed >= 1',
+    iconColor: '#6B7280', // gray-500
+    sortOrder: 1,
+    maxProgress: 1,
+    checkFunction: 'checkFirstMatch',
   },
   {
-    id: 'match_10',
-    name: 'Joueur Régulier',
-    description: 'Jouez 10 matchs',
+    id: 'getting-started',
+    name: 'Getting Started',
+    description: '10 matchs joués',
+    criteria: 'Jouez 10 matchs',
+    category: 'milestone',
+    tier: 'common',
     icon: 'Target',
-    category: 'milestone',
-    rarity: 'common',
-    condition: 'matchesPlayed >= 10',
+    iconColor: '#6B7280',
+    sortOrder: 2,
+    maxProgress: 10,
+    checkFunction: 'checkMatchCount',
   },
   {
-    id: 'match_50',
-    name: 'Compétiteur',
-    description: 'Jouez 50 matchs',
+    id: 'regular',
+    name: 'Habitué',
+    description: '25 matchs joués',
+    criteria: 'Jouez 25 matchs',
+    category: 'milestone',
+    tier: 'rare',
+    icon: 'Activity',
+    iconColor: '#3B82F6', // blue-500
+    sortOrder: 3,
+    maxProgress: 25,
+    checkFunction: 'checkMatchCount',
+  },
+  {
+    id: 'dedicated',
+    name: 'Passionné',
+    description: '50 matchs joués',
+    criteria: 'Jouez 50 matchs',
+    category: 'milestone',
+    tier: 'epic',
     icon: 'Flame',
-    category: 'milestone',
-    rarity: 'rare',
-    condition: 'matchesPlayed >= 50',
+    iconColor: '#8B5CF6', // purple-500
+    sortOrder: 4,
+    maxProgress: 50,
+    checkFunction: 'checkMatchCount',
   },
   {
-    id: 'match_100',
-    name: 'Centenaire',
-    description: 'Atteignez 100 matchs joués',
+    id: 'century',
+    name: 'Century',
+    description: '100 matchs joués - Légende !',
+    criteria: 'Jouez 100 matchs',
+    category: 'milestone',
+    tier: 'legendary',
     icon: 'Trophy',
-    category: 'milestone',
-    rarity: 'epic',
-    condition: 'matchesPlayed >= 100',
-  },
-  {
-    id: 'elo_1400',
-    name: 'Rising Star',
-    description: 'Atteignez 1400 ELO',
-    icon: 'TrendingUp',
-    category: 'milestone',
-    rarity: 'rare',
-    condition: 'currentElo >= 1400',
+    iconColor: '#F59E0B', // amber-500
+    sortOrder: 5,
+    maxProgress: 100,
+    checkFunction: 'checkMatchCount',
   },
 
-  // --- EXPLOITS (5 badges) ---
+  // ----------------------------------------
+  // EXPLOITS (Achievements) - 4 badges
+  // ----------------------------------------
   {
-    id: 'giant_slayer',
-    name: 'Giant Slayer',
-    description: 'Battez un joueur avec 200+ ELO de plus que vous',
-    icon: 'Sword',
+    id: 'hot-streak',
+    name: 'Hot Streak',
+    description: '3 victoires consécutives',
+    criteria: 'Gagnez 3 matchs d\'affilée',
     category: 'achievement',
-    rarity: 'epic',
-    condition: 'Victoire contre adversaire +200 ELO',
-  },
-  {
-    id: 'win_streak_5',
-    name: 'En Feu',
-    description: 'Gagnez 5 matchs consécutifs',
+    tier: 'rare',
     icon: 'Zap',
-    category: 'achievement',
-    rarity: 'rare',
-    condition: 'winStreak >= 5',
+    iconColor: '#3B82F6',
+    sortOrder: 10,
+    maxProgress: 3,
+    checkFunction: 'checkWinStreak',
   },
   {
-    id: 'win_streak_10',
-    name: 'Inarrêtable',
-    description: 'Gagnez 10 matchs consécutifs',
-    icon: 'Rocket',
+    id: 'on-fire',
+    name: 'On Fire',
+    description: '5 victoires consécutives',
+    criteria: 'Gagnez 5 matchs d\'affilée',
     category: 'achievement',
-    rarity: 'legendary',
-    condition: 'winStreak >= 10',
+    tier: 'epic',
+    icon: 'Flame',
+    iconColor: '#EF4444', // red-500
+    sortOrder: 11,
+    maxProgress: 5,
+    checkFunction: 'checkWinStreak',
   },
   {
-    id: 'perfect_month',
-    name: 'Mois Parfait',
-    description: 'Gagnez tous vos matchs d\'un mois (min. 4 matchs)',
-    icon: 'CalendarCheck',
+    id: 'giant-killer',
+    name: 'Giant Killer',
+    description: 'Victoire contre un joueur +200 ELO',
+    criteria: 'Battez un adversaire avec +200 ELO',
     category: 'achievement',
-    rarity: 'legendary',
-    condition: '100% victoires sur 1 mois (min 4 matchs)',
+    tier: 'epic',
+    icon: 'Sword',
+    iconColor: '#8B5CF6',
+    sortOrder: 12,
+    checkFunction: 'checkGiantKiller',
   },
   {
-    id: 'comeback_king',
-    name: 'Comeback King',
-    description: 'Remontez 100+ points ELO en 30 jours',
-    icon: 'ArrowBigUp',
+    id: 'rising-star',
+    name: 'Rising Star',
+    description: '+100 ELO en 30 jours',
+    criteria: 'Progressez de 100 ELO en un mois',
     category: 'achievement',
-    rarity: 'epic',
-    condition: '+100 ELO en 30 jours',
+    tier: 'rare',
+    icon: 'TrendingUp',
+    iconColor: '#10B981', // emerald-500
+    sortOrder: 13,
+    checkFunction: 'checkRisingStar',
   },
 
-  // --- SOCIAL (3 badges) ---
+  // ----------------------------------------
+  // SOCIAL - 4 badges
+  // ----------------------------------------
   {
-    id: 'social_butterfly',
-    name: 'Papillon Social',
-    description: 'Jouez contre 10 adversaires différents',
+    id: 'social-butterfly',
+    name: 'Social Butterfly',
+    description: '10 adversaires différents',
+    criteria: 'Jouez contre 10 joueurs différents',
+    category: 'social',
+    tier: 'rare',
     icon: 'Users',
-    category: 'social',
-    rarity: 'common',
-    condition: 'uniqueOpponents >= 10',
+    iconColor: '#3B82F6',
+    sortOrder: 20,
+    maxProgress: 10,
+    checkFunction: 'checkUniqueOpponents',
   },
   {
-    id: 'networking_pro',
-    name: 'Networking Pro',
-    description: 'Jouez contre 25 adversaires différents',
-    icon: 'Network',
+    id: 'club-pillar',
+    name: 'Pilier du Club',
+    description: '25 adversaires différents',
+    criteria: 'Jouez contre 25 joueurs différents',
     category: 'social',
-    rarity: 'rare',
-    condition: 'uniqueOpponents >= 25',
+    tier: 'epic',
+    icon: 'Building',
+    iconColor: '#8B5CF6',
+    sortOrder: 21,
+    maxProgress: 25,
+    checkFunction: 'checkUniqueOpponents',
   },
   {
-    id: 'club_legend',
-    name: 'Légende du Club',
-    description: 'Jouez contre 50 adversaires différents',
-    icon: 'Star',
+    id: 'rival-master',
+    name: 'Rival Master',
+    description: '10 matchs vs même adversaire',
+    criteria: 'Affrontez le même joueur 10 fois',
     category: 'social',
-    rarity: 'epic',
-    condition: 'uniqueOpponents >= 50',
+    tier: 'rare',
+    icon: 'Swords',
+    iconColor: '#F59E0B',
+    sortOrder: 22,
+    maxProgress: 10,
+    checkFunction: 'checkRivalry',
+  },
+  {
+    id: 'welcome-committee',
+    name: 'Comité d\'accueil',
+    description: 'Premier match de 5 nouveaux membres',
+    criteria: 'Soyez le premier adversaire de 5 nouveaux',
+    category: 'social',
+    tier: 'common',
+    icon: 'HandHeart',
+    iconColor: '#EC4899', // pink-500
+    sortOrder: 23,
+    maxProgress: 5,
+    checkFunction: 'checkWelcomeCommittee',
   },
 
-  // --- SPÉCIAL (3 badges) ---
+  // ----------------------------------------
+  // SPÉCIAL - 4 badges
+  // ----------------------------------------
   {
-    id: 'early_bird',
-    name: 'Early Bird',
-    description: 'Membre depuis la phase de lancement',
-    icon: 'Bird',
-    category: 'special',
-    rarity: 'legendary',
-    condition: 'Inscription avant le 30 juin 2026',
-  },
-  {
-    id: 'king_of_club',
+    id: 'king-of-club',
     name: 'King of Club',
-    description: 'Tu es #1 ELO de ton club !',
-    icon: 'Crown',
+    description: '#1 ELO de ton club',
+    criteria: 'Atteins la première place du classement',
     category: 'special',
-    rarity: 'legendary',
-    condition: 'Classement #1 du club',
-    // BADGE DYNAMIQUE : peut être retiré si quelqu'un te dépasse
+    tier: 'legendary',
+    icon: 'Crown',
+    iconColor: '#F59E0B',
+    sortOrder: 30,
+    isDynamic: true, // Peut être perdu
+    checkFunction: 'checkKingOfClub',
   },
   {
-    id: 'club_regular',
-    name: 'Club Regular',
-    description: 'Membre le plus actif du club sur les 90 derniers jours',
-    icon: 'Calendar',
+    id: 'founding-member',
+    name: 'Founding Member',
+    description: 'Membre depuis le début',
+    criteria: 'Inscription pendant la phase Early Bird',
     category: 'special',
-    rarity: 'epic',
-    condition: 'Plus de matchs joués sur 90 jours que tout autre membre',
+    tier: 'legendary',
+    icon: 'Star',
+    iconColor: '#F59E0B',
+    sortOrder: 31,
+    checkFunction: 'checkFoundingMember',
+  },
+  {
+    id: 'tournament-victor',
+    name: 'Champion',
+    description: 'Vainqueur de tournoi',
+    criteria: 'Remportez un tournoi',
+    category: 'special',
+    tier: 'epic',
+    icon: 'Medal',
+    iconColor: '#8B5CF6',
+    sortOrder: 32,
+    checkFunction: 'checkTournamentVictor',
+  },
+  {
+    id: 'box-league-winner',
+    name: 'Roi de la Poule',
+    description: 'Vainqueur de Box League',
+    criteria: 'Terminez premier de votre poule',
+    category: 'special',
+    tier: 'epic',
+    icon: 'Award',
+    iconColor: '#8B5CF6',
+    sortOrder: 33,
+    checkFunction: 'checkBoxLeagueWinner',
   },
 ];
 
-// Badge dynamique - peut être perdu
-export const DYNAMIC_BADGES = ['king_of_club'] as const;
+// ============================================
+// STYLE PAR TIER
+// ============================================
 
-/**
- * Vérifie si un badge est dynamique (peut être retiré)
- */
-export function isDynamicBadge(badgeId: string): boolean {
-  return DYNAMIC_BADGES.includes(badgeId as typeof DYNAMIC_BADGES[number]);
-}
+export const TIER_STYLES: Record<BadgeTier, {
+  bg: string;
+  bgGradient: string;
+  icon: string;
+  glow: string;
+  border: string;
+  animation?: string;
+}> = {
+  common: {
+    bg: 'bg-gray-100 dark:bg-gray-800',
+    bgGradient: 'bg-gray-100 dark:bg-gray-800',
+    icon: 'text-gray-600 dark:text-gray-400',
+    glow: '',
+    border: 'border-gray-300 dark:border-gray-600',
+  },
+  rare: {
+    bg: 'bg-blue-100 dark:bg-blue-900/30',
+    bgGradient: 'bg-gradient-to-br from-blue-400 to-blue-600',
+    icon: 'text-white',
+    glow: 'shadow-lg shadow-blue-500/30',
+    border: 'border-blue-400 dark:border-blue-500',
+  },
+  epic: {
+    bg: 'bg-purple-100 dark:bg-purple-900/30',
+    bgGradient: 'bg-gradient-to-br from-purple-400 to-purple-600',
+    icon: 'text-white',
+    glow: 'shadow-lg shadow-purple-500/30',
+    border: 'border-purple-400 dark:border-purple-500',
+  },
+  legendary: {
+    bg: 'bg-amber-100 dark:bg-amber-900/30',
+    bgGradient: 'bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-500',
+    icon: 'text-white',
+    glow: 'shadow-lg shadow-yellow-500/40',
+    border: 'border-amber-400 dark:border-amber-500',
+    animation: 'animate-pulse-slow',
+  },
+};
+
+// ============================================
+// LABELS FRANÇAIS
+// ============================================
+
+export const TIER_LABELS: Record<BadgeTier, string> = {
+  common: 'Commun',
+  rare: 'Rare',
+  epic: 'Épique',
+  legendary: 'Légendaire',
+};
+
+export const CATEGORY_LABELS: Record<BadgeCategory, string> = {
+  milestone: 'Jalons',
+  achievement: 'Exploits',
+  social: 'Social',
+  special: 'Spécial',
+};
+
+export const CATEGORY_ICONS: Record<BadgeCategory, string> = {
+  milestone: 'Flag',
+  achievement: 'Medal',
+  social: 'Users',
+  special: 'Star',
+};
 
 // ============================================
 // HELPERS
@@ -199,66 +343,112 @@ export function isDynamicBadge(badgeId: string): boolean {
 /**
  * Récupère un badge par son ID
  */
-export function getBadgeById(badgeId: string): Badge | undefined {
-  return BADGES.find((b) => b.id === badgeId);
+export function getBadgeById(badgeId: string): BadgeDefinition | undefined {
+  return BADGE_DEFINITIONS.find((b) => b.id === badgeId);
 }
 
 /**
  * Récupère les badges par catégorie
  */
-export function getBadgesByCategory(category: BadgeCategory): Badge[] {
-  return BADGES.filter((b) => b.category === category);
+export function getBadgesByCategory(category: BadgeCategory): BadgeDefinition[] {
+  return BADGE_DEFINITIONS.filter((b) => b.category === category)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
 /**
- * Récupère les badges par rareté
+ * Récupère les badges par tier
  */
-export function getBadgesByRarity(rarity: BadgeRarity): Badge[] {
-  return BADGES.filter((b) => b.rarity === rarity);
+export function getBadgesByTier(tier: BadgeTier): BadgeDefinition[] {
+  return BADGE_DEFINITIONS.filter((b) => b.tier === tier)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
 /**
- * Couleurs associées aux raretés
+ * Vérifie si un badge est dynamique (peut être retiré)
  */
-export const RARITY_COLORS: Record<BadgeRarity, { bg: string; text: string; border: string }> = {
+export function isDynamicBadge(badgeId: string): boolean {
+  const badge = getBadgeById(badgeId);
+  return badge?.isDynamic ?? false;
+}
+
+/**
+ * Vérifie si un badge est progressif
+ */
+export function isProgressiveBadge(badgeId: string): boolean {
+  const badge = getBadgeById(badgeId);
+  return (badge?.maxProgress ?? 0) > 1;
+}
+
+/**
+ * Calcule le pourcentage de progression
+ */
+export function calculateProgressPercentage(current: number, max: number): number {
+  if (max <= 0) return 0;
+  return Math.min(Math.round((current / max) * 100), 100);
+}
+
+// ============================================
+// SEED DATA POUR LA BDD
+// ============================================
+
+export function getBadgeSeedData() {
+  return BADGE_DEFINITIONS.map(badge => ({
+    id: badge.id,
+    name: badge.name,
+    description: badge.description,
+    criteria: badge.criteria,
+    category: badge.category,
+    tier: badge.tier,
+    icon: badge.icon,
+    iconColor: badge.iconColor,
+    sortOrder: badge.sortOrder,
+    isActive: true,
+    isDynamic: badge.isDynamic ?? false,
+    maxProgress: badge.maxProgress ?? null,
+  }));
+}
+
+// ============================================
+// BACKWARDS COMPATIBILITY EXPORTS
+// ============================================
+
+/**
+ * Alias BADGES pour rétrocompatibilité avec l'ancien code
+ */
+export const BADGES = BADGE_DEFINITIONS;
+
+/**
+ * Alias RARITY_LABELS pour rétrocompatibilité
+ */
+export const RARITY_LABELS = TIER_LABELS;
+
+/**
+ * Couleurs par rareté (ancien format)
+ */
+export const RARITY_COLORS: Record<BadgeTier, { bg: string; text: string; border: string }> = {
   common: {
-    bg: 'bg-gray-100 dark:bg-gray-800',
+    bg: TIER_STYLES.common.bg,
     text: 'text-gray-700 dark:text-gray-300',
-    border: 'border-gray-300 dark:border-gray-600',
+    border: TIER_STYLES.common.border,
   },
   rare: {
-    bg: 'bg-blue-50 dark:bg-blue-900/30',
+    bg: TIER_STYLES.rare.bg,
     text: 'text-blue-700 dark:text-blue-300',
-    border: 'border-blue-300 dark:border-blue-600',
+    border: TIER_STYLES.rare.border,
   },
   epic: {
-    bg: 'bg-purple-50 dark:bg-purple-900/30',
+    bg: TIER_STYLES.epic.bg,
     text: 'text-purple-700 dark:text-purple-300',
-    border: 'border-purple-300 dark:border-purple-600',
+    border: TIER_STYLES.epic.border,
   },
   legendary: {
-    bg: 'bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30',
+    bg: TIER_STYLES.legendary.bg,
     text: 'text-amber-700 dark:text-amber-300',
-    border: 'border-amber-400 dark:border-amber-500',
+    border: TIER_STYLES.legendary.border,
   },
 };
 
 /**
- * Labels français des catégories
+ * Type Badge alias pour rétrocompatibilité
  */
-export const CATEGORY_LABELS: Record<BadgeCategory, string> = {
-  milestone: 'Jalons',
-  achievement: 'Exploits',
-  social: 'Social',
-  special: 'Spécial',
-};
-
-/**
- * Labels français des raretés
- */
-export const RARITY_LABELS: Record<BadgeRarity, string> = {
-  common: 'Commun',
-  rare: 'Rare',
-  epic: 'Épique',
-  legendary: 'Légendaire',
-};
+export type Badge = BadgeDefinition;

@@ -5,11 +5,11 @@ import { redirect } from 'next/navigation';
 export const dynamic = 'force-dynamic';
 
 import { Trophy, Flame, Target, Award } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { getServerPlayer } from '@/lib/auth-helpers';
 import { getWeeklyStreakInfo } from '@/lib/gamification/streaks';
 import { getPlayerChallengeProgress, getChallengeSummary } from '@/lib/gamification/challenges';
-import { getPlayerBadges } from '@/lib/gamification/badge-service';
+import { getPlayerBadgesForDisplay } from '@/lib/gamification/badge-checker';
 import { BADGES } from '@/lib/gamification/badges';
 import { TrophyCase, WeeklyStreak, MonthlyChallenges } from '@/components/gamification';
 
@@ -30,7 +30,7 @@ export default async function AchievementsPage() {
     getWeeklyStreakInfo(player.id),
     getPlayerChallengeProgress(player.id),
     getChallengeSummary(player.id),
-    getPlayerBadges(player.id),
+    getPlayerBadgesForDisplay(player.id),
   ]);
 
   // Statistiques globales
@@ -122,7 +122,7 @@ export default async function AchievementsPage() {
       {/* Trophy Case */}
       <TrophyCase
         earnedBadges={badges.map((b) => ({
-          badgeType: b.badgeType,
+          badgeId: b.badgeId,
           earnedAt: b.earnedAt,
         }))}
         showProgress={true}

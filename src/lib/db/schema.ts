@@ -372,7 +372,50 @@ export const forumReactions = pgTable(
   })
 );
 
-// Player Badges
+// ============================================
+// BADGES SYSTEM (Trophy Case 2.0)
+// ============================================
+
+export const badgeTierEnum = pgEnum('badge_tier', [
+  'common',
+  'rare', 
+  'epic',
+  'legendary',
+]);
+
+export const badgeCategoryEnum = pgEnum('badge_category', [
+  'milestone',    // Jalons de progression
+  'achievement',  // Exploits sportifs
+  'social',       // Engagement communautaire
+  'special',      // Événements spéciaux
+]);
+
+// Badges Master Table (définition des badges disponibles)
+export const badges = pgTable(
+  'badges',
+  {
+    id: varchar('id', { length: 50 }).primaryKey(), // ex: 'first-rally', 'century'
+    name: varchar('name', { length: 100 }).notNull(),
+    description: text('description').notNull(),
+    criteria: text('criteria').notNull(), // Description humaine: "Gagnez votre premier match"
+    category: badgeCategoryEnum('category').notNull(),
+    tier: badgeTierEnum('tier').default('common').notNull(),
+    icon: varchar('icon', { length: 50 }).notNull(), // Nom icône Lucide ou custom
+    iconColor: varchar('icon_color', { length: 20 }), // Couleur hex optionnelle
+    sortOrder: integer('sort_order').default(0).notNull(),
+    isActive: boolean('is_active').default(true).notNull(),
+    isDynamic: boolean('is_dynamic').default(false).notNull(), // true = peut être retiré (ex: King of Club)
+    // Métadonnées pour badges progressifs
+    maxProgress: integer('max_progress'), // ex: 100 pour Century
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (table) => ({
+    categoryIdx: index('badges_category_idx').on(table.category),
+    tierIdx: index('badges_tier_idx').on(table.tier),
+  })
+);
+
+// Player Badges (badges débloqués par joueur)
 export const playerBadges = pgTable(
   'player_badges',
   {
@@ -380,14 +423,20 @@ export const playerBadges = pgTable(
     playerId: uuid('player_id')
       .notNull()
       .references(() => players.id, { onDelete: 'cascade' }),
-    badgeType: varchar('badge_type', { length: 50 }).notNull(),
-    badgeName: varchar('badge_name', { length: 100 }).notNull(),
-    badgeDescription: text('badge_description'),
-    badgeIcon: varchar('badge_icon', { length: 50 }),
+    badgeId: varchar('badge_id', { length: 50 })
+      .notNull()
+      .references(() => badges.id, { onDelete: 'cascade' }),
+    // Tracking
+    progress: integer('progress').default(0).notNull(), // Progression actuelle (ex: 45/100 matchs)
+    seen: boolean('seen').default(false).notNull(), // true = célébration déjà affichée
+    // Timestamps
     earnedAt: timestamp('earned_at', { mode: 'date' }).defaultNow().notNull(),
+    seenAt: timestamp('seen_at', { mode: 'date' }), // Quand l'utilisateur a vu la célébration
   },
   (table) => ({
     playerIdIdx: index('player_badges_player_id_idx').on(table.playerId),
+    badgeIdIdx: index('player_badges_badge_id_idx').on(table.badgeId),
+    uniqueBadge: index('player_badges_unique_idx').on(table.playerId, table.badgeId),
   })
 );
 
@@ -1164,6 +1213,21 @@ export const clubJoinRequestsRelations = relations(clubJoinRequests, ({ one }) =
   }),
 }));
 
+export const badgesRelations = relations(badges, ({ many }) => ({
+  playerBadges: many(playerBadges),
+}));
+
+export const playerBadgesRelations = relations(playerBadges, ({ one }) => ({
+  player: one(players, {
+    fields: [playerBadges.playerId],
+    references: [players.id],
+  }),
+  badge: one(badges, {
+    fields: [playerBadges.badgeId],
+    references: [badges.id],
+  }),
+}));
+
 // ============================================
 // TYPE EXPORTS
 // ============================================
@@ -1192,8 +1256,16 @@ export type NewForumThread = typeof forumThreads.$inferInsert;
 export type ForumReply = typeof forumReplies.$inferSelect;
 export type NewForumReply = typeof forumReplies.$inferInsert;
 
+export type Badge = typeof badges.$inferSelect;
+export type NewBadge = typeof badges.$inferInsert;
+
 export type PlayerBadge = typeof playerBadges.$inferSelect;
+export type NewPlayerBadge = typeof playerBadges.$inferInsert;
+
 export type Notification = typeof notifications.$inferSelect;
+
+export type BadgeTier = 'common' | 'rare' | 'epic' | 'legendary';
+export type BadgeCategory = 'milestone' | 'achievement' | 'social' | 'special';
 
 export type ChatRoom = typeof chatRooms.$inferSelect;
 export type NewChatRoom = typeof chatRooms.$inferInsert;

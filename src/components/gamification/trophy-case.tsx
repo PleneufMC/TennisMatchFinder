@@ -10,12 +10,12 @@ import { BadgeCard } from './badge-card';
 import {
   BADGES,
   CATEGORY_LABELS,
-  type Badge as BadgeType,
-  type BadgeCategory,
+  type BadgeDefinition,
 } from '@/lib/gamification/badges';
+import type { BadgeCategory } from '@/lib/db/schema';
 
 interface EarnedBadge {
-  badgeType: string;
+  badgeId: string;
   earnedAt: Date;
 }
 
@@ -32,16 +32,16 @@ export function TrophyCase({
 }: TrophyCaseProps) {
   const [selectedCategory, setSelectedCategory] = useState<BadgeCategory | 'all'>('all');
 
-  // Map earned badges by type for quick lookup
+  // Map earned badges by id for quick lookup
   const earnedMap = new Map(
-    earnedBadges.map((b) => [b.badgeType, b.earnedAt])
+    earnedBadges.map((b) => [b.badgeId, b.earnedAt])
   );
 
   // Filter badges by category
   const filteredBadges =
     selectedCategory === 'all'
       ? BADGES
-      : BADGES.filter((b) => b.category === selectedCategory);
+      : BADGES.filter((b: BadgeDefinition) => b.category === selectedCategory);
 
   // Calculate progress
   const totalBadges = BADGES.length;
@@ -51,7 +51,7 @@ export function TrophyCase({
   // Group badges for display
   const displayBadges = showLocked
     ? filteredBadges
-    : filteredBadges.filter((b) => earnedMap.has(b.id));
+    : filteredBadges.filter((b: BadgeDefinition) => earnedMap.has(b.id));
 
   return (
     <Card>
@@ -101,7 +101,7 @@ export function TrophyCase({
               </div>
             ) : (
               <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-3">
-                {displayBadges.map((badge) => {
+                {displayBadges.map((badge: BadgeDefinition) => {
                   const earnedAt = earnedMap.get(badge.id);
                   return (
                     <BadgeCard

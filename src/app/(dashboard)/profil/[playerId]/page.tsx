@@ -386,7 +386,7 @@ export default async function PlayerProfilePage({ params }: PageProps) {
       {/* Trophy Case */}
       <TrophyCase
         earnedBadges={badges.map((b) => ({
-          badgeType: b.badgeType,
+          badgeId: b.badgeId,
           earnedAt: b.earnedAt,
         }))}
         showProgress={false}

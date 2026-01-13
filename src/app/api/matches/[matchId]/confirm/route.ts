@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { matches, players, notifications, eloHistory } from '@/lib/db/schema';
 import { getServerPlayer } from '@/lib/auth-helpers';
 import { eq, and, or } from 'drizzle-orm';
-import { triggerBadgeCheckAfterMatch } from '@/lib/gamification';
+import { triggerBadgeCheckAfterMatch } from '@/lib/gamification/badge-checker';
 
 // POST: Confirmer ou rejeter un match
 export async function POST(
@@ -195,31 +195,17 @@ export async function POST(
     // 5. Vérifier et attribuer les badges pour les deux joueurs
     const { player1Badges, player2Badges } = await triggerBadgeCheckAfterMatch(
       match.player1Id,
-      match.player2Id
+      match.player2Id,
+      match.winnerId,
+      {
+        player1Elo: match.player1EloBefore,
+        player2Elo: match.player2EloBefore,
+        matchId: match.id,
+        clubId: match.clubId,
+      }
     );
 
-    // Notifier les joueurs des nouveaux badges
-    for (const badge of player1Badges) {
-      await db.insert(notifications).values({
-        userId: match.player1Id,
-        type: 'badge_earned',
-        title: `🏆 Nouveau badge : ${badge.name}`,
-        message: badge.description,
-        link: '/profil',
-        data: { badgeId: badge.id, badgeName: badge.name, badgeRarity: badge.rarity },
-      });
-    }
-
-    for (const badge of player2Badges) {
-      await db.insert(notifications).values({
-        userId: match.player2Id,
-        type: 'badge_earned',
-        title: `🏆 Nouveau badge : ${badge.name}`,
-        message: badge.description,
-        link: '/profil',
-        data: { badgeId: badge.id, badgeName: badge.name, badgeRarity: badge.rarity },
-      });
-    }
+    // Note: Les notifications sont déjà créées par triggerBadgeCheckAfterMatch
 
     return NextResponse.json({
       success: true,
