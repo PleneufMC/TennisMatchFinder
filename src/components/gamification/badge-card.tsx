@@ -1,6 +1,6 @@
 'use client';
 
-import { type LucideIcon, Award, Sparkles, Target, Flame, Trophy, TrendingUp, Sword, Zap, Rocket, Crown, ArrowBigUp, Users, Network, Star, Bird } from 'lucide-react';
+import { type LucideIcon, Award, Sparkles, Target, Flame, Trophy, TrendingUp, Sword, Zap, Rocket, Crown, ArrowBigUp, Users, Network, Star, Bird, Calendar, CalendarCheck } from 'lucide-react';
 import { Badge as BadgeType, RARITY_COLORS, RARITY_LABELS } from '@/lib/gamification/badges';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -23,6 +23,8 @@ const iconMap: Record<string, LucideIcon> = {
   Network,
   Star,
   Bird,
+  Calendar,
+  CalendarCheck,
 };
 
 interface BadgeCardProps {

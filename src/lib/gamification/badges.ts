@@ -107,7 +107,7 @@ export const BADGES: Badge[] = [
     id: 'perfect_month',
     name: 'Mois Parfait',
     description: 'Gagnez tous vos matchs d\'un mois (min. 4 matchs)',
-    icon: 'Crown',
+    icon: 'CalendarCheck',
     category: 'achievement',
     rarity: 'legendary',
     condition: '100% victoires sur 1 mois (min 4 matchs)',
