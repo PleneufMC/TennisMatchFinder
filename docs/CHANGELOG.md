@@ -52,10 +52,11 @@ Toutes les modifications notables de ce projet sont documentées dans ce fichier
 ### 🎉 Fonctionnalités de lancement
 
 - Système d'authentification par magic link
-- Profils joueurs avec niveau et disponibilités
+- Profils joueurs avec niveau, disponibilités et photos
 - Système ELO pour le classement
 - Création et gestion des matchs
 - Forum de discussion par club
+- Chat en temps réel entre joueurs
 - Système de badges et gamification
 - Notifications en temps réel
 - Gestion du club MCCC
@@ -67,7 +68,7 @@ Toutes les modifications notables de ce projet sont documentées dans ce fichier
 ### v1.2.0 — Intégrations (Février 2026)
 - [ ] 📅 Intégration **Google Calendar** (synchronisation des matchs)
 - [ ] 💬 Intégration **WhatsApp** (notifications et invitations)
-- [ ] 📱 Améliorations PWA (notifications push)
+- [ ] 📱 Améliorations notifications push (PWA)
 
 ### v1.3.0 — Croissance (Mars-Avril 2026)
 - [ ] 🚀 Lancement des campagnes publicitaires
@@ -75,10 +76,10 @@ Toutes les modifications notables de ce projet sont documentées dans ce fichier
 - [ ] 📈 **Objectif : 1000 joueurs en 1 trimestre**
 - [ ] 🤝 Partenariats avec clubs et micro-influenceurs
 
-### v1.4.0 — Social (Q2 2026)
-- [ ] 💬 Chat en temps réel entre joueurs
-- [ ] 📸 Partage de photos de matchs
-- [ ] 🏅 Classements régionaux
+### v1.4.0 — Expansion (Q2-Q3 2026)
+- [ ] 🗺️ **Classements départementaux** (rankings par département)
+- [ ] 🏆 Tournois inter-clubs
+- [ ] 📊 Statistiques avancées et analytics joueurs
 
 ---
 
