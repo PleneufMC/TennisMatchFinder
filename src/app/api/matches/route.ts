@@ -2,66 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { matches, players, notifications, eloHistory } from '@/lib/db/schema';
 import { getServerPlayer } from '@/lib/auth-helpers';
-import { eq, and, or, desc, sql, count } from 'drizzle-orm';
-
-// Configuration ELO
-const ELO_CONFIG = {
-  K_FACTOR: 32, // Facteur K standard
-  NEW_OPPONENT_BONUS: 0.15, // +15% pour nouvel adversaire
-  UPSET_BONUS: 0.20, // +20% pour victoire exploit (ELO adversaire > 100 pts)
-  REPEAT_PENALTY: 0.05, // -5% par match récent vs même adversaire
-  DIVERSITY_BONUS: 0.10, // +10% si 3+ adversaires cette semaine
-};
-
-// Calculer le changement ELO
-function calculateEloChange(
-  winnerElo: number,
-  loserElo: number,
-  modifiers: {
-    isNewOpponent: boolean;
-    isUpset: boolean;
-    repeatCount: number;
-    diversityBonus: boolean;
-  }
-): { winnerDelta: number; loserDelta: number; modifiersApplied: Record<string, number> } {
-  // Calcul ELO standard
-  const expectedWin = 1 / (1 + Math.pow(10, (loserElo - winnerElo) / 400));
-  let baseDelta = Math.round(ELO_CONFIG.K_FACTOR * (1 - expectedWin));
-  
-  const modifiersApplied: Record<string, number> = {};
-  let multiplier = 1;
-
-  // Bonus nouvel adversaire
-  if (modifiers.isNewOpponent) {
-    multiplier += ELO_CONFIG.NEW_OPPONENT_BONUS;
-    modifiersApplied.newOpponent = ELO_CONFIG.NEW_OPPONENT_BONUS;
-  }
-
-  // Bonus victoire exploit
-  if (modifiers.isUpset) {
-    multiplier += ELO_CONFIG.UPSET_BONUS;
-    modifiersApplied.upset = ELO_CONFIG.UPSET_BONUS;
-  }
-
-  // Pénalité matchs répétés
-  if (modifiers.repeatCount > 0) {
-    const penalty = modifiers.repeatCount * ELO_CONFIG.REPEAT_PENALTY;
-    multiplier -= penalty;
-    modifiersApplied.repeatPenalty = -penalty;
-  }
-
-  // Bonus diversité
-  if (modifiers.diversityBonus) {
-    multiplier += ELO_CONFIG.DIVERSITY_BONUS;
-    modifiersApplied.diversity = ELO_CONFIG.DIVERSITY_BONUS;
-  }
-
-  // Appliquer le multiplicateur
-  const winnerDelta = Math.max(1, Math.round(baseDelta * multiplier));
-  const loserDelta = -Math.round(baseDelta * 0.8); // Le perdant perd légèrement moins
-
-  return { winnerDelta, loserDelta, modifiersApplied };
-}
+import { eq, and, or, desc, sql, count, gte } from 'drizzle-orm';
+import { 
+  calculateEloChange, 
+  type EloCalculationParams,
+  ELO_CONFIG 
+} from '@/lib/elo/calculator';
+import { 
+  parseScoreForGames, 
+  inferFormatFromScore,
+  isValidMatchFormat,
+  type MatchFormat 
+} from '@/lib/elo/format-coefficients';
 
 // GET: Liste des matchs du joueur
 export async function GET(request: NextRequest) {
@@ -153,11 +105,30 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { clubId, opponentId, winnerId, score, gameType, surface, playedAt, notes } = body;
+    const { 
+      clubId, 
+      opponentId, 
+      winnerId, 
+      score, 
+      matchFormat: requestedFormat,
+      gameType, 
+      surface, 
+      playedAt, 
+      notes 
+    } = body;
 
     // Validation
     if (!opponentId || !winnerId || !score) {
       return NextResponse.json({ error: 'Données manquantes' }, { status: 400 });
+    }
+
+    // Déterminer le format du match (fourni ou inféré du score)
+    let matchFormat: MatchFormat = 'two_sets';
+    if (requestedFormat && isValidMatchFormat(requestedFormat)) {
+      matchFormat = requestedFormat;
+    } else {
+      // Inférer du score si non fourni
+      matchFormat = inferFormatFromScore(score);
     }
 
     // Vérifier que l'adversaire est du même club
@@ -223,17 +194,42 @@ export async function POST(request: NextRequest) {
     const uniqueOpponents = new Set(weeklyMatches.map((m) => m.opponentId));
     const diversityBonus = uniqueOpponents.size >= 3;
 
-    // 4. Est-ce une victoire exploit ? (gagnant a 100+ pts de moins)
+    // 4. Déterminer gagnant/perdant et leurs ELO
     const winnerElo = winnerId === player1Id ? player1Elo : player2Elo;
     const loserElo = winnerId === player1Id ? player2Elo : player1Elo;
-    const isUpset = loserElo - winnerElo >= 100;
+    const winnerPlayer = winnerId === player1Id ? player : opponentPlayer;
+    const loserPlayer = winnerId === player1Id ? opponentPlayer : player;
 
-    // Calculer le changement ELO
-    const { winnerDelta, loserDelta, modifiersApplied } = calculateEloChange(
+    // 5. Calculer les jeux pour le modificateur de marge
+    const { winnerGames, loserGames } = parseScoreForGames(score, winnerId, player1Id);
+
+    // Calculer le changement ELO avec le nouveau système
+    const eloParams: EloCalculationParams = {
       winnerElo,
       loserElo,
-      { isNewOpponent, isUpset, repeatCount, diversityBonus }
-    );
+      winnerMatchCount: winnerPlayer.matchesPlayed || 0,
+      loserMatchCount: loserPlayer.matchesPlayed || 0,
+      matchFormat,
+      winnerGames,
+      loserGames,
+      isNewOpponent,
+      recentMatchesVsSameOpponent: repeatCount,
+      weeklyUniqueOpponents: uniqueOpponents.size,
+    };
+
+    const eloResult = calculateEloChange(eloParams);
+    const { winnerDelta, loserDelta, breakdown } = eloResult;
+    
+    // Construire les modificateurs appliqués pour stockage
+    const modifiersApplied = {
+      formatCoefficient: breakdown.formatCoefficient,
+      marginModifier: breakdown.marginModifier,
+      newOpponentBonus: breakdown.newOpponentBonus,
+      upsetBonus: breakdown.upsetBonus,
+      repetitionMalus: breakdown.repetitionMalus,
+      diversityBonus: breakdown.diversityBonus,
+      kFactor: breakdown.kFactor,
+    };
 
     // Les ELO finaux (seront appliqués après validation)
     const winnerNewElo = winnerElo + winnerDelta;
@@ -248,6 +244,7 @@ export async function POST(request: NextRequest) {
         player2Id,
         winnerId,
         score,
+        matchFormat, // Nouveau champ
         gameType: gameType || 'simple',
         surface: surface || null,
         player1EloBefore: player1Elo,
@@ -290,9 +287,20 @@ export async function POST(request: NextRequest) {
       success: true,
       match: newMatch,
       eloChange: {
-        winner: { before: winnerElo, after: winnerNewElo, delta: winnerDelta },
-        loser: { before: loserElo, after: loserNewElo, delta: loserDelta },
-        modifiers: modifiersApplied,
+        winner: { 
+          playerId: winnerId,
+          before: winnerElo, 
+          after: winnerNewElo, 
+          delta: winnerDelta 
+        },
+        loser: { 
+          playerId: winnerId === player1Id ? player2Id : player1Id,
+          before: loserElo, 
+          after: loserNewElo, 
+          delta: loserDelta 
+        },
+        breakdown, // Breakdown complet pour affichage transparent
+        matchFormat,
       },
       message: 'Match enregistré. En attente de confirmation par votre adversaire.',
     });

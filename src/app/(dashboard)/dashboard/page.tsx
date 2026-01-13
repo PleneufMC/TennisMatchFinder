@@ -40,7 +40,7 @@ export default async function DashboardPage() {
   ]);
 
   // Calculer la tendance
-  const trend = calculateEloTrend(eloHistory.map(h => ({ delta: h.delta, recorded_at: h.recordedAt.toISOString() })));
+  const trend = calculateEloTrend(eloHistory.map(h => ({ delta: h.delta })));
   const recentDelta = eloHistory.slice(0, 5).reduce((sum, h) => sum + h.delta, 0);
   const rankInfo = getEloRankTitle(player.currentElo);
 

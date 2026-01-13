@@ -122,17 +122,15 @@ export async function GET(
     const loserEloAfter = isPlayer1Winner ? match.player2EloAfter : match.player1EloAfter;
 
     // Calculer les facteurs K (estimation basée sur les matchs au moment du match)
-    const winnerKFactor = calculateKFactor({
-      id: winnerData.id,
-      currentElo: winnerEloBefore,
-      matchesPlayed: winnerData.matchesPlayed - 1, // -1 car ce match est déjà compté
-    });
+    const winnerKFactor = calculateKFactor(
+      winnerData.matchesPlayed - 1, // -1 car ce match est déjà compté
+      winnerEloBefore
+    );
 
-    const loserKFactor = calculateKFactor({
-      id: loserData.id,
-      currentElo: loserEloBefore,
-      matchesPlayed: loserData.matchesPlayed - 1,
-    });
+    const loserKFactor = calculateKFactor(
+      loserData.matchesPlayed - 1,
+      loserEloBefore
+    );
 
     // Calculer les probabilités de victoire
     const winnerExpectedScore = calculateExpectedScore(winnerEloBefore, loserEloBefore);

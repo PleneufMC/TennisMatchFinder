@@ -74,6 +74,13 @@ export const eloChangeReasonEnum = pgEnum('elo_change_reason', [
   'manual_adjustment',
 ]);
 
+export const matchFormatEnum = pgEnum('match_format', [
+  'one_set',
+  'two_sets',
+  'three_sets',
+  'super_tiebreak',
+]);
+
 export const joinRequestStatusEnum = pgEnum('join_request_status', [
   'pending',
   'approved',
@@ -225,6 +232,7 @@ export const matches = pgTable(
       .notNull()
       .references(() => players.id, { onDelete: 'cascade' }),
     score: varchar('score', { length: 50 }).notNull(),
+    matchFormat: matchFormatEnum('match_format').default('two_sets').notNull(),
     gameType: gameTypeEnum('game_type').default('simple').notNull(),
     surface: courtSurfaceEnum('surface'),
     location: varchar('location', { length: 100 }),
@@ -262,6 +270,9 @@ export const eloHistory = pgTable(
     elo: integer('elo').notNull(),
     delta: integer('delta').notNull(),
     reason: eloChangeReasonEnum('reason').notNull(),
+    // Breakdown ELO (nouveau système coefficients)
+    formatCoefficient: numeric('format_coefficient', { precision: 3, scale: 2 }),
+    marginModifier: numeric('margin_modifier', { precision: 3, scale: 2 }),
     metadata: jsonb('metadata').default({}).notNull(),
     recordedAt: timestamp('recorded_at', { mode: 'date' }).defaultNow().notNull(),
   },
@@ -1266,6 +1277,7 @@ export type Notification = typeof notifications.$inferSelect;
 
 export type BadgeTier = 'common' | 'rare' | 'epic' | 'legendary';
 export type BadgeCategory = 'milestone' | 'achievement' | 'social' | 'special';
+export type MatchFormatType = 'one_set' | 'two_sets' | 'three_sets' | 'super_tiebreak';
 
 export type ChatRoom = typeof chatRooms.$inferSelect;
 export type NewChatRoom = typeof chatRooms.$inferInsert;
