@@ -1,5 +1,5 @@
 /**
- * API Route: GET /api/matches/[id]/elo-breakdown
+ * API Route: GET /api/matches/[matchId]/elo-breakdown
  * 
  * Récupère le breakdown ELO complet pour un match
  * USP CRITIQUE : Différenciation vs Playtomic (rating opaque)
@@ -55,7 +55,7 @@ interface PlayerBreakdown {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { matchId: string } }
 ) {
   try {
     // Vérifier l'authentification
@@ -68,7 +68,7 @@ export async function GET(
       );
     }
 
-    const matchId = params.id;
+    const matchId = params.matchId;
 
     // Récupérer le match
     const [match] = await db
