@@ -136,15 +136,17 @@ Créer une expérience "single-player mode" qui apporte de la valeur **avant** d
 
 ---
 
-## 📋 Sprint 4 : Réputation & Social (Semaine 4-5) - EN COURS
+## 📋 Sprint 4 : Réputation & Social (Semaine 4-5) - ✅ COMPLÉTÉ
 
-### 4.1 Système de réputation
-- [ ] Évaluation post-match (optionnel)
+### 4.1 Système de réputation ✅
+- [x] Évaluation post-match (optionnel)
   - Ponctualité : ⭐⭐⭐⭐⭐
   - Fair-play : ⭐⭐⭐⭐⭐
   - Convivialité : ⭐⭐⭐⭐⭐
-- [ ] Badge "Partenaire Fiable" (>4.5 moyenne, >5 évaluations)
-- [ ] Affichage discret sur le profil
+- [x] Badge "Partenaire Fiable" (>4.5 moyenne, >5 évaluations)
+- [x] Affichage discret sur le profil (ReputationBadge)
+- [x] Modal d'évaluation après confirmation de match
+- [x] API POST/GET /api/matches/[matchId]/rate
 
 ### 4.2 Suggestions intelligentes
 - [x] "Partenaires recommandés" basé sur ELO proche
@@ -273,7 +275,7 @@ POST /api/onboarding                      -- Créer profil joueur
 | 2 | 80% des matchs trackables en <30 sec | ✅ Complété |
 | 3 | 16 badges disponibles, 3+ gagnables jour 1 | ✅ Complété |
 | 3.5 | Coefficient ELO par format fonctionnel | ✅ Complété |
-| 4 | Taux de suggestion acceptée >20% | 🔄 En cours |
+| 4 | Système de réputation post-match | ✅ Complété |
 | 5 | Conversion freemium >3% | ⏳ À faire |
 
 ---
@@ -378,4 +380,4 @@ src/
 
 ---
 
-*Dernière mise à jour : 13 janvier 2026 - 17h00*
+*Dernière mise à jour : 14 janvier 2026 - Sprint 4 complété*
