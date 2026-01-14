@@ -8,13 +8,13 @@
  * - PRERELEASE : alpha, beta, rc (release candidate)
  */
 
-export const APP_VERSION = '1.1.0';
+export const APP_VERSION = '1.3.0';
 
 export const VERSION_INFO = {
   version: APP_VERSION,
-  name: 'Open Club',
-  releaseDate: '2026-01-13',
-  description: 'Introduction de l\'Open Club et des Box Leagues',
+  name: 'Réputation & Anti-Churn',
+  releaseDate: '2026-01-14',
+  description: 'Système de réputation, auto-validation des matchs et contestation',
 };
 
 /**

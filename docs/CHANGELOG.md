@@ -4,6 +4,134 @@ Toutes les modifications notables de ce projet sont documentées dans ce fichier
 
 ---
 
+## [1.3.0] - 2026-01-14 — "Réputation & Anti-Churn"
+
+### 🎉 Nouveautés majeures
+
+#### ⭐ Système de Réputation Post-Match
+- **Nouveau** : Évaluation des adversaires après confirmation de match
+- **Nouveau** : 3 critères : Ponctualité, Fair-play, Convivialité (⭐ 1-5)
+- **Nouveau** : Commentaire optionnel (privé, max 500 caractères)
+- **Nouveau** : Moyenne de réputation calculée et affichée sur le profil
+- **Nouveau** : Composant `RatingModal` avec système d'étoiles interactif
+- **Nouveau** : Composant `ReputationBadge` avec tooltip détaillé
+- **Nouveau** : Badge **"Partenaire Fiable"** 🏅 (≥4.5 moyenne, ≥5 avis)
+- **Nouveau** : API `POST/GET /api/matches/[matchId]/rate`
+
+#### 🛡️ Système Anti-Churn — Auto-Validation & Contestation
+- **Nouveau** : Auto-validation des matchs après **24h** sans réponse
+- **Nouveau** : Rappel automatique après **6h** si pas d'action
+- **Nouveau** : Contestation possible pendant **7 jours** après validation
+- **Nouveau** : Limite de **3 contestations par mois** par joueur
+- **Nouveau** : Countdown en temps réel sur la page de confirmation
+- **Nouveau** : Dialog de contestation avec raison obligatoire
+- **Nouveau** : Notifications admin pour les litiges
+- **Nouveau** : CRON jobs Netlify : `auto-validate-matches`, `match-reminders`
+- **Nouveau** : API `POST /api/matches/[matchId]/contest`
+
+#### 👋 "Nouveaux membres à accueillir"
+- **Nouveau** : Section dédiée en haut de la page `/suggestions`
+- **Nouveau** : Identification automatique (<3 matchs, <30 jours d'inscription)
+- **Nouveau** : Tag `"Nouveau membre 👋"` prioritaire sur les cartes
+- **Nouveau** : Query `getNewMembersToWelcome` pour les clubs
+- **Nouveau** : Lien avec le badge "Comité d'accueil"
+
+#### ⏰ Rappel d'Inactivité (CRON)
+- **Nouveau** : Notification automatique après **7 jours** sans match
+- **Nouveau** : Exécution quotidienne à 11h (heure française)
+- **Nouveau** : Smart filtering : pas de spam (1 notif/7 jours max)
+- **Nouveau** : Message personnalisé selon la durée d'inactivité
+- **Nouveau** : API `POST /api/cron/inactivity-reminder`
+
+#### 👑 Administration Super Admin
+- **Nouveau** : Suppression définitive d'un joueur (cascade complète)
+- **Nouveau** : Dialog de confirmation avec saisie du nom exact
+- **Nouveau** : Suppression de toutes les données liées (matchs, ELO, badges, chat, etc.)
+
+### 🔧 Améliorations techniques
+
+- **Amélioration** : Schema DB enrichi avec colonnes auto-validation/contestation
+- **Amélioration** : 3 index de performance ajoutés sur `matches`
+- **Amélioration** : Configuration centralisée `MATCH_VALIDATION_CONFIG`
+- **Amélioration** : Helpers de calcul temporel (`getTimeUntilAutoValidation`)
+
+### 📊 Schema DB — Nouvelles colonnes
+
+```sql
+-- Table matches : Auto-validation
+ALTER TABLE matches ADD COLUMN auto_validated BOOLEAN DEFAULT FALSE;
+ALTER TABLE matches ADD COLUMN auto_validate_at TIMESTAMP;
+ALTER TABLE matches ADD COLUMN reminder_sent_at TIMESTAMP;
+
+-- Table matches : Contestation
+ALTER TABLE matches ADD COLUMN contested BOOLEAN DEFAULT FALSE;
+ALTER TABLE matches ADD COLUMN contested_by UUID REFERENCES players(id);
+ALTER TABLE matches ADD COLUMN contested_at TIMESTAMP;
+ALTER TABLE matches ADD COLUMN contest_reason TEXT;
+ALTER TABLE matches ADD COLUMN contest_resolved_at TIMESTAMP;
+ALTER TABLE matches ADD COLUMN contest_resolution VARCHAR(50);
+
+-- Table match_ratings (nouvelle)
+CREATE TABLE match_ratings (
+  id UUID PRIMARY KEY,
+  match_id UUID REFERENCES matches(id),
+  rater_id UUID REFERENCES players(id),
+  rated_player_id UUID REFERENCES players(id),
+  punctuality INT, fair_play INT, friendliness INT,
+  comment TEXT, average_rating DECIMAL(2,1),
+  created_at TIMESTAMP
+);
+
+-- Table players : Réputation
+ALTER TABLE players ADD COLUMN reputation_avg DECIMAL(2,1);
+ALTER TABLE players ADD COLUMN reputation_punctuality DECIMAL(2,1);
+ALTER TABLE players ADD COLUMN reputation_fair_play DECIMAL(2,1);
+ALTER TABLE players ADD COLUMN reputation_friendliness DECIMAL(2,1);
+ALTER TABLE players ADD COLUMN reputation_count INTEGER DEFAULT 0;
+```
+
+### 📁 Fichiers créés
+
+```
+src/
+├── app/api/
+│   ├── matches/[matchId]/
+│   │   ├── rate/route.ts           # API réputation
+│   │   └── contest/route.ts        # API contestation
+│   ├── cron/
+│   │   ├── auto-validate-matches/  # CRON auto-validation
+│   │   ├── match-reminders/        # CRON rappels 6h
+│   │   └── inactivity-reminder/    # CRON inactivité
+│   └── super-admin/
+│       └── delete-player/route.ts  # Suppression joueur
+├── components/reputation/
+│   ├── rating-modal.tsx            # Modal évaluation
+│   └── reputation-badge.tsx        # Badge profil
+├── lib/constants/
+│   └── validation.ts               # Config validation
+migrations/
+├── reputation-system.sql           # Migration réputation
+└── match-validation-contestation.sql  # Migration anti-churn
+netlify/functions/
+├── auto-validate-matches.mts       # CRON Netlify
+├── match-reminders.mts             # CRON Netlify
+└── inactivity-reminder.mts         # CRON Netlify
+```
+
+### 📈 Statistiques
+
+| Métrique | Valeur |
+|----------|--------|
+| Fichiers créés | 12 |
+| Fichiers modifiés | 14 |
+| Lignes de code ajoutées | ~2700 |
+| Commits | 8 |
+| Migrations SQL | 2 |
+| CRON Jobs | 3 |
+| Nouveaux badges | 1 |
+
+---
+
 ## [1.2.0] - 2026-01-13 — "Trophy Case & Fair ELO"
 
 ### 🎉 Nouveautés majeures
@@ -134,11 +262,13 @@ migrations/match-format-coefficients.sql
 
 ## 🗺️ Roadmap
 
-### v1.3.0 — Réputation & Social (Janvier-Février 2026)
-- [ ] ⭐ Système de réputation post-match
-- [ ] 🏅 Badge "Partenaire Fiable"
-- [ ] 🔔 Rappels d'inactivité
-- [ ] 👋 "Nouveaux membres à accueillir"
+### v1.3.0 — Réputation & Social ✅ TERMINÉ (14 janvier 2026)
+- [x] ⭐ Système de réputation post-match
+- [x] 🏅 Badge "Partenaire Fiable"
+- [x] 🔔 Rappels d'inactivité (CRON)
+- [x] 👋 "Nouveaux membres à accueillir"
+- [x] 🛡️ Auto-validation matchs (24h)
+- [x] ⚖️ Système de contestation (7 jours)
 
 ### v1.4.0 — Monétisation (Février 2026)
 - [ ] 💳 Intégration **Stripe**
@@ -172,4 +302,4 @@ Merci de faire partie de l'aventure ! 🎾
 
 ---
 
-*Dernière mise à jour : 13 janvier 2026*
+*Dernière mise à jour : 14 janvier 2026*

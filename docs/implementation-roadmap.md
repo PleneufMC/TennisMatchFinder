@@ -148,18 +148,30 @@ Créer une expérience "single-player mode" qui apporte de la valeur **avant** d
 - [x] Modal d'évaluation après confirmation de match
 - [x] API POST/GET /api/matches/[matchId]/rate
 
-### 4.2 Suggestions intelligentes
+### 4.2 Suggestions intelligentes ✅
 - [x] "Partenaires recommandés" basé sur ELO proche
 - [x] Disponibilités compatibles (Match Now)
 - [ ] Style de jeu complémentaire
 - [x] "Joueurs actifs cette semaine"
-- [ ] "Nouveaux membres à accueillir"
+- [x] "Nouveaux membres à accueillir" ✅ (section dédiée + tag)
 
-### 4.3 Notifications
+### 4.3 Notifications ✅
 - [x] Nouveau match proposé
 - [x] Match Now - quelqu'un veut jouer
-- [ ] Rappel : "Vous n'avez pas joué depuis 7 jours"
+- [x] Rappel d'inactivité : "Vous n'avez pas joué depuis 7 jours" ✅ (CRON quotidien)
 - [x] Badge débloqué (notification in-app)
+
+### 4.4 Système Anti-Churn ✅ NEW (14 janvier 2026)
+- [x] Auto-validation des matchs après 24h sans réponse
+- [x] Rappel automatique après 6h si pas d'action
+- [x] Contestation possible 7 jours après validation
+- [x] Limite de 3 contestations par mois
+- [x] UI avec countdown en temps réel
+- [x] CRON jobs Netlify (auto-validate, reminders)
+
+### 4.5 Administration Super Admin ✅
+- [x] Suppression définitive d'un joueur (cascade complète)
+- [x] Dialog de confirmation sécurisé
 
 ---
 
@@ -205,7 +217,7 @@ Créer une expérience "single-player mode" qui apporte de la valeur **avant** d
 
 ## 🏗️ Architecture Technique
 
-### Tables DB (mise à jour 13 janvier 2026)
+### Tables DB (mise à jour 14 janvier 2026)
 
 ```sql
 -- Badges Master Table
