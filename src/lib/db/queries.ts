@@ -1061,3 +1061,86 @@ export async function getNewMembersToWelcome(
 
   return result;
 }
+
+// ============================================
+// INACTIVITY QUERIES (for reminder system)
+// ============================================
+
+/**
+ * Get players who have been inactive for a specific number of days
+ * Used for inactivity reminder notifications
+ * 
+ * @param inactiveDays - Number of days of inactivity (default: 7)
+ * @param excludeAlreadyNotified - Exclude players who already received an inactivity notification recently
+ */
+export async function getInactivePlayers(
+  inactiveDays: number = 7,
+  excludeAlreadyNotified: boolean = true
+): Promise<Player[]> {
+  const inactivityThreshold = new Date();
+  inactivityThreshold.setDate(inactivityThreshold.getDate() - inactiveDays);
+
+  // Get players who haven't played recently
+  const inactivePlayers = await db
+    .select()
+    .from(players)
+    .where(
+      and(
+        eq(players.isActive, true),
+        sql`${players.clubId} IS NOT NULL`, // Only club members
+        sql`${players.lastMatchAt} IS NULL OR ${players.lastMatchAt} < ${inactivityThreshold}`
+      )
+    );
+
+  if (!excludeAlreadyNotified) {
+    return inactivePlayers;
+  }
+
+  // Filter out players who already received an inactivity notification in the past 7 days
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+  const filteredPlayers: Player[] = [];
+  
+  for (const player of inactivePlayers) {
+    const recentNotification = await db
+      .select()
+      .from(notifications)
+      .where(
+        and(
+          eq(notifications.userId, player.id),
+          eq(notifications.type, 'inactivity_reminder'),
+          sql`${notifications.createdAt} >= ${sevenDaysAgo}`
+        )
+      )
+      .limit(1);
+
+    if (recentNotification.length === 0) {
+      filteredPlayers.push(player);
+    }
+  }
+
+  return filteredPlayers;
+}
+
+/**
+ * Create inactivity reminder notification for a player
+ */
+export async function createInactivityNotification(
+  playerId: string,
+  daysSinceLastMatch: number
+): Promise<void> {
+  await db.insert(notifications).values({
+    userId: playerId,
+    type: 'inactivity_reminder',
+    title: '🎾 On vous attend sur le court !',
+    message: daysSinceLastMatch > 14
+      ? `Cela fait plus de ${daysSinceLastMatch} jours que vous n'avez pas joué. Vos partenaires vous attendent !`
+      : 'Cela fait un moment que vous n\'avez pas joué. Trouvez un adversaire et reprenez du bon pied !',
+    link: '/suggestions',
+    data: {
+      daysSinceLastMatch,
+      reminderType: daysSinceLastMatch > 14 ? 'long_inactivity' : 'short_inactivity',
+    },
+  });
+}
