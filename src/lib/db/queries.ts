@@ -1025,3 +1025,39 @@ export async function hasUserPendingRequest(userId: string, clubId: string): Pro
   
   return result.length > 0;
 }
+
+// ============================================
+// NEW MEMBERS QUERIES (for welcome committee)
+// ============================================
+
+/**
+ * Get new members of a club (less than 3 matches, joined within last 30 days)
+ * Used for "Nouveaux membres à accueillir" feature
+ */
+export async function getNewMembersToWelcome(
+  clubId: string,
+  excludePlayerId?: string
+): Promise<Player[]> {
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const result = await db
+    .select()
+    .from(players)
+    .where(
+      and(
+        eq(players.clubId, clubId),
+        eq(players.isActive, true),
+        sql`${players.matchesPlayed} < 3`,
+        sql`${players.createdAt} >= ${thirtyDaysAgo}`
+      )
+    )
+    .orderBy(desc(players.createdAt));
+
+  // Filter out the current player if specified
+  if (excludePlayerId) {
+    return result.filter(p => p.id !== excludePlayerId);
+  }
+
+  return result;
+}

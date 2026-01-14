@@ -65,4 +65,5 @@ export interface SuggestedPlayer {
     losses: number;
     lastPlayed?: string;
   };
+  isNewMember?: boolean;
 }

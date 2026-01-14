@@ -11,11 +11,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PlayerAvatar } from '@/components/ui/avatar';
 import { getServerPlayer } from '@/lib/auth-helpers';
-import { getPlayersByClub, getMatchesByPlayer } from '@/lib/db/queries';
+import { getPlayersByClub, getMatchesByPlayer, getNewMembersToWelcome } from '@/lib/db/queries';
 import { generateSuggestions } from '@/lib/matching';
 import { formatTimeAgo } from '@/lib/utils/dates';
 import { getEloRankTitle } from '@/lib/elo';
 import { cn } from '@/lib/utils';
+import { UserPlus, HandHeart } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Trouver un adversaire',
@@ -54,10 +55,11 @@ export default async function SuggestionsPage() {
     );
   }
 
-  // Récupérer tous les joueurs actifs du club et l'historique des matchs
-  const [allPlayers, matchHistory] = await Promise.all([
+  // Récupérer tous les joueurs actifs du club, les nouveaux membres et l'historique des matchs
+  const [allPlayers, matchHistory, newMembers] = await Promise.all([
     getPlayersByClub(player.clubId, { activeOnly: true }),
     getMatchesByPlayer(player.id),
+    getNewMembersToWelcome(player.clubId, player.id),
   ]);
 
   // Préparer les données pour le moteur de suggestions
@@ -85,6 +87,8 @@ export default async function SuggestionsPage() {
     availability: p.availability,
     preferences: p.preferences,
     last_active_at: p.lastActiveAt?.toISOString(),
+    matches_played: p.matchesPlayed,
+    created_at: p.createdAt?.toISOString(),
   }));
 
   // Générer les suggestions
@@ -122,6 +126,75 @@ export default async function SuggestionsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Section: Nouveaux membres à accueillir */}
+      {newMembers.length > 0 && (
+        <Card className="border-emerald-200 bg-emerald-50/50 dark:border-emerald-900 dark:bg-emerald-950/20">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <HandHeart className="h-5 w-5 text-emerald-600" />
+              Nouveaux membres à accueillir
+              <Badge variant="secondary" className="ml-2">
+                {newMembers.length} {newMembers.length === 1 ? 'nouveau' : 'nouveaux'}
+              </Badge>
+            </CardTitle>
+            <CardDescription>
+              Ces joueurs viennent de rejoindre le club et n&apos;ont pas encore beaucoup joué.
+              Soyez leur premier adversaire et gagnez le badge &quot;Comité d&apos;accueil&quot; ! 🏅
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {newMembers.map((member) => {
+                const memberRankInfo = getEloRankTitle(member.currentElo);
+                const joinedDaysAgo = Math.floor(
+                  (Date.now() - new Date(member.createdAt).getTime()) / (1000 * 60 * 60 * 24)
+                );
+
+                return (
+                  <div
+                    key={member.id}
+                    className="flex items-center gap-3 p-3 rounded-lg bg-white dark:bg-gray-900 border shadow-sm hover:shadow-md transition-shadow"
+                  >
+                    <PlayerAvatar
+                      src={member.avatarUrl}
+                      name={member.fullName}
+                      size="md"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{member.fullName}</p>
+                      <p className="text-sm text-muted-foreground flex items-center gap-1">
+                        <span className={memberRankInfo.color}>
+                          {memberRankInfo.icon} {member.currentElo}
+                        </span>
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge variant="outline" className="text-xs">
+                          <UserPlus className="h-3 w-3 mr-1" />
+                          {joinedDaysAgo === 0
+                            ? "Aujourd'hui"
+                            : joinedDaysAgo === 1
+                            ? 'Hier'
+                            : `Il y a ${joinedDaysAgo} jours`}
+                        </Badge>
+                        <Badge variant="secondary" className="text-xs">
+                          {member.matchesPlayed} match{member.matchesPlayed !== 1 ? 's' : ''}
+                        </Badge>
+                      </div>
+                    </div>
+                    <Button asChild size="sm" variant="outline">
+                      <Link href={`/profil/${member.id}`}>
+                        <Calendar className="h-4 w-4 mr-1" />
+                        Proposer
+                      </Link>
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Liste des suggestions */}
       {suggestions.length > 0 ? (

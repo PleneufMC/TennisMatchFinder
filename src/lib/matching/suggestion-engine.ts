@@ -16,6 +16,8 @@ export interface SuggestionPlayer {
   availability?: unknown;
   preferences?: unknown;
   last_active_at?: string;
+  matches_played?: number;
+  created_at?: string;
 }
 
 export interface PlayerWithHistory extends SuggestionPlayer {
@@ -139,15 +141,33 @@ function calculatePreferenceMatchScore(
 }
 
 /**
+ * Vérifie si un joueur est un nouveau membre (moins de 3 matchs et inscrit depuis moins de 30 jours)
+ */
+export function isNewMember(opponent: SuggestionPlayer): boolean {
+  const matchesPlayed = opponent.matches_played ?? 0;
+  const createdAt = opponent.created_at ? new Date(opponent.created_at) : null;
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  
+  return matchesPlayed < 3 && createdAt !== null && createdAt >= thirtyDaysAgo;
+}
+
+/**
  * Génère les tags pour une suggestion
  */
 function generateTags(
   playerElo: number,
   opponentElo: number,
   noveltyScore: number,
+  opponent: SuggestionPlayer,
   matchHistory?: PlayerWithHistory['matchHistory']
 ): SuggestionTag[] {
   const tags: SuggestionTag[] = [];
+
+  // Nouveau membre du club
+  if (isNewMember(opponent)) {
+    tags.push('Nouveau membre 👋');
+  }
 
   // Nouvel adversaire
   if (noveltyScore === 100) {
@@ -276,10 +296,12 @@ export function generateSuggestions(
         currentPlayer.current_elo,
         opponent.current_elo,
         noveltyScore,
+        opponent,
         currentPlayer.matchHistory
       ),
       lastPlayed,
       headToHead: getHeadToHead(currentPlayer.id, opponent.id, currentPlayer.matchHistory),
+      isNewMember: isNewMember(opponent),
     });
   }
 
