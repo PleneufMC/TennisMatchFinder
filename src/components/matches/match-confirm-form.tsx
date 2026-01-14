@@ -9,18 +9,26 @@ import {
   XCircle, 
   Loader2,
   AlertCircle,
-  AlertTriangle
+  AlertTriangle,
+  Star
 } from 'lucide-react';
+import { RatingModal } from '@/components/reputation/rating-modal';
 
 interface MatchConfirmFormProps {
   matchId: string;
+  opponent?: {
+    id: string;
+    fullName: string;
+    avatarUrl?: string | null;
+  };
 }
 
-export function MatchConfirmForm({ matchId }: MatchConfirmFormProps) {
+export function MatchConfirmForm({ matchId, opponent }: MatchConfirmFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<'confirmed' | 'rejected' | null>(null);
+  const [showRatingModal, setShowRatingModal] = useState(false);
 
   const handleAction = async (action: 'confirm' | 'reject') => {
     setIsSubmitting(true);
@@ -41,11 +49,19 @@ export function MatchConfirmForm({ matchId }: MatchConfirmFormProps) {
 
       setSuccess(action === 'confirm' ? 'confirmed' : 'rejected');
 
-      // Rediriger après 2 secondes
-      setTimeout(() => {
-        router.push('/matchs');
-        router.refresh();
-      }, 2000);
+      // Si confirmation et qu'on a les infos de l'adversaire, proposer l'évaluation
+      if (action === 'confirm' && opponent) {
+        // Afficher le modal d'évaluation après un court délai
+        setTimeout(() => {
+          setShowRatingModal(true);
+        }, 1500);
+      } else {
+        // Rediriger après 2 secondes
+        setTimeout(() => {
+          router.push('/matchs');
+          router.refresh();
+        }, 2000);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
     } finally {
@@ -53,20 +69,45 @@ export function MatchConfirmForm({ matchId }: MatchConfirmFormProps) {
     }
   };
 
+  const handleRatingModalClose = () => {
+    setShowRatingModal(false);
+    router.push('/matchs');
+    router.refresh();
+  };
+
   if (success === 'confirmed') {
     return (
-      <div className="text-center py-8">
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
-          <CheckCircle2 className="w-8 h-8 text-green-600" />
+      <>
+        <div className="text-center py-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
+            <CheckCircle2 className="w-8 h-8 text-green-600" />
+          </div>
+          <h3 className="text-lg font-semibold mb-2">Match confirmé !</h3>
+          <p className="text-muted-foreground mb-4">
+            Les classements ELO ont été mis à jour.
+          </p>
+          {opponent ? (
+            <p className="text-sm text-muted-foreground flex items-center justify-center gap-1">
+              <Star className="h-4 w-4 text-yellow-500" />
+              Chargement de l&apos;évaluation...
+            </p>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Redirection en cours...
+            </p>
+          )}
         </div>
-        <h3 className="text-lg font-semibold mb-2">Match confirmé !</h3>
-        <p className="text-muted-foreground mb-4">
-          Les classements ELO ont été mis à jour.
-        </p>
-        <p className="text-sm text-muted-foreground">
-          Redirection en cours...
-        </p>
-      </div>
+
+        {/* Modal d'évaluation */}
+        {opponent && (
+          <RatingModal
+            isOpen={showRatingModal}
+            onClose={handleRatingModalClose}
+            matchId={matchId}
+            opponent={opponent}
+          />
+        )}
+      </>
     );
   }
 

@@ -200,6 +200,12 @@ export const players = pgTable(
     winStreak: integer('win_streak').default(0).notNull(),
     bestWinStreak: integer('best_win_streak').default(0).notNull(),
     uniqueOpponents: integer('unique_opponents').default(0).notNull(),
+    // Réputation (système d'évaluation post-match)
+    reputationAvg: numeric('reputation_avg', { precision: 2, scale: 1 }), // Moyenne générale (null = pas encore évalué)
+    reputationPunctuality: numeric('reputation_punctuality', { precision: 2, scale: 1 }), // Moyenne ponctualité
+    reputationFairPlay: numeric('reputation_fair_play', { precision: 2, scale: 1 }), // Moyenne fair-play
+    reputationFriendliness: numeric('reputation_friendliness', { precision: 2, scale: 1 }), // Moyenne convivialité
+    reputationCount: integer('reputation_count').default(0).notNull(), // Nombre d'évaluations reçues
     isAdmin: boolean('is_admin').default(false).notNull(),
     isVerified: boolean('is_verified').default(false).notNull(),
     isActive: boolean('is_active').default(true).notNull(),
@@ -749,6 +755,44 @@ export const matchNowResponses = pgTable(
 );
 
 // ============================================
+// MATCH RATINGS (Évaluations post-match)
+// ============================================
+
+// Table des évaluations après un match
+export const matchRatings = pgTable(
+  'match_ratings',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    matchId: uuid('match_id')
+      .notNull()
+      .references(() => matches.id, { onDelete: 'cascade' }),
+    raterId: uuid('rater_id')
+      .notNull()
+      .references(() => players.id, { onDelete: 'cascade' }),
+    ratedPlayerId: uuid('rated_player_id')
+      .notNull()
+      .references(() => players.id, { onDelete: 'cascade' }),
+    // Critères d'évaluation (1-5 étoiles)
+    punctuality: integer('punctuality').notNull(), // Ponctualité
+    fairPlay: integer('fair_play').notNull(),      // Fair-play
+    friendliness: integer('friendliness').notNull(), // Convivialité
+    // Commentaire optionnel (privé, pour les admins)
+    comment: text('comment'),
+    // Moyenne calculée
+    averageRating: numeric('average_rating', { precision: 2, scale: 1 }).notNull(),
+    // Timestamps
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (table) => ({
+    matchIdIdx: index('match_ratings_match_id_idx').on(table.matchId),
+    raterIdIdx: index('match_ratings_rater_id_idx').on(table.raterId),
+    ratedPlayerIdIdx: index('match_ratings_rated_player_id_idx').on(table.ratedPlayerId),
+    // Un joueur ne peut évaluer qu'une fois par match
+    uniqueRating: index('match_ratings_unique_idx').on(table.matchId, table.raterId),
+  })
+);
+
+// ============================================
 // BOX LEAGUES (Compétitions mensuelles)
 // ============================================
 
@@ -1239,6 +1283,23 @@ export const playerBadgesRelations = relations(playerBadges, ({ one }) => ({
   }),
 }));
 
+export const matchRatingsRelations = relations(matchRatings, ({ one }) => ({
+  match: one(matches, {
+    fields: [matchRatings.matchId],
+    references: [matches.id],
+  }),
+  rater: one(players, {
+    fields: [matchRatings.raterId],
+    references: [players.id],
+    relationName: 'rater',
+  }),
+  ratedPlayer: one(players, {
+    fields: [matchRatings.ratedPlayerId],
+    references: [players.id],
+    relationName: 'ratedPlayer',
+  }),
+}));
+
 // ============================================
 // TYPE EXPORTS
 // ============================================
@@ -1314,3 +1375,6 @@ export type NewTournamentMatch = typeof tournamentMatches.$inferInsert;
 
 export type TournamentStatus = 'draft' | 'registration' | 'seeding' | 'active' | 'completed' | 'cancelled';
 export type TournamentFormat = 'single_elimination' | 'double_elimination' | 'consolation';
+
+export type MatchRating = typeof matchRatings.$inferSelect;
+export type NewMatchRating = typeof matchRatings.$inferInsert;

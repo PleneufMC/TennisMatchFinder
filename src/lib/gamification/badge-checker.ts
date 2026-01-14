@@ -212,6 +212,9 @@ async function checkBadge(
     case 'box-league-winner':
       return checkBoxLeagueWinner(playerId);
     
+    case 'reliable-partner':
+      return checkReliablePartner(playerId);
+    
     default:
       return { earned: false };
   }
@@ -397,6 +400,26 @@ async function checkBoxLeagueWinner(playerId: string): Promise<{ earned: boolean
     .limit(1);
   
   return { earned: !!victory };
+}
+
+async function checkReliablePartner(playerId: string): Promise<{ earned: boolean }> {
+  // Vérifier si le joueur a une réputation >= 4.5 avec au moins 5 évaluations
+  const [player] = await db
+    .select({
+      reputationAvg: players.reputationAvg,
+      reputationCount: players.reputationCount,
+    })
+    .from(players)
+    .where(eq(players.id, playerId));
+  
+  if (!player) return { earned: false };
+  
+  const avgRating = player.reputationAvg ? Number(player.reputationAvg) : 0;
+  const ratingCount = player.reputationCount || 0;
+  
+  return { 
+    earned: avgRating >= 4.5 && ratingCount >= 5 
+  };
 }
 
 // ============================================

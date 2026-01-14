@@ -19,6 +19,7 @@ import { getEloRankTitle } from '@/lib/elo';
 import { levelLabels, weekdayLabels, timeSlotLabels, surfaceLabels } from '@/lib/validations/profile';
 import { TrophyCase } from '@/components/gamification';
 import { RivalryCard } from '@/components/rivalries';
+import { ReputationBadge } from '@/components/reputation/reputation-badge';
 
 export const metadata: Metadata = {
   title: 'Mon profil',
@@ -59,12 +60,21 @@ export default async function ProfilPage() {
           />
           <div>
             <h1 className="text-3xl font-bold">{player.fullName}</h1>
-            <div className="flex items-center gap-2 mt-1">
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
               <span className={rankInfo.color}>
                 {rankInfo.icon} {rankInfo.title}
               </span>
               <span className="text-muted-foreground">•</span>
               <span className="text-muted-foreground">{player.currentElo} ELO</span>
+              {/* Badge de réputation */}
+              <ReputationBadge
+                average={player.reputationAvg ? Number(player.reputationAvg) : null}
+                count={player.reputationCount || 0}
+                punctuality={player.reputationPunctuality ? Number(player.reputationPunctuality) : null}
+                fairPlay={player.reputationFairPlay ? Number(player.reputationFairPlay) : null}
+                friendliness={player.reputationFriendliness ? Number(player.reputationFriendliness) : null}
+                size="md"
+              />
             </div>
             <p className="text-sm text-muted-foreground mt-1">
               Membre depuis {formatFullDate(player.createdAt.toISOString())}

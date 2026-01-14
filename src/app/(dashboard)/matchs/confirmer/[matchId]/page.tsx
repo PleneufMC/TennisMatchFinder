@@ -181,7 +181,14 @@ export default async function ConfirmerMatchPage({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <MatchConfirmForm matchId={match.id} />
+            <MatchConfirmForm 
+              matchId={match.id} 
+              opponent={{
+                id: match.player1Id === player.id ? match.player2Id : match.player1Id,
+                fullName: opponentName || 'Adversaire',
+                avatarUrl: match.player1Id === player.id ? player2Data?.avatarUrl : player1Data?.avatarUrl,
+              }}
+            />
           </CardContent>
         </Card>
       </div>

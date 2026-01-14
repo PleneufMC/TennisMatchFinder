@@ -266,6 +266,18 @@ export const BADGE_DEFINITIONS: BadgeDefinition[] = [
     sortOrder: 33,
     checkFunction: 'checkBoxLeagueWinner',
   },
+  {
+    id: 'reliable-partner',
+    name: 'Partenaire Fiable',
+    description: 'Excellente réputation',
+    criteria: 'Obtenez une moyenne de 4.5/5 avec au moins 5 évaluations',
+    category: 'social',
+    tier: 'rare',
+    icon: 'UserCheck',
+    iconColor: '#10B981', // emerald-500
+    sortOrder: 24,
+    checkFunction: 'checkReliablePartner',
+  },
 ];
 
 // ============================================
