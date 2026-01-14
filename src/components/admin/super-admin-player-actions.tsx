@@ -10,6 +10,8 @@ import {
   User,
   Loader2,
   ArrowRightLeft,
+  Trash2,
+  AlertTriangle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -62,6 +64,8 @@ export function SuperAdminPlayerActions({
   const [isLoading, setIsLoading] = useState(false);
   const [showChangeClubDialog, setShowChangeClubDialog] = useState(false);
   const [showRemoveClubDialog, setShowRemoveClubDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [selectedClubId, setSelectedClubId] = useState<string>(currentClubId || '');
 
   const otherClubs = clubs.filter(c => c.id !== currentClubId);
@@ -120,6 +124,34 @@ export function SuperAdminPlayerActions({
     }
   };
 
+  const handleDeletePlayer = async () => {
+    if (deleteConfirmation !== playerName) {
+      toast.error('Le nom ne correspond pas');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/super-admin/delete-player?playerId=${playerId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Erreur lors de la suppression');
+      }
+
+      toast.success(`${playerName} a été supprimé définitivement`);
+      setShowDeleteDialog(false);
+      setDeleteConfirmation('');
+      router.refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erreur');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <>
       <DropdownMenu>
@@ -161,6 +193,15 @@ export function SuperAdminPlayerActions({
               </DropdownMenuItem>
             </>
           )}
+
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            className="text-destructive focus:text-destructive focus:bg-destructive/10"
+            onClick={() => setShowDeleteDialog(true)}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Supprimer définitivement
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -255,6 +296,76 @@ export function SuperAdminPlayerActions({
                 <UserX className="h-4 w-4 mr-2" />
               )}
               Retirer du club
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de confirmation pour supprimer définitivement */}
+      <Dialog open={showDeleteDialog} onOpenChange={(open) => {
+        setShowDeleteDialog(open);
+        if (!open) setDeleteConfirmation('');
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" />
+              Supprimer définitivement {playerName} ?
+            </DialogTitle>
+            <DialogDescription className="space-y-3">
+              <div className="p-3 bg-destructive/10 rounded-lg border border-destructive/20 text-destructive text-sm">
+                <strong>⚠️ Cette action est irréversible !</strong>
+                <br />
+                Toutes les données du joueur seront supprimées :
+                <ul className="list-disc list-inside mt-2 space-y-1">
+                  <li>Compte utilisateur</li>
+                  <li>Profil joueur</li>
+                  <li>Historique des matchs</li>
+                  <li>Historique ELO</li>
+                  <li>Badges et achievements</li>
+                  <li>Messages et notifications</li>
+                  <li>Participations aux tournois et box leagues</li>
+                </ul>
+              </div>
+              <div>
+                Pour confirmer, tapez le nom du joueur : <strong>{playerName}</strong>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-2">
+            <input
+              type="text"
+              className="w-full px-3 py-2 border rounded-md text-sm"
+              placeholder={`Tapez "${playerName}" pour confirmer`}
+              value={deleteConfirmation}
+              onChange={(e) => setDeleteConfirmation(e.target.value)}
+              autoComplete="off"
+            />
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowDeleteDialog(false);
+                setDeleteConfirmation('');
+              }}
+              disabled={isLoading}
+            >
+              Annuler
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeletePlayer}
+              disabled={isLoading || deleteConfirmation !== playerName}
+            >
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Trash2 className="h-4 w-4 mr-2" />
+              )}
+              Supprimer définitivement
             </Button>
           </DialogFooter>
         </DialogContent>
