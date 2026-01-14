@@ -209,6 +209,7 @@ export const players = pgTable(
     isAdmin: boolean('is_admin').default(false).notNull(),
     isVerified: boolean('is_verified').default(false).notNull(),
     isActive: boolean('is_active').default(true).notNull(),
+    onboardingCompleted: boolean('onboarding_completed').default(false).notNull(),
     lastActiveAt: timestamp('last_active_at', { mode: 'date' }).defaultNow().notNull(),
     lastMatchAt: timestamp('last_match_at', { mode: 'date' }),
     createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),

@@ -651,6 +651,120 @@ export async function revokeDynamicBadge(
 }
 
 /**
+ * Vérifie et attribue les badges "passifs" (Founding Member, etc.)
+ * Appelé au login ou manuellement
+ */
+export async function checkPassiveBadges(playerId: string): Promise<BadgeCheckResult[]> {
+  const newBadges: BadgeCheckResult[] = [];
+  
+  try {
+    const playerStats = await getPlayerStats(playerId);
+    if (!playerStats) return [];
+    
+    const existingBadges = await getPlayerBadges(playerId);
+    const existingBadgeIds = new Set(existingBadges.map(b => b.badgeId));
+    
+    // Badge Founding Member
+    if (!existingBadgeIds.has('founding-member')) {
+      if (playerStats.createdAt <= EARLY_BIRD_DEADLINE) {
+        await awardBadge(playerId, 'founding-member');
+        await createBadgeNotification(playerId, 'founding-member');
+        
+        const badge = getBadgeById('founding-member');
+        newBadges.push({
+          badgeId: 'founding-member',
+          name: badge?.name ?? 'Founding Member',
+          tier: badge?.tier ?? 'legendary',
+          isNew: true,
+        });
+        
+        console.log(`🌟 Founding Member badge awarded to player ${playerId}`);
+      }
+    }
+    
+    // Badge Reliable Partner (peut être gagné passivement si conditions remplies)
+    if (!existingBadgeIds.has('reliable-partner')) {
+      const result = await checkReliablePartner(playerId);
+      if (result.earned) {
+        await awardBadge(playerId, 'reliable-partner');
+        await createBadgeNotification(playerId, 'reliable-partner');
+        
+        const badge = getBadgeById('reliable-partner');
+        newBadges.push({
+          badgeId: 'reliable-partner',
+          name: badge?.name ?? 'Partenaire Fiable',
+          tier: badge?.tier ?? 'rare',
+          isNew: true,
+        });
+      }
+    }
+    
+    return newBadges;
+  } catch (error) {
+    console.error('[Badge Checker] checkPassiveBadges failed:', error);
+    return [];
+  }
+}
+
+/**
+ * Attribue le badge Founding Member à tous les joueurs éligibles
+ * Fonction admin/CRON pour attribution en masse
+ */
+export async function awardFoundingMemberToAllEligible(): Promise<{
+  awarded: number;
+  alreadyHad: number;
+  notEligible: number;
+}> {
+  let awarded = 0;
+  let alreadyHad = 0;
+  let notEligible = 0;
+  
+  try {
+    // Récupérer tous les joueurs
+    const allPlayers = await db
+      .select({
+        id: players.id,
+        createdAt: players.createdAt,
+      })
+      .from(players);
+    
+    for (const player of allPlayers) {
+      // Vérifier si déjà obtenu
+      const [existingBadge] = await db
+        .select()
+        .from(playerBadges)
+        .where(
+          and(
+            eq(playerBadges.playerId, player.id),
+            eq(playerBadges.badgeId, 'founding-member')
+          )
+        );
+      
+      if (existingBadge) {
+        alreadyHad++;
+        continue;
+      }
+      
+      // Vérifier éligibilité
+      if (player.createdAt <= EARLY_BIRD_DEADLINE) {
+        await awardBadge(player.id, 'founding-member');
+        await createBadgeNotification(player.id, 'founding-member');
+        awarded++;
+      } else {
+        notEligible++;
+      }
+    }
+    
+    console.log(`[Founding Member] Awarded: ${awarded}, Already had: ${alreadyHad}, Not eligible: ${notEligible}`);
+    
+    return { awarded, alreadyHad, notEligible };
+  } catch (error) {
+    console.error('[Badge Checker] awardFoundingMemberToAllEligible failed:', error);
+    return { awarded, alreadyHad, notEligible };
+  }
+}
+
+/**
  * Trigger appelé après chaque match pour les deux joueurs
  */
 export async function triggerBadgeCheckAfterMatch(

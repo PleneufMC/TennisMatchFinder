@@ -1,223 +1,316 @@
 'use client';
 
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
+  DialogTrigger,
 } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
-import { 
-  ArrowUp, 
-  ArrowDown, 
-  Info, 
-  Zap, 
-  Users, 
-  RefreshCw, 
-  Sparkles,
+import {
+  Info,
+  TrendingUp,
+  TrendingDown,
   Target,
-  Percent
+  Zap,
+  Users,
+  Repeat,
+  Sparkles,
+  Trophy,
+  HelpCircle,
+  Calculator,
+  ChevronRight,
+  Award,
 } from 'lucide-react';
-import { FORMAT_LABELS, type MatchFormat } from '@/lib/elo/format-coefficients';
 import type { EloBreakdown } from '@/lib/elo/calculator';
-import { cn } from '@/lib/utils';
 
 interface EloBreakdownModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  isWinner: boolean;
-  delta: number;
-  newElo: number;
   breakdown: EloBreakdown;
-  matchFormat: MatchFormat;
-  opponentName?: string;
+  winnerName: string;
+  loserName: string;
+  winnerEloBefore: number;
+  loserEloBefore: number;
+  winnerEloAfter: number;
+  loserEloAfter: number;
+  score: string;
+  isCurrentUserWinner?: boolean;
+  trigger?: React.ReactNode;
 }
 
 export function EloBreakdownModal({
-  isOpen,
-  onClose,
-  isWinner,
-  delta,
-  newElo,
   breakdown,
-  matchFormat,
-  opponentName,
+  winnerName,
+  loserName,
+  winnerEloBefore,
+  loserEloBefore,
+  winnerEloAfter,
+  loserEloAfter,
+  score,
+  isCurrentUserWinner,
+  trigger,
 }: EloBreakdownModalProps) {
-  const formatLabel = FORMAT_LABELS[matchFormat] || matchFormat;
+  const [open, setOpen] = useState(false);
+
+  const winnerDelta = winnerEloAfter - winnerEloBefore;
+  const loserDelta = loserEloAfter - loserEloBefore;
+
+  // Calcul des modificateurs actifs
+  const activeModifiers = [];
+  if (breakdown.formatCoefficient !== 1.0) {
+    activeModifiers.push({
+      label: `Format ${breakdown.formatLabel}`,
+      value: breakdown.formatCoefficient,
+      icon: Target,
+      color: breakdown.formatCoefficient < 1 ? 'text-orange-500' : 'text-green-500',
+      description: breakdown.formatCoefficient < 1 
+        ? 'Impact réduit (format court)' 
+        : 'Impact complet',
+    });
+  }
+  if (breakdown.marginModifier !== 1.0) {
+    activeModifiers.push({
+      label: breakdown.marginLabel,
+      value: breakdown.marginModifier,
+      icon: breakdown.marginModifier > 1 ? TrendingUp : TrendingDown,
+      color: breakdown.marginModifier > 1 ? 'text-green-500' : 'text-orange-500',
+      description: breakdown.marginModifier > 1 
+        ? 'Bonus victoire écrasante' 
+        : 'Réduction match serré',
+    });
+  }
+  if (breakdown.newOpponentBonus > 1) {
+    activeModifiers.push({
+      label: 'Nouvel adversaire',
+      value: breakdown.newOpponentBonus,
+      icon: Users,
+      color: 'text-blue-500',
+      description: '+15% pour diversifier vos matchs',
+    });
+  }
+  if (breakdown.upsetBonus > 1) {
+    activeModifiers.push({
+      label: 'Victoire exploit !',
+      value: breakdown.upsetBonus,
+      icon: Trophy,
+      color: 'text-amber-500',
+      description: '+20% pour battre un joueur +100 ELO',
+    });
+  }
+  if (breakdown.repetitionMalus < 1) {
+    activeModifiers.push({
+      label: 'Matchs répétés',
+      value: breakdown.repetitionMalus,
+      icon: Repeat,
+      color: 'text-red-500',
+      description: 'Réduction pour matchs fréquents vs même adversaire',
+    });
+  }
+  if (breakdown.diversityBonus > 1) {
+    activeModifiers.push({
+      label: 'Bonus diversité',
+      value: breakdown.diversityBonus,
+      icon: Sparkles,
+      color: 'text-purple-500',
+      description: '+10% pour 3+ adversaires cette semaine',
+    });
+  }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        {trigger || (
+          <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground hover:text-foreground">
+            <HelpCircle className="h-4 w-4" />
+            <span className="hidden sm:inline">Comment est calculé l&apos;ELO ?</span>
+          </Button>
+        )}
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            {isWinner ? (
-              <ArrowUp className="h-5 w-5 text-green-500" />
-            ) : (
-              <ArrowDown className="h-5 w-5 text-red-500" />
-            )}
-            {isWinner ? 'Victoire !' : 'Défaite'}
-            {opponentName && (
-              <span className="text-muted-foreground font-normal text-sm">
-                vs {opponentName}
-              </span>
-            )}
+            <Calculator className="h-5 w-5 text-primary" />
+            Détail du calcul ELO
           </DialogTitle>
           <DialogDescription>
-            Détail du calcul de votre changement ELO
+            Transparence totale sur l&apos;évolution de votre classement
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Résultat principal */}
-          <div className="text-center py-6 bg-muted rounded-lg">
-            <div className={cn(
-              'text-5xl font-bold',
-              isWinner ? 'text-green-500' : 'text-red-500'
-            )}>
-              {delta > 0 ? '+' : ''}{delta}
+        <div className="space-y-6 py-4">
+          {/* Résultat du match */}
+          <div className="bg-muted/50 rounded-lg p-4">
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground mb-1">Résultat</p>
+              <p className="text-2xl font-bold">{score}</p>
+              <div className="flex items-center justify-center gap-2 mt-2">
+                <Badge variant="default" className="bg-green-600">
+                  {winnerName}
+                </Badge>
+                <span className="text-muted-foreground">bat</span>
+                <Badge variant="outline">
+                  {loserName}
+                </Badge>
+              </div>
             </div>
-            <div className="text-lg text-muted-foreground mt-1">
-              points ELO
+          </div>
+
+          {/* Changements ELO */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className={`p-4 rounded-lg ${isCurrentUserWinner === true ? 'bg-green-50 dark:bg-green-950 ring-2 ring-green-500' : 'bg-muted/30'}`}>
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingUp className="h-4 w-4 text-green-600" />
+                <span className="text-sm font-medium">{winnerName}</span>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-lg text-muted-foreground">{winnerEloBefore}</span>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                <span className="text-xl font-bold">{winnerEloAfter}</span>
+              </div>
+              <Badge className="bg-green-600 mt-2">+{winnerDelta}</Badge>
             </div>
-            <Separator className="my-4" />
-            <div className="text-muted-foreground">
-              Nouveau classement : <span className="font-bold text-foreground text-xl">{newElo}</span>
+
+            <div className={`p-4 rounded-lg ${isCurrentUserWinner === false ? 'bg-red-50 dark:bg-red-950 ring-2 ring-red-500' : 'bg-muted/30'}`}>
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingDown className="h-4 w-4 text-red-600" />
+                <span className="text-sm font-medium">{loserName}</span>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-lg text-muted-foreground">{loserEloBefore}</span>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                <span className="text-xl font-bold">{loserEloAfter}</span>
+              </div>
+              <Badge variant="destructive" className="mt-2">{loserDelta}</Badge>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Formule */}
+          <div>
+            <h4 className="font-semibold mb-3 flex items-center gap-2">
+              <Info className="h-4 w-4 text-primary" />
+              Formule de calcul
+            </h4>
+            <div className="bg-muted/50 rounded-lg p-3 font-mono text-sm">
+              <p className="text-muted-foreground mb-2">Δ ELO = K × (1 - P) × Modificateurs</p>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <span className="text-muted-foreground">K (facteur) =</span>
+                  <span className="ml-1 font-bold">{breakdown.kFactor}</span>
+                  <span className="text-muted-foreground ml-1">({breakdown.kFactorLabel})</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">P (proba victoire) =</span>
+                  <span className="ml-1 font-bold">{breakdown.winProbability}%</span>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Probabilité de victoire */}
-          <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
-            <div className="flex items-center gap-2">
-              <Percent className="h-4 w-4 text-blue-500" />
-              <span className="text-sm">Probabilité de victoire attendue</span>
-            </div>
-            <Badge variant="outline" className="text-blue-600">
-              {breakdown.winProbability}%
-            </Badge>
-          </div>
-
-          {/* Breakdown détaillé */}
-          <div className="space-y-3">
-            <h4 className="font-medium flex items-center gap-2">
-              <Info className="h-4 w-4" />
-              Détail du calcul
+          <div>
+            <h4 className="font-semibold mb-3 flex items-center gap-2">
+              <Target className="h-4 w-4 text-primary" />
+              Probabilité de victoire
             </h4>
-            
-            <div className="space-y-2 text-sm">
-              {/* Base */}
-              <div className="flex justify-between items-center py-2 border-b">
-                <div className="flex items-center gap-2">
-                  <Target className="h-4 w-4 text-muted-foreground" />
-                  <span>Changement de base</span>
-                  <Badge variant="outline" className="text-xs">
-                    K={breakdown.kFactor}
-                  </Badge>
-                </div>
-                <span className="font-mono">
-                  {isWinner ? '+' : '-'}{breakdown.rawChange}
-                </span>
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>{winnerName}</span>
+                <span className="font-bold">{breakdown.winProbability}%</span>
               </div>
-
-              {/* Format */}
-              <div className="flex justify-between items-center py-2 border-b">
-                <div className="flex items-center gap-2">
-                  <Zap className="h-4 w-4 text-muted-foreground" />
-                  <span>Format ({formatLabel})</span>
-                </div>
-                <Badge 
-                  variant={breakdown.formatCoefficient < 1 ? 'secondary' : 'default'}
-                  className={cn(
-                    breakdown.formatCoefficient === 1.0 && 'bg-green-600',
-                    breakdown.formatCoefficient === 0.8 && 'bg-blue-600',
-                    breakdown.formatCoefficient === 0.5 && 'bg-amber-600',
-                    breakdown.formatCoefficient === 0.3 && 'bg-purple-600'
-                  )}
-                >
-                  ×{breakdown.formatCoefficient}
-                </Badge>
-              </div>
-
-              {/* Marge de victoire */}
-              {breakdown.marginModifier !== 1 && (
-                <div className="flex justify-between items-center py-2 border-b">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-muted-foreground" />
-                    <span>{breakdown.marginLabel}</span>
-                  </div>
-                  <Badge variant={breakdown.marginModifier > 1 ? 'default' : 'secondary'}>
-                    ×{breakdown.marginModifier}
-                  </Badge>
-                </div>
-              )}
-
-              {/* Nouvel adversaire */}
-              {breakdown.newOpponentBonus > 1 && (
-                <div className="flex justify-between items-center py-2 border-b">
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-green-500" />
-                    <span>🆕 Nouvel adversaire</span>
-                  </div>
-                  <Badge className="bg-green-600">×{breakdown.newOpponentBonus}</Badge>
-                </div>
-              )}
-
-              {/* Upset bonus */}
-              {breakdown.upsetBonus > 1 && (
-                <div className="flex justify-between items-center py-2 border-b">
-                  <div className="flex items-center gap-2">
-                    <Zap className="h-4 w-4 text-amber-500" />
-                    <span>⚡ Victoire exploit !</span>
-                  </div>
-                  <Badge className="bg-amber-600">×{breakdown.upsetBonus}</Badge>
-                </div>
-              )}
-
-              {/* Répétition malus */}
-              {breakdown.repetitionMalus < 1 && (
-                <div className="flex justify-between items-center py-2 border-b">
-                  <div className="flex items-center gap-2">
-                    <RefreshCw className="h-4 w-4 text-orange-500" />
-                    <span>🔄 Adversaire répété</span>
-                  </div>
-                  <Badge variant="secondary">×{breakdown.repetitionMalus}</Badge>
-                </div>
-              )}
-
-              {/* Diversité bonus */}
-              {breakdown.diversityBonus > 1 && (
-                <div className="flex justify-between items-center py-2 border-b">
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-purple-500" />
-                    <span>🌈 Bonus diversité</span>
-                  </div>
-                  <Badge className="bg-purple-600">×{breakdown.diversityBonus}</Badge>
-                </div>
-              )}
-
-              {/* Résultat final */}
-              <div className="flex justify-between items-center py-3 font-medium bg-muted rounded-lg px-3 mt-2">
-                <span>Résultat final</span>
-                <span className={cn(
-                  'font-mono text-lg',
-                  isWinner ? 'text-green-500' : 'text-red-500'
-                )}>
-                  {delta > 0 ? '+' : ''}{breakdown.finalChange}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Message explicatif */}
-          {breakdown.formatCoefficient < 1 && (
-            <div className="bg-blue-50 dark:bg-blue-950/30 p-4 rounded-lg text-sm">
-              <p className="text-blue-800 dark:text-blue-200">
-                <strong>💡 Impact réduit</strong> : Les matchs en {formatLabel.toLowerCase()} ont 
-                plus de variance statistique. Joue en 2 ou 3 sets pour un impact complet !
+              <Progress value={breakdown.winProbability} className="h-3" />
+              <p className="text-xs text-muted-foreground">
+                {breakdown.winProbability > 70 
+                  ? `${winnerName} était favori, gain ELO modéré`
+                  : breakdown.winProbability < 30
+                  ? `${winnerName} était outsider, gain ELO important !`
+                  : 'Match équilibré, gain ELO standard'}
               </p>
             </div>
+          </div>
+
+          {/* Modificateurs appliqués */}
+          {activeModifiers.length > 0 && (
+            <>
+              <Separator />
+              <div>
+                <h4 className="font-semibold mb-3 flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-primary" />
+                  Modificateurs appliqués
+                </h4>
+                <div className="space-y-2">
+                  {activeModifiers.map((mod, index) => (
+                    <div key={index} className="flex items-center justify-between p-2 bg-muted/30 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <mod.icon className={`h-4 w-4 ${mod.color}`} />
+                        <div>
+                          <p className="text-sm font-medium">{mod.label}</p>
+                          <p className="text-xs text-muted-foreground">{mod.description}</p>
+                        </div>
+                      </div>
+                      <Badge variant={mod.value > 1 ? 'default' : 'secondary'} className={mod.value > 1 ? 'bg-green-600' : ''}>
+                        ×{mod.value.toFixed(2)}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
           )}
+
+          {/* Résumé du calcul */}
+          <Separator />
+          <div>
+            <h4 className="font-semibold mb-3 flex items-center gap-2">
+              <Award className="h-4 w-4 text-primary" />
+              Résumé du calcul
+            </h4>
+            <div className="bg-primary/5 rounded-lg p-4 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Changement brut</span>
+                <span>{breakdown.rawChange} points</span>
+              </div>
+              {activeModifiers.length > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">
+                    Total modificateurs (×{activeModifiers.reduce((acc, m) => acc * m.value, 1).toFixed(2)})
+                  </span>
+                  <span>{breakdown.formatCoefficient !== 1 ? `Format ×${breakdown.formatCoefficient}` : ''}</span>
+                </div>
+              )}
+              <Separator />
+              <div className="flex justify-between font-bold">
+                <span>Changement final</span>
+                <span className="text-green-600">+{breakdown.finalChange} points</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Le perdant perd 80% du gain du gagnant ({Math.abs(loserDelta)} points)
+              </p>
+            </div>
+          </div>
+
+          {/* Note USP */}
+          <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+            <div className="flex gap-3">
+              <Info className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                  Pourquoi cette transparence ?
+                </p>
+                <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                  Contrairement à d&apos;autres plateformes, TennisMatchFinder vous montre 
+                  exactement comment votre ELO est calculé. Chaque modificateur est visible 
+                  et justifié pour un système juste et compréhensible.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
@@ -225,56 +318,34 @@ export function EloBreakdownModal({
 }
 
 /**
- * Composant inline pour afficher le breakdown sans modal
+ * Version compacte pour affichage inline
  */
-export function EloBreakdownInline({
-  isWinner,
+export function EloChangeDisplay({
   delta,
-  breakdown,
-  matchFormat,
+  showSign = true,
+  size = 'default',
 }: {
-  isWinner: boolean;
   delta: number;
-  breakdown: EloBreakdown;
-  matchFormat: MatchFormat;
+  showSign?: boolean;
+  size?: 'sm' | 'default' | 'lg';
 }) {
-  const formatLabel = FORMAT_LABELS[matchFormat] || matchFormat;
-  
-  // Construire la formule
-  const parts: string[] = [];
-  parts.push(`Base: ${isWinner ? '+' : ''}${breakdown.rawChange}`);
-  
-  if (breakdown.formatCoefficient !== 1) {
-    parts.push(`Format ${formatLabel} (×${breakdown.formatCoefficient})`);
-  }
-  if (breakdown.marginModifier !== 1) {
-    parts.push(`${breakdown.marginLabel} (×${breakdown.marginModifier})`);
-  }
-  if (breakdown.newOpponentBonus > 1) {
-    parts.push(`Nouvel adv. (×${breakdown.newOpponentBonus})`);
-  }
-  if (breakdown.upsetBonus > 1) {
-    parts.push(`Exploit (×${breakdown.upsetBonus})`);
-  }
-  if (breakdown.repetitionMalus < 1) {
-    parts.push(`Répétition (×${breakdown.repetitionMalus})`);
-  }
-  if (breakdown.diversityBonus > 1) {
-    parts.push(`Diversité (×${breakdown.diversityBonus})`);
-  }
+  const isPositive = delta > 0;
+  const sizeClasses = {
+    sm: 'text-xs px-1.5 py-0.5',
+    default: 'text-sm px-2 py-1',
+    lg: 'text-base px-3 py-1.5',
+  };
 
   return (
-    <div className="text-sm text-muted-foreground">
-      <span className={cn(
-        'font-bold',
-        isWinner ? 'text-green-500' : 'text-red-500'
-      )}>
-        {delta > 0 ? '+' : ''}{delta} ELO
-      </span>
-      <span className="mx-2">→</span>
-      <span>{parts.join(' × ')}</span>
-      <span className="mx-2">=</span>
-      <span className="font-medium">{delta > 0 ? '+' : ''}{breakdown.finalChange}</span>
-    </div>
+    <span
+      className={`
+        inline-flex items-center font-bold rounded
+        ${isPositive ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'}
+        ${sizeClasses[size]}
+      `}
+    >
+      {showSign && (isPositive ? '+' : '')}
+      {delta}
+    </span>
   );
 }

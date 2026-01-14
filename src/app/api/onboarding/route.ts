@@ -1,13 +1,6 @@
 /**
- * API Route: Onboarding - Création du profil joueur
- * POST /api/onboarding
- * 
- * Crée un profil joueur pour un utilisateur déjà connecté (via NextAuth)
- * qui n'a pas encore de profil player
- * 
- * Supporte le nouveau flow en 5 étapes avec:
- * - fullName, city, selfAssessedLevel (requis)
- * - dominantHand, availability, preferences (optionnels)
+ * API Route: Onboarding
+ * POST - Sauvegarde les données du profil après l'onboarding
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -16,136 +9,106 @@ import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { players } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
-import { checkAndAwardBadges } from '@/lib/gamification/badge-checker';
+import { checkPassiveBadges } from '@/lib/gamification/badge-checker';
 
-interface OnboardingPayload {
+interface OnboardingData {
   fullName: string;
-  city: string;
-  selfAssessedLevel?: 'débutant' | 'intermédiaire' | 'avancé' | 'expert';
-  dominantHand?: 'right' | 'left' | 'ambidextrous';
-  avatarUrl?: string;
-  availability?: {
+  phone?: string;
+  bio?: string;
+  selfAssessedLevel: 'débutant' | 'intermédiaire' | 'avancé' | 'expert';
+  preferredHand?: 'droitier' | 'gaucher' | 'ambidextre';
+  availability: {
     days: string[];
     timeSlots: string[];
   };
-  preferences?: {
+  preferences: {
     gameTypes: string[];
-    surfaces: string[];
   };
 }
 
 export async function POST(request: NextRequest) {
   try {
-    // Vérifier l'authentification
     const session = await getServerSession(authOptions);
-    
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Non authentifié' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
-    const body: OnboardingPayload = await request.json();
-    const { 
-      fullName, 
-      city, 
-      selfAssessedLevel,
-      dominantHand,
-      avatarUrl,
-      availability,
-      preferences,
-    } = body;
+    const data: OnboardingData = await request.json();
 
-    // Validation basique
-    if (!fullName || !city) {
+    // Validation
+    if (!data.fullName || data.fullName.trim().length < 2) {
       return NextResponse.json(
-        { error: 'Nom complet et ville sont requis' },
+        { error: 'Le nom doit contenir au moins 2 caractères' },
         { status: 400 }
       );
     }
 
-    // Vérifier si le joueur existe déjà
+    // Vérifier si le joueur existe
     const [existingPlayer] = await db
-      .select()
+      .select({ id: players.id })
       .from(players)
       .where(eq(players.id, session.user.id))
       .limit(1);
 
+    const now = new Date();
+
     if (existingPlayer) {
-      return NextResponse.json(
-        { error: 'Vous avez déjà un profil joueur' },
-        { status: 400 }
-      );
-    }
-
-    // Normaliser la ville
-    const normalizedCity = city.trim()
-      .split(' ')
-      .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(' ');
-
-    // Préparer les données de disponibilité et préférences
-    const playerAvailability = availability || { days: [], timeSlots: [] };
-    const playerPreferences = preferences || { gameTypes: ['simple'], surfaces: [] };
-
-    // Ajouter la main dominante aux préférences si fournie
-    if (dominantHand) {
-      (playerPreferences as Record<string, unknown>).dominantHand = dominantHand;
-    }
-
-    // Créer le profil joueur
-    const [newPlayer] = await db
-      .insert(players)
-      .values({
+      // Mettre à jour le profil existant
+      await db
+        .update(players)
+        .set({
+          fullName: data.fullName.trim(),
+          phone: data.phone?.trim() || null,
+          bio: data.bio?.trim() || null,
+          selfAssessedLevel: data.selfAssessedLevel,
+          availability: data.availability,
+          preferences: {
+            ...data.preferences,
+            preferredHand: data.preferredHand,
+          },
+          onboardingCompleted: true,
+          updatedAt: now,
+        })
+        .where(eq(players.id, session.user.id));
+    } else {
+      // Créer un nouveau profil
+      await db.insert(players).values({
         id: session.user.id,
-        clubId: null,
-        city: normalizedCity,
-        fullName: fullName.trim(),
-        avatarUrl: avatarUrl || session.user.image || null,
-        selfAssessedLevel: selfAssessedLevel || 'intermédiaire',
-        availability: playerAvailability,
-        preferences: playerPreferences,
+        fullName: data.fullName.trim(),
+        phone: data.phone?.trim() || null,
+        bio: data.bio?.trim() || null,
+        selfAssessedLevel: data.selfAssessedLevel,
+        availability: data.availability,
+        preferences: {
+          ...data.preferences,
+          preferredHand: data.preferredHand,
+        },
         currentElo: 1200,
         bestElo: 1200,
         lowestElo: 1200,
-      })
-      .returning();
-
-    if (!newPlayer) {
-      return NextResponse.json(
-        { error: 'Erreur lors de la création du profil' },
-        { status: 500 }
-      );
+        matchesPlayed: 0,
+        wins: 0,
+        losses: 0,
+        winStreak: 0,
+        bestWinStreak: 0,
+        uniqueOpponents: 0,
+        isActive: true,
+        onboardingCompleted: true,
+        createdAt: now,
+        updatedAt: now,
+      });
     }
 
-    // Vérifier les badges initiaux (Early Bird si applicable)
-    try {
-      await checkAndAwardBadges(newPlayer.id, 'profile_completed');
-    } catch (badgeError) {
-      // Ne pas bloquer l'onboarding si les badges échouent
-      console.warn('Badge check failed during onboarding:', badgeError);
-    }
+    // Vérifier et attribuer les badges passifs (Founding Member, etc.)
+    const newBadges = await checkPassiveBadges(session.user.id);
 
     return NextResponse.json({
       success: true,
-      message: 'Profil créé avec succès !',
-      playerId: newPlayer.id,
+      message: 'Profil sauvegardé avec succès !',
+      newBadges: newBadges.length > 0 ? newBadges : undefined,
     });
   } catch (error) {
-    console.error('Onboarding error:', error);
-
-    // Gérer l'erreur de contrainte unique
-    if (error instanceof Error && error.message.includes('unique')) {
-      return NextResponse.json(
-        { error: 'Ce profil existe déjà' },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      { error: 'Erreur lors de la création du profil' },
-      { status: 500 }
-    );
+    console.error('Error in onboarding:', error);
+    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }
