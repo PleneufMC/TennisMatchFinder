@@ -1,14 +1,16 @@
 import type { Metadata } from 'next';
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Clock, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { getServerPlayer } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { matches, players } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { MatchConfirmForm } from '@/components/matches/match-confirm-form';
+import { getTimeUntilAutoValidation } from '@/lib/constants/validation';
 
 // Force dynamic rendering - this page requires database data
 export const dynamic = 'force-dynamic';
@@ -84,6 +86,11 @@ export default async function ConfirmerMatchPage({
   const myEloAfter = isPlayer1 ? match.player1EloAfter : match.player2EloAfter;
   const eloDelta = myEloAfter - myEloBefore;
 
+  // Calculer le temps restant avant auto-validation
+  const autoValidateInfo = match.autoValidateAt 
+    ? getTimeUntilAutoValidation(match.autoValidateAt)
+    : null;
+
   return (
     <div className="space-y-6">
       {/* En-tête avec retour */}
@@ -100,6 +107,26 @@ export default async function ConfirmerMatchPage({
           </p>
         </div>
       </div>
+
+      {/* Alerte auto-validation */}
+      {autoValidateInfo && !autoValidateInfo.expired && (
+        <Alert className="border-amber-500 bg-amber-50 dark:bg-amber-950/20">
+          <Clock className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="text-amber-800 dark:text-amber-200">
+            <strong>⏱️ Auto-validation dans {autoValidateInfo.formatted}</strong> si vous ne répondez pas.
+            Vous pourrez contester pendant 7 jours après validation.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {autoValidateInfo?.expired && (
+        <Alert className="border-red-500 bg-red-50 dark:bg-red-950/20">
+          <AlertTriangle className="h-4 w-4 text-red-600" />
+          <AlertDescription className="text-red-800 dark:text-red-200">
+            <strong>⚠️ Ce match sera bientôt auto-validé.</strong> Confirmez ou contestez maintenant !
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Détails du match */}
@@ -188,6 +215,7 @@ export default async function ConfirmerMatchPage({
                 fullName: opponentName || 'Adversaire',
                 avatarUrl: match.player1Id === player.id ? player2Data?.avatarUrl : player1Data?.avatarUrl,
               }}
+              autoValidateAt={match.autoValidateAt?.toISOString()}
             />
           </CardContent>
         </Card>

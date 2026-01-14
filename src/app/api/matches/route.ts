@@ -14,6 +14,7 @@ import {
   isValidMatchFormat,
   type MatchFormat 
 } from '@/lib/elo/format-coefficients';
+import { getAutoValidateDate, VALIDATION_MESSAGES } from '@/lib/constants/validation';
 
 // GET: Liste des matchs du joueur
 export async function GET(request: NextRequest) {
@@ -235,6 +236,10 @@ export async function POST(request: NextRequest) {
     const winnerNewElo = winnerElo + winnerDelta;
     const loserNewElo = Math.max(100, loserElo + loserDelta); // Minimum 100 ELO
 
+    // Calculer la date d'auto-validation (24h après création)
+    const now = new Date();
+    const autoValidateAt = getAutoValidateDate(now);
+
     // Créer le match (non validé)
     const [newMatch] = await db
       .insert(matches)
@@ -255,6 +260,7 @@ export async function POST(request: NextRequest) {
         playedAt: new Date(playedAt),
         reportedBy: player.id,
         validated: false, // En attente de confirmation
+        autoValidateAt, // Date d'auto-validation
         notes: notes || null,
       })
       .returning();
@@ -266,12 +272,13 @@ export async function POST(request: NextRequest) {
     // Créer une notification pour l'adversaire
     const winnerName = winnerId === player.id ? player.fullName : opponentPlayer.fullName;
     const reporterIsWinner = winnerId === player.id;
+    const notificationMessage = VALIDATION_MESSAGES.matchReported(player.fullName, score);
 
     await db.insert(notifications).values({
       userId: opponentId,
       type: 'match_confirmation',
-      title: 'Match à confirmer',
-      message: `${player.fullName} a déclaré un match contre vous. Résultat: ${reporterIsWinner ? 'Défaite' : 'Victoire'} (${score}). Confirmez-vous ce résultat ?`,
+      title: notificationMessage.title,
+      message: `${notificationMessage.body} Résultat: ${reporterIsWinner ? 'Défaite' : 'Victoire'}. ⏱️ Auto-validation dans 24h.`,
       link: `/matchs/confirmer/${newMatch.id}`,
       data: {
         matchId: newMatch.id,
@@ -280,6 +287,7 @@ export async function POST(request: NextRequest) {
         score,
         winnerId,
         winnerName,
+        autoValidateAt: autoValidateAt.toISOString(),
       },
     });
 

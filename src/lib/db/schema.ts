@@ -252,6 +252,17 @@ export const matches = pgTable(
     validated: boolean('validated').default(false).notNull(),
     validatedBy: uuid('validated_by').references(() => players.id),
     validatedAt: timestamp('validated_at', { mode: 'date' }),
+    // Auto-validation system
+    autoValidated: boolean('auto_validated').default(false).notNull(),
+    autoValidateAt: timestamp('auto_validate_at', { mode: 'date' }), // Quand auto-valider
+    reminderSentAt: timestamp('reminder_sent_at', { mode: 'date' }), // Rappel envoyé
+    // Contestation system
+    contested: boolean('contested').default(false).notNull(),
+    contestedBy: uuid('contested_by').references(() => players.id),
+    contestedAt: timestamp('contested_at', { mode: 'date' }),
+    contestReason: text('contest_reason'),
+    contestResolvedAt: timestamp('contest_resolved_at', { mode: 'date' }),
+    contestResolution: varchar('contest_resolution', { length: 50 }), // 'upheld' | 'rejected' | 'modified'
     notes: text('notes'),
     createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
@@ -261,6 +272,7 @@ export const matches = pgTable(
     player1IdIdx: index('matches_player1_id_idx').on(table.player1Id),
     player2IdIdx: index('matches_player2_id_idx').on(table.player2Id),
     playedAtIdx: index('matches_played_at_idx').on(table.playedAt),
+    autoValidateAtIdx: index('matches_auto_validate_at_idx').on(table.autoValidateAt),
   })
 );
 
