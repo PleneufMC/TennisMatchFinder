@@ -13,12 +13,12 @@ import type {
 // Relying Party (RP) configuration
 export const rpName = 'TennisMatchFinder';
 export const rpID = process.env.NEXT_PUBLIC_WEBAUTHN_RP_ID || 
-  (process.env.NODE_ENV === 'production' ? 'tennismatchfinder.com' : 'localhost');
+  (process.env.NODE_ENV === 'production' ? 'tennismatchfinder.net' : 'localhost');
 
 // Expected origin(s) for credential verification
 export const expectedOrigin = process.env.NEXT_PUBLIC_APP_URL || 
   (process.env.NODE_ENV === 'production' 
-    ? 'https://tennismatchfinder.com' 
+    ? 'https://tennismatchfinder.net' 
     : 'http://localhost:3000');
 
 // Challenge expiration time (5 minutes)
