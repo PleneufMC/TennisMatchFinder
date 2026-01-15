@@ -175,20 +175,41 @@ Créer une expérience "single-player mode" qui apporte de la valeur **avant** d
 
 ---
 
-## 📋 Sprint 5 : Monétisation & Admin (Semaine 5-6)
+## 📋 Sprint 5 : Monétisation (Semaine 5-6) - ✅ COMPLÉTÉ (15 janvier 2026)
 
-### 5.1 Tiers et restrictions
-- [ ] Définir limites tier Gratuit
-- [ ] Implémentation soft paywall
-- [ ] Page pricing (`/pricing`)
+### 5.1 Mode Early Bird ✅
+- [x] Accès Premium gratuit pour tous jusqu'au 30 juin 2026
+- [x] Badge "Founding Member" pour les early adopters
+- [x] Page `/pricing` avec offre de lancement
+- [x] Variable `EARLY_BIRD_MODE` pour basculer facilement
 
-### 5.2 Système d'abonnement
-- [ ] Intégration Stripe
-- [ ] Plans : Premium (€99/an), Pro (€149/an)
-- [ ] Gestion abonnement (upgrade, cancel)
-- [ ] Période d'essai 30 jours
+### 5.2 Infrastructure Stripe ✅
+- [x] Intégration Stripe complète (backend prêt)
+- [x] **Produits Stripe configurés** :
+  | Plan | Product ID | Price ID | Tarif |
+  |------|------------|----------|-------|
+  | Premium Mensuel | `prod_TkkGjS5zwAMEG0` | `price_1SnEm8IkmQ7vFcvcvPLnGOT2` | 9.99€/mois |
+  | Premium Annuel | `prod_TkkIGodB2NEhoJ` | `price_1SnEnTIkmQ7vFcvcJdy5nWog` | 99€/an |
+- [x] API `/api/stripe/checkout` - Création session checkout
+- [x] API `/api/stripe/subscription` - Status abonnement
+- [x] API `/api/stripe/portal` - Portail facturation client
+- [x] Webhook `/api/webhooks/stripe` - Gestion événements Stripe
+- [x] Tables DB `subscriptions` et `payments` créées
+- [x] Migration SQL `stripe-subscriptions.sql`
 
-### 5.3 Admin club avancé
+### 5.3 Configuration Netlify ✅
+- [x] `STRIPE_SECRET_KEY` configuré
+- [x] `STRIPE_WEBHOOK_SECRET` configuré
+- [x] `STRIPE_PRICE_PREMIUM_MONTHLY` configuré
+- [x] `STRIPE_PRICE_PREMIUM_YEARLY` configuré
+
+### 5.4 Paywall (prêt pour activation post-Early Bird)
+- [x] `src/lib/stripe/paywall.ts` - Système de limites par tier
+- [x] `src/lib/stripe/config.ts` - Plans FREE et PREMIUM définis
+- [x] Fonctions `getUserTier()`, `canUseFeature()`, `getPlanLimits()`
+- [ ] Activation du paywall (quand Early Bird termine)
+
+### 5.5 Admin club avancé
 - [x] Dashboard admin club
 - [x] Gestion membres (approbation, rôles)
 - [ ] Analytics club (membres actifs/inactifs)
@@ -217,7 +238,7 @@ Créer une expérience "single-player mode" qui apporte de la valeur **avant** d
 
 ## 🏗️ Architecture Technique
 
-### Tables DB (mise à jour 14 janvier 2026)
+### Tables DB (mise à jour 15 janvier 2026)
 
 ```sql
 -- Badges Master Table
@@ -256,6 +277,33 @@ ALTER TABLE matches ADD COLUMN match_format match_format NOT NULL DEFAULT 'two_s
 ALTER TABLE elo_history 
 ADD COLUMN format_coefficient DECIMAL(3,2),
 ADD COLUMN margin_modifier DECIMAL(3,2);
+
+-- Subscriptions (Stripe) ✨ NEW
+CREATE TABLE subscriptions (
+  id UUID PRIMARY KEY,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  stripe_customer_id VARCHAR(255) NOT NULL,
+  stripe_subscription_id VARCHAR(255),
+  stripe_price_id VARCHAR(255),
+  tier subscription_tier NOT NULL DEFAULT 'free',
+  status subscription_status NOT NULL DEFAULT 'active',
+  current_period_start TIMESTAMP,
+  current_period_end TIMESTAMP,
+  cancel_at_period_end BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Payments (Stripe) ✨ NEW
+CREATE TABLE payments (
+  id UUID PRIMARY KEY,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  subscription_id UUID REFERENCES subscriptions(id),
+  stripe_payment_intent_id VARCHAR(255),
+  amount INTEGER NOT NULL,
+  currency VARCHAR(3) DEFAULT 'eur',
+  status VARCHAR(50) NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
 ```
 
 ### API Routes (complètes)
@@ -265,13 +313,24 @@ ADD COLUMN margin_modifier DECIMAL(3,2);
 POST /api/matches                         -- Créer un match (avec matchFormat)
 POST /api/matches/[matchId]/confirm       -- Confirmer + check badges
 GET  /api/matches/[matchId]/elo-breakdown -- Détail calcul ELO complet
+POST /api/matches/[matchId]/rate          -- Évaluer l'adversaire
+POST /api/matches/[matchId]/contest       -- Contester un résultat
 
 # Badges
 GET  /api/badges                          -- Badges du joueur
 POST /api/badges/[badgeId]/seen           -- Marquer badge vu
+POST /api/admin/badges/founding-member    -- Attribuer badge Founding Member
 
-# Gamification
-GET  /api/gamification                    -- Stats gamification
+# Stripe ✨ NEW
+POST /api/stripe/checkout                 -- Créer session checkout
+GET  /api/stripe/subscription             -- Status abonnement
+POST /api/stripe/portal                   -- Portail facturation
+POST /api/webhooks/stripe                 -- Webhook Stripe
+
+# CRON Jobs
+POST /api/cron/auto-validate-matches      -- Auto-validation 24h
+POST /api/cron/match-reminders            -- Rappels 6h
+POST /api/cron/inactivity-reminder        -- Rappel inactivité 7j
 
 # Onboarding
 POST /api/onboarding                      -- Créer profil joueur
@@ -288,11 +347,21 @@ POST /api/onboarding                      -- Créer profil joueur
 | 3 | 16 badges disponibles, 3+ gagnables jour 1 | ✅ Complété |
 | 3.5 | Coefficient ELO par format fonctionnel | ✅ Complété |
 | 4 | Système de réputation post-match | ✅ Complété |
-| 5 | Conversion freemium >3% | ⏳ À faire |
+| 5 | Infrastructure Stripe prête | ✅ Complété |
+| - | Conversion freemium >3% | ⏳ Post-Early Bird |
 
 ---
 
-## 🚀 Fonctionnalités livrées - 13 janvier 2026
+## 🚀 Fonctionnalités livrées - 15 janvier 2026
+
+### 💳 Sprint 5 : Monétisation (USP Business)
+- ✅ Mode Early Bird : accès Premium gratuit jusqu'au 30/06/2026
+- ✅ Page `/pricing` avec offre de lancement
+- ✅ Infrastructure Stripe complète (backend prêt)
+- ✅ Webhook configuré et opérationnel
+- ✅ Variables d'environnement Netlify configurées
+- ✅ Tables DB `subscriptions` et `payments`
+- ✅ 2 plans : Gratuit et Premium (9.99€/mois ou 99€/an)
 
 ### 🎾 Coefficient ELO par Format (USP majeur)
 - ✅ Système de coefficients équitable (1 set ×0.5 → 3 sets ×1.0)
@@ -300,7 +369,7 @@ POST /api/onboarding                      -- Créer profil joueur
 - ✅ Composant `MatchFormatSelector` avec indicateurs visuels
 - ✅ Modal `EloBreakdownModal` pour transparence totale
 - ✅ API enrichie avec breakdown complet
-- ✅ Migration SQL préparée pour Neon
+- ✅ Migration SQL exécutée sur Neon
 
 ### 🏆 Trophy Case 2.0 (Gamification complète)
 - ✅ Migration DB badges exécutée sur Neon
@@ -309,14 +378,15 @@ POST /api/onboarding                      -- Créer profil joueur
 - ✅ Célébration avec confetti pour badges epic/legendary
 - ✅ Backward-compatible (graceful degradation)
 
-### 📱 Onboarding & API
-- ✅ Onboarding guidé en 5 écrans (`/onboarding`)
-- ✅ API ELO Breakdown détaillée
-- ✅ Fix route dynamique `[matchId]` vs `[id]`
+### ⭐ Sprint 4 : Réputation & Anti-Churn
+- ✅ Système de réputation post-match (3 critères)
+- ✅ Auto-validation matchs 24h
+- ✅ Contestation 7 jours
+- ✅ CRON jobs automatisés
 
 ---
 
-## 📁 Structure fichiers créés (13 janvier 2026)
+## 📁 Structure fichiers créés (15 janvier 2026)
 
 ```
 src/
@@ -324,6 +394,9 @@ src/
 │   ├── (auth)/
 │   │   └── onboarding/
 │   │       └── page.tsx                    -- Onboarding 5 étapes
+│   ├── (public)/
+│   │   └── pricing/
+│   │       └── page.tsx                    -- Page tarifs (Early Bird)
 │   ├── (dashboard)/
 │   │   └── achievements/
 │   │       └── page.tsx                    -- Page Trophy Case
@@ -335,13 +408,25 @@ src/
 │       │   ├── route.ts                    -- POST avec matchFormat
 │       │   └── [matchId]/
 │       │       ├── confirm/route.ts        -- Avec check badges
+│       │       ├── rate/route.ts           -- Évaluation
+│       │       ├── contest/route.ts        -- Contestation
 │       │       └── elo-breakdown/route.ts  -- Détail calcul ELO
+│       ├── stripe/                         -- ✨ NEW Sprint 5
+│       │   ├── checkout/route.ts           -- Session checkout
+│       │   ├── subscription/route.ts       -- Status abonnement
+│       │   └── portal/route.ts             -- Portail client
+│       ├── webhooks/
+│       │   └── stripe/route.ts             -- ✨ NEW Webhook Stripe
+│       ├── cron/
+│       │   ├── auto-validate-matches/route.ts
+│       │   ├── match-reminders/route.ts
+│       │   └── inactivity-reminder/route.ts
 │       └── onboarding/
 │           └── route.ts                    -- Création profil
 │
 ├── components/
 │   ├── elo/
-│   │   └── elo-breakdown-modal.tsx         -- Modal transparence ELO ✨ NEW
+│   │   └── elo-breakdown-modal.tsx         -- Modal transparence ELO
 │   ├── gamification/
 │   │   ├── BadgeCard.tsx
 │   │   ├── BadgeGrid.tsx
@@ -350,46 +435,75 @@ src/
 │   │   ├── badge-notification.tsx
 │   │   └── trophy-case.tsx
 │   ├── matches/
-│   │   └── match-format-selector.tsx       -- Sélecteur format ✨ NEW
+│   │   └── match-format-selector.tsx       -- Sélecteur format
+│   ├── reputation/
+│   │   ├── rating-modal.tsx
+│   │   └── reputation-badge.tsx
 │   └── onboarding/
-│       ├── OnboardingFlow.tsx
-│       ├── WelcomeStep.tsx
-│       ├── ProfileStep.tsx
-│       ├── LevelStep.tsx
-│       ├── AvailabilityStep.tsx
-│       └── FirstMatchStep.tsx
+│       └── onboarding-steps.tsx
 │
 ├── lib/
 │   ├── db/
-│   │   ├── schema.ts                       -- Tables + ENUM match_format
+│   │   ├── schema.ts                       -- Tables + ENUMs
 │   │   └── seed-badges.ts
-│   ├── elo/                                -- Module ELO refactorisé ✨ NEW
+│   ├── elo/                                -- Module ELO refactorisé
 │   │   ├── index.ts
-│   │   ├── calculator.ts                   -- Calcul avec coefficients
-│   │   ├── format-coefficients.ts          -- Constantes & helpers
+│   │   ├── calculator.ts
+│   │   ├── format-coefficients.ts
 │   │   ├── modifiers.ts
 │   │   └── types.ts
-│   └── gamification/
-│       ├── badges.ts
-│       ├── badge-checker.ts
-│       ├── streaks.ts
-│       ├── challenges.ts
-│       └── index.ts
+│   ├── stripe/                             -- ✨ NEW Sprint 5
+│   │   ├── client.ts
+│   │   ├── config.ts                       -- Plans FREE/PREMIUM
+│   │   ├── index.ts
+│   │   ├── paywall.ts                      -- Limites par tier
+│   │   └── subscription.ts                 -- Gestion abonnements
+│   ├── gamification/
+│   │   ├── badges.ts
+│   │   ├── badge-checker.ts
+│   │   ├── streaks.ts
+│   │   ├── challenges.ts
+│   │   └── index.ts
+│   └── constants/
+│       └── validation.ts                   -- Config anti-churn
 │
 └── migrations/
-    ├── trophy-case-2.0.sql                 -- Badges (exécuté)
-    └── match-format-coefficients.sql       -- Format ELO ✨ NEW (à exécuter)
+    ├── trophy-case-2.0.sql                 -- Badges (exécuté ✅)
+    ├── match-format-coefficients.sql       -- Format ELO (exécuté ✅)
+    ├── reputation-system.sql               -- Réputation (exécuté ✅)
+    ├── match-validation-contestation.sql   -- Anti-churn (exécuté ✅)
+    ├── onboarding-system.sql               -- Onboarding (exécuté ✅)
+    └── stripe-subscriptions.sql            -- ✨ NEW Stripe (exécuté ✅)
 ```
 
 ---
 
-## 🔜 Prochaines étapes prioritaires
+## 🔜 Prochaines étapes
 
-1. **Exécuter migration SQL** `match-format-coefficients.sql` sur Neon
-2. **Intégrer MatchFormatSelector** dans le formulaire de saisie de match
-3. **Sprint 4** : Système de réputation post-match
-4. **Sprint 5** : Intégration Stripe pour monétisation
+### Phase 2 : Post-Early Bird (Juillet 2026)
+1. **Activer le paywall** - Basculer `EARLY_BIRD_MODE = false`
+2. **Promotion Early Birds** - Offre spéciale pour les premiers membres
+3. **Conversion tracking** - Analytics sur les upgrades
+
+### Fonctionnalités futures envisagées
+- [ ] Weekly Streak (engagement)
+- [ ] Email digest hebdomadaire (rétention)
+- [ ] Page stats publique profil (viralité)
+- [ ] Plan "Club" pour multi-club management
+- [ ] Inter-clubs : matchs entre clubs différents
 
 ---
 
-*Dernière mise à jour : 14 janvier 2026 - Sprint 4 complété*
+## 📈 Métriques de succès
+
+| Métrique | Cible | Status |
+|----------|-------|--------|
+| Utilisateurs inscrits | 100+ | ⏳ En cours |
+| Matchs enregistrés/semaine | 50+ | ⏳ En cours |
+| Badges débloqués | 500+ | ⏳ En cours |
+| Taux de rétention J7 | >40% | ⏳ En cours |
+| Conversion Premium (post-EB) | >5% | ⏳ Post-Early Bird |
+
+---
+
+*Dernière mise à jour : 15 janvier 2026 - Sprint 5 Monétisation complété*
