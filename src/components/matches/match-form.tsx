@@ -93,8 +93,9 @@ export function MatchForm({ currentPlayer, opponents, clubId }: MatchFormProps) 
     const expectedSets: Record<MatchFormat, { min: number; max: number }> = {
       one_set: { min: 1, max: 1 },
       two_sets: { min: 2, max: 2 },
+      two_sets_super_tb: { min: 2, max: 3 }, // 2 sets, ou 3 si Super TB au 3ème
       three_sets: { min: 2, max: 3 },
-      super_tiebreak: { min: 2, max: 3 },
+      super_tiebreak: { min: 1, max: 1 },    // Super TB seul = score unique (10-X)
     };
     
     const { min, max } = expectedSets[format];
@@ -102,16 +103,32 @@ export function MatchForm({ currentPlayer, opponents, clubId }: MatchFormProps) 
     
     // Valider chaque set
     return sets.every((set, index) => {
-      // Pour le super tie-break, le dernier set peut être un tie-break à 10
-      if (format === 'super_tiebreak' && index === sets.length - 1 && sets.length > 2) {
-        // Format super tie-break: 10-8, 11-9, etc.
+      // Pour le format "super_tiebreak" seul : un seul score de 10 pts minimum
+      if (format === 'super_tiebreak') {
         const stbMatch = set.match(/^(\d+)-(\d+)$/);
         if (stbMatch) {
           const [, g1, g2] = stbMatch;
           const s1 = parseInt(g1 || '0');
           const s2 = parseInt(g2 || '0');
-          // Un des deux doit avoir au moins 10 points et gagner par 2
-          if ((s1 >= 10 || s2 >= 10) && Math.abs(s1 - s2) >= 2) {
+          // Le gagnant doit avoir au moins 10 pts et 2 pts d'écart
+          const winner = Math.max(s1, s2);
+          const loser = Math.min(s1, s2);
+          return winner >= 10 && winner - loser >= 2;
+        }
+        return false;
+      }
+      
+      // Pour le format "2 sets + Super TB" : le 3ème set peut être un Super TB
+      if (format === 'two_sets_super_tb' && index === sets.length - 1 && sets.length === 3) {
+        // Le 3ème set est un Super TB : 10-8, 11-9, etc.
+        const stbMatch = set.match(/^(\d+)-(\d+)$/);
+        if (stbMatch) {
+          const [, g1, g2] = stbMatch;
+          const s1 = parseInt(g1 || '0');
+          const s2 = parseInt(g2 || '0');
+          const winner = Math.max(s1, s2);
+          const loser = Math.min(s1, s2);
+          if (winner >= 10 && winner - loser >= 2) {
             return true;
           }
         }
@@ -151,8 +168,9 @@ export function MatchForm({ currentPlayer, opponents, clubId }: MatchFormProps) 
     switch (format) {
       case 'one_set': return 'Exemples: 6-4, 6-3, 7-6(5)';
       case 'two_sets': return 'Exemples: 6-4 6-2, 7-5 6-3';
+      case 'two_sets_super_tb': return 'Exemples: 6-4 6-3, ou 6-4 4-6 10-8 si égalité';
       case 'three_sets': return 'Exemples: 6-4 3-6 7-5';
-      case 'super_tiebreak': return 'Exemples: 6-4 4-6 10-8';
+      case 'super_tiebreak': return 'Score du Super TB (10 pts min, 2 pts écart). Ex: 10-7, 11-9';
     }
   };
 
@@ -475,7 +493,13 @@ export function MatchForm({ currentPlayer, opponents, clubId }: MatchFormProps) 
             <Label htmlFor="score">Score</Label>
             <Input
               id="score"
-              placeholder={matchFormat === 'one_set' ? '6-4' : matchFormat === 'super_tiebreak' ? '6-4 4-6 10-8' : '6-4 6-2'}
+              placeholder={
+                matchFormat === 'one_set' ? '6-4' : 
+                matchFormat === 'super_tiebreak' ? '10-7' : 
+                matchFormat === 'two_sets_super_tb' ? '6-4 4-6 10-8' :
+                matchFormat === 'three_sets' ? '6-4 3-6 6-2' :
+                '6-4 6-2'
+              }
               value={score}
               onChange={(e) => handleScoreChange(e.target.value)}
               className={!score || validateScore(score, matchFormat) ? '' : 'border-red-500'}

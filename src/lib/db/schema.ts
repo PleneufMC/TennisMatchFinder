@@ -77,8 +77,9 @@ export const eloChangeReasonEnum = pgEnum('elo_change_reason', [
 export const matchFormatEnum = pgEnum('match_format', [
   'one_set',
   'two_sets',
+  'two_sets_super_tb',  // 2 sets gagnants + Super TB au 3ème (10 pts)
   'three_sets',
-  'super_tiebreak',
+  'super_tiebreak',     // Match en Super TB uniquement (10 pts)
 ]);
 
 export const joinRequestStatusEnum = pgEnum('join_request_status', [
