@@ -244,8 +244,8 @@ export async function recordPayment(
 export function getPlanLimits(tier: SubscriptionTier) {
   switch (tier) {
     case 'pro':
-      return STRIPE_PLANS.PRO.limits;
     case 'premium':
+      // Pro is an alias for Premium (no separate Pro plan for now)
       return STRIPE_PLANS.PREMIUM.limits;
     default:
       return STRIPE_PLANS.FREE.limits;

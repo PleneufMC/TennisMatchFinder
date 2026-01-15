@@ -14,11 +14,10 @@ export async function GET() {
 
     const subscription = await getUserSubscription(session.user.id);
     const tier = await getUserTier(session.user.id);
-    const plan = tier === 'pro' 
-      ? STRIPE_PLANS.PRO 
-      : tier === 'premium' 
-        ? STRIPE_PLANS.PREMIUM 
-        : STRIPE_PLANS.FREE;
+    // Pro is an alias for Premium (no separate Pro plan for now)
+    const plan = (tier === 'pro' || tier === 'premium')
+      ? STRIPE_PLANS.PREMIUM 
+      : STRIPE_PLANS.FREE;
 
     return NextResponse.json({
       subscription: subscription ? {

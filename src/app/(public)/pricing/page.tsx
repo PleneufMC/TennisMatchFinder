@@ -3,7 +3,7 @@
 import { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Check, X, Sparkles, Crown, Zap, Gift, PartyPopper } from 'lucide-react';
+import { Check, X, Sparkles, Zap, Gift, PartyPopper } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +14,12 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 // Mode Early Bird actif
 const EARLY_BIRD_MODE = true;
 const EARLY_BIRD_END_DATE = new Date('2026-06-30T23:59:59');
+
+// Real Stripe Price IDs
+const STRIPE_PRICES = {
+  PREMIUM_MONTHLY: 'price_1SnEm8IkmQ7vFcvcvPLnGOT2', // 9.99€/mois
+  PREMIUM_YEARLY: 'price_1SnEnTIkmQ7vFcvcJdy5nWog',  // 99€/an
+};
 
 const plans = [
   {
@@ -41,12 +47,12 @@ const plans = [
   {
     id: 'premium',
     name: 'Premium',
-    description: 'Pour les joueurs réguliers',
+    description: 'Toutes les fonctionnalités pour les passionnés',
     monthlyPrice: 9.99,
     yearlyPrice: 99,
     icon: Sparkles,
-    priceIdMonthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_PREMIUM_MONTHLY,
-    priceIdYearly: process.env.NEXT_PUBLIC_STRIPE_PRICE_PREMIUM_YEARLY,
+    priceIdMonthly: STRIPE_PRICES.PREMIUM_MONTHLY,
+    priceIdYearly: STRIPE_PRICES.PREMIUM_YEARLY,
     features: [
       { name: 'Suggestions illimitées', included: true },
       { name: 'Statistiques avancées', included: true },
@@ -56,35 +62,12 @@ const plans = [
       { name: 'Badge "Membre Premium"', included: true },
       { name: 'Explication ELO détaillée', included: true },
       { name: 'Export des données', included: true },
-      { name: 'Tournois & Box Leagues', included: false },
+      { name: 'Tournois & Box Leagues', included: true },
+      { name: 'Support prioritaire', included: true },
     ],
     cta: 'Passer à Premium',
     ctaVariant: 'default' as const,
     popular: true,
-  },
-  {
-    id: 'pro',
-    name: 'Pro',
-    description: 'L\'expérience complète',
-    monthlyPrice: 14.99,
-    yearlyPrice: 149,
-    icon: Crown,
-    priceIdMonthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY,
-    priceIdYearly: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_YEARLY,
-    features: [
-      { name: 'Tout Premium inclus', included: true },
-      { name: 'Tournois & Box Leagues', included: true },
-      { name: 'Analytics premium', included: true },
-      { name: 'Historique complet', included: true },
-      { name: 'Badge "Membre Pro"', included: true },
-      { name: 'Support prioritaire', included: true },
-      { name: 'Accès anticipé aux nouveautés', included: true },
-      { name: 'Multi-clubs (bientôt)', included: true },
-      { name: 'API personnelle (bientôt)', included: false },
-    ],
-    cta: 'Passer à Pro',
-    ctaVariant: 'default' as const,
-    popular: false,
   },
 ];
 
@@ -94,6 +77,7 @@ function PricingPageContent() {
   const [loading, setLoading] = useState<string | null>(null);
 
   const canceled = searchParams.get('subscription') === 'canceled';
+  const success = searchParams.get('success') === 'true';
 
   const handleSubscribe = async (planId: string, priceId: string | undefined) => {
     if (!priceId || planId === 'free') {
@@ -159,7 +143,7 @@ function PricingPageContent() {
             
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
               Rejoignez TennisMatchFinder pendant notre phase de lancement et profitez de 
-              <strong className="text-foreground"> toutes les fonctionnalités Pro sans limite</strong>, 
+              <strong className="text-foreground"> toutes les fonctionnalités Premium sans limite</strong>, 
               sans carte bancaire requise.
             </p>
 
@@ -178,10 +162,10 @@ function PricingPageContent() {
           <Card className="border-2 border-amber-500/50 shadow-xl shadow-amber-500/10 max-w-xl mx-auto">
             <CardHeader className="text-center pb-2">
               <div className="h-16 w-16 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center mx-auto mb-4">
-                <Crown className="h-8 w-8 text-white" />
+                <Sparkles className="h-8 w-8 text-white" />
               </div>
               <Badge className="bg-amber-500 hover:bg-amber-600 mb-2 mx-auto">Early Bird</Badge>
-              <CardTitle className="text-2xl">Accès Pro Complet</CardTitle>
+              <CardTitle className="text-2xl">Accès Premium Complet</CardTitle>
               <CardDescription>Toutes les fonctionnalités, aucune restriction</CardDescription>
             </CardHeader>
             
@@ -199,8 +183,8 @@ function PricingPageContent() {
                   'Chat illimité',
                   'Classement avec filtres avancés',
                   'Explication ELO détaillée',
-                  'Tournois & Box Leagues (bientôt)',
-                  'Badge "Early Bird" exclusif',
+                  'Tournois & Box Leagues',
+                  'Badge "Founding Member" exclusif',
                 ].map((feature) => (
                   <div key={feature} className="flex items-center gap-3">
                     <div className="h-5 w-5 rounded-full bg-green-500/20 flex items-center justify-center">
@@ -227,8 +211,8 @@ function PricingPageContent() {
           {/* Future pricing info */}
           <div className="mt-12 text-center">
             <p className="text-muted-foreground mb-4">
-              Les tarifs seront annoncés ultérieurement. Les early birds bénéficieront 
-              d&apos;une offre exclusive en remerciement de leur confiance.
+              Après la phase de lancement : <strong>9.99€/mois</strong> ou <strong>99€/an</strong>.
+              <br />Les early birds bénéficieront d&apos;une offre exclusive en remerciement.
             </p>
             <p className="text-sm text-muted-foreground">
               Une question ? <a href="mailto:pleneuftrading@gmail.com" className="text-primary hover:underline">pleneuftrading@gmail.com</a>
@@ -239,6 +223,7 @@ function PricingPageContent() {
     );
   }
 
+  // Normal pricing display (when Early Bird ends)
   return (
     <div className="py-12 md:py-20">
       <div className="container px-4">
@@ -256,7 +241,15 @@ function PricingPageContent() {
           </p>
         </div>
 
-        {/* Canceled alert */}
+        {/* Success/Canceled alerts */}
+        {success && (
+          <Alert className="max-w-md mx-auto mb-8 border-green-500 bg-green-50 dark:bg-green-900/20">
+            <AlertDescription className="text-green-700 dark:text-green-300">
+              🎉 Félicitations ! Votre abonnement Premium est maintenant actif.
+            </AlertDescription>
+          </Alert>
+        )}
+        
         {canceled && (
           <Alert className="max-w-md mx-auto mb-8">
             <AlertDescription>
@@ -277,14 +270,14 @@ function PricingPageContent() {
           />
           <Label htmlFor="billing-toggle" className={isYearly ? 'font-semibold' : 'text-muted-foreground'}>
             Annuel
-            <Badge variant="secondary" className="ml-2">
-              -17%
+            <Badge variant="secondary" className="ml-2 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
+              2 mois offerts
             </Badge>
           </Label>
         </div>
 
-        {/* Pricing cards */}
-        <div className="grid gap-8 md:grid-cols-3 max-w-6xl mx-auto">
+        {/* Pricing cards - 2 plans only */}
+        <div className="grid gap-8 md:grid-cols-2 max-w-4xl mx-auto">
           {plans.map((plan) => {
             const Icon = plan.icon;
             const price = isYearly ? plan.yearlyPrice : plan.monthlyPrice;
@@ -297,21 +290,17 @@ function PricingPageContent() {
               >
                 {plan.popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-primary">Le plus populaire</Badge>
+                    <Badge className="bg-primary">Recommandé</Badge>
                   </div>
                 )}
                 
                 <CardHeader>
                   <div className="flex items-center gap-2 mb-2">
                     <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${
-                      plan.id === 'free' ? 'bg-muted' :
-                      plan.id === 'premium' ? 'bg-primary/10' :
-                      'bg-amber-500/10'
+                      plan.id === 'free' ? 'bg-muted' : 'bg-primary/10'
                     }`}>
                       <Icon className={`h-5 w-5 ${
-                        plan.id === 'free' ? 'text-muted-foreground' :
-                        plan.id === 'premium' ? 'text-primary' :
-                        'text-amber-500'
+                        plan.id === 'free' ? 'text-muted-foreground' : 'text-primary'
                       }`} />
                     </div>
                     <CardTitle>{plan.name}</CardTitle>
@@ -373,15 +362,9 @@ function PricingPageContent() {
           <h2 className="text-2xl font-bold mb-4">Questions fréquentes</h2>
           <div className="max-w-2xl mx-auto space-y-4 text-left">
             <div className="p-4 rounded-lg bg-muted/50">
-              <h3 className="font-semibold mb-1">Puis-je changer de formule ?</h3>
+              <h3 className="font-semibold mb-1">Puis-je annuler à tout moment ?</h3>
               <p className="text-sm text-muted-foreground">
-                Oui, vous pouvez upgrader ou downgrader à tout moment. Le changement prend effet immédiatement.
-              </p>
-            </div>
-            <div className="p-4 rounded-lg bg-muted/50">
-              <h3 className="font-semibold mb-1">Comment fonctionne l&apos;annulation ?</h3>
-              <p className="text-sm text-muted-foreground">
-                Vous pouvez annuler à tout moment. Vous conservez l&apos;accès Premium/Pro jusqu&apos;à la fin de votre période payée.
+                Oui, vous pouvez annuler votre abonnement à tout moment. Vous conserverez l&apos;accès Premium jusqu&apos;à la fin de votre période payée.
               </p>
             </div>
             <div className="p-4 rounded-lg bg-muted/50">
@@ -389,6 +372,12 @@ function PricingPageContent() {
               <p className="text-sm text-muted-foreground">
                 Oui, tous les paiements sont traités par Stripe, leader mondial du paiement en ligne. 
                 Nous ne stockons jamais vos données bancaires.
+              </p>
+            </div>
+            <div className="p-4 rounded-lg bg-muted/50">
+              <h3 className="font-semibold mb-1">Que se passe-t-il après l&apos;abonnement ?</h3>
+              <p className="text-sm text-muted-foreground">
+                Votre abonnement se renouvelle automatiquement. Vous recevrez un email de rappel avant chaque renouvellement.
               </p>
             </div>
           </div>

@@ -29,7 +29,14 @@ export const stripe = {
   get products() { return getStripe().products; },
 };
 
-// Pricing configuration
+// ============================================
+// STRIPE PRODUCTS & PRICES (REAL IDs)
+// ============================================
+// Premium Mensuel: prod_TkkGjS5zwAMEG0 / price_1SnEm8IkmQ7vFcvcvPLnGOT2 (9.99€/mois)
+// Premium Annuel:  prod_TkkIGodB2NEhoJ / price_1SnEnTIkmQ7vFcvcJdy5nWog (99€/an)
+// ============================================
+
+// Pricing configuration - Only FREE and PREMIUM (no Pro for now)
 export const STRIPE_PLANS = {
   FREE: {
     id: 'free',
@@ -50,18 +57,22 @@ export const STRIPE_PLANS = {
       chatUnlimited: false,
       advancedStats: false,
       tournaments: false,
+      boxLeagues: false,
       dataExport: false,
     },
   },
   PREMIUM: {
     id: 'premium',
     name: 'Premium',
-    description: 'Pour les joueurs réguliers',
+    description: 'Toutes les fonctionnalités pour les joueurs passionnés',
     price: 99,
     yearlyPrice: 99,
     monthlyPrice: 9.99,
-    stripePriceIdMonthly: process.env.STRIPE_PRICE_PREMIUM_MONTHLY,
-    stripePriceIdYearly: process.env.STRIPE_PRICE_PREMIUM_YEARLY,
+    // Real Stripe Price IDs
+    stripeProductIdMonthly: 'prod_TkkGjS5zwAMEG0',
+    stripeProductIdYearly: 'prod_TkkIGodB2NEhoJ',
+    stripePriceIdMonthly: process.env.STRIPE_PRICE_PREMIUM_MONTHLY || 'price_1SnEm8IkmQ7vFcvcvPLnGOT2',
+    stripePriceIdYearly: process.env.STRIPE_PRICE_PREMIUM_YEARLY || 'price_1SnEnTIkmQ7vFcvcJdy5nWog',
     features: [
       'Suggestions illimitées',
       'Statistiques avancées',
@@ -70,47 +81,31 @@ export const STRIPE_PLANS = {
       'Filtres avancés classement',
       'Badge "Membre Premium"',
       'Explication ELO détaillée',
+      'Tournois & Box Leagues',
+      'Export des données',
+      'Support prioritaire',
     ],
     limits: {
       suggestionsPerWeek: -1, // unlimited
       forumWrite: true,
       chatUnlimited: true,
       advancedStats: true,
-      tournaments: false,
-      dataExport: true,
-    },
-  },
-  PRO: {
-    id: 'pro',
-    name: 'Pro',
-    description: 'L\'expérience complète',
-    price: 149,
-    yearlyPrice: 149,
-    monthlyPrice: 14.99,
-    stripePriceIdMonthly: process.env.STRIPE_PRICE_PRO_MONTHLY,
-    stripePriceIdYearly: process.env.STRIPE_PRICE_PRO_YEARLY,
-    features: [
-      'Tout Premium +',
-      'Tournois & Box Leagues',
-      'Analytics premium',
-      'Historique complet',
-      'Badge "Membre Pro"',
-      'Support prioritaire',
-      'Accès anticipé aux nouvelles fonctionnalités',
-    ],
-    limits: {
-      suggestionsPerWeek: -1,
-      forumWrite: true,
-      chatUnlimited: true,
-      advancedStats: true,
       tournaments: true,
+      boxLeagues: true,
       dataExport: true,
     },
   },
 } as const;
 
-export type PlanId = keyof typeof STRIPE_PLANS;
-export type Plan = (typeof STRIPE_PLANS)[PlanId];
+// Keep PRO as alias to PREMIUM for backward compatibility
+// In the future, PRO could be a separate "Club" plan
+export const STRIPE_PLANS_WITH_PRO = {
+  ...STRIPE_PLANS,
+  PRO: STRIPE_PLANS.PREMIUM, // Alias for now
+} as const;
+
+export type PlanId = 'free' | 'premium';
+export type Plan = (typeof STRIPE_PLANS)[keyof typeof STRIPE_PLANS];
 
 // Helper to get plan by Stripe price ID
 export function getPlanByPriceId(priceId: string): Plan | null {
@@ -120,28 +115,24 @@ export function getPlanByPriceId(priceId: string): Plan | null {
   ) {
     return STRIPE_PLANS.PREMIUM;
   }
-  if (
-    priceId === STRIPE_PLANS.PRO.stripePriceIdMonthly ||
-    priceId === STRIPE_PLANS.PRO.stripePriceIdYearly
-  ) {
-    return STRIPE_PLANS.PRO;
-  }
   return null;
 }
 
 // Helper to get tier from price ID
-export function getTierFromPriceId(priceId: string): 'free' | 'premium' | 'pro' {
+export function getTierFromPriceId(priceId: string): 'free' | 'premium' {
   if (
     priceId === STRIPE_PLANS.PREMIUM.stripePriceIdMonthly ||
     priceId === STRIPE_PLANS.PREMIUM.stripePriceIdYearly
   ) {
     return 'premium';
   }
-  if (
-    priceId === STRIPE_PLANS.PRO.stripePriceIdMonthly ||
-    priceId === STRIPE_PLANS.PRO.stripePriceIdYearly
-  ) {
-    return 'pro';
-  }
   return 'free';
+}
+
+// Helper to check if a price ID is valid
+export function isValidPriceId(priceId: string): boolean {
+  return (
+    priceId === STRIPE_PLANS.PREMIUM.stripePriceIdMonthly ||
+    priceId === STRIPE_PLANS.PREMIUM.stripePriceIdYearly
+  );
 }

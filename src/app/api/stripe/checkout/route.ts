@@ -24,12 +24,11 @@ export async function POST(request: NextRequest) {
     if (directPriceId) {
       // Direct price ID from pricing page
       finalPriceId = directPriceId;
-    } else if (planId && ['premium', 'pro'].includes(planId)) {
-      // Plan ID with billing period
-      const plan = planId === 'premium' ? STRIPE_PLANS.PREMIUM : STRIPE_PLANS.PRO;
+    } else if (planId === 'premium') {
+      // Plan ID with billing period (only premium exists for now)
       finalPriceId = billingPeriod === 'yearly' 
-        ? plan.stripePriceIdYearly 
-        : plan.stripePriceIdMonthly;
+        ? STRIPE_PLANS.PREMIUM.stripePriceIdYearly 
+        : STRIPE_PLANS.PREMIUM.stripePriceIdMonthly;
     }
 
     if (!finalPriceId) {
