@@ -7,13 +7,14 @@ import { signIn } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
-import { Mail, ArrowRight, Loader2, CheckCircle } from 'lucide-react';
+import { Mail, ArrowRight, Loader2, CheckCircle, Fingerprint } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { loginMagicLinkSchema, type LoginMagicLinkInput } from '@/lib/validations/auth';
+import { PasskeyLoginButton } from '@/components/auth/passkey-login-button';
 
 export function LoginForm() {
   const searchParams = useSearchParams();
@@ -157,6 +158,24 @@ export function LoginForm() {
             )}
           </Button>
         </form>
+
+        {/* Séparateur */}
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-card px-2 text-muted-foreground">
+              Ou connexion rapide
+            </span>
+          </div>
+        </div>
+
+        {/* Passkey Button */}
+        <PasskeyLoginButton 
+          callbackUrl={callbackUrl}
+          className="w-full"
+        />
 
         <div className="mt-6 rounded-lg bg-muted/50 p-4">
           <div className="flex items-start gap-3">

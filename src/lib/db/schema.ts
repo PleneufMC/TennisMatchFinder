@@ -176,6 +176,50 @@ export const verificationTokens = pgTable(
 );
 
 // ============================================
+// PASSKEYS / WEBAUTHN
+// ============================================
+
+export const passkeys = pgTable('passkeys', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  // WebAuthn credential ID (base64url encoded)
+  credentialId: text('credential_id').notNull().unique(),
+  // WebAuthn credential public key (base64url encoded)
+  credentialPublicKey: text('credential_public_key').notNull(),
+  // Sign count for replay attack prevention
+  counter: integer('counter').notNull().default(0),
+  // Credential device type: 'singleDevice' | 'multiDevice'
+  credentialDeviceType: varchar('credential_device_type', { length: 32 }).notNull(),
+  // Whether the credential is backed up (iCloud Keychain, Google Password Manager, etc.)
+  credentialBackedUp: boolean('credential_backed_up').notNull().default(false),
+  // Transports: ['internal', 'usb', 'ble', 'nfc', 'hybrid']
+  transports: jsonb('transports').$type<string[]>(),
+  // Human-readable name for the passkey (e.g., "iPhone de Pierre")
+  name: varchar('name', { length: 100 }),
+  // Last used timestamp
+  lastUsedAt: timestamp('last_used_at', { mode: 'date' }),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index('passkeys_user_id_idx').on(table.userId),
+  credentialIdIdx: index('passkeys_credential_id_idx').on(table.credentialId),
+}));
+
+// Challenge storage for WebAuthn (temporary, expires quickly)
+export const webauthnChallenges = pgTable('webauthn_challenges', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  challenge: text('challenge').notNull().unique(),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
+  type: varchar('type', { length: 20 }).notNull(), // 'registration' | 'authentication'
+  expiresAt: timestamp('expires_at', { mode: 'date' }).notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+}, (table) => ({
+  challengeIdx: index('webauthn_challenges_challenge_idx').on(table.challenge),
+  expiresAtIdx: index('webauthn_challenges_expires_at_idx').on(table.expiresAt),
+}));
+
+// ============================================
 // APPLICATION TABLES
 // ============================================
 
@@ -1117,6 +1161,14 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   sessions: many(sessions),
   subscriptions: many(subscriptions),
   payments: many(payments),
+  passkeys: many(passkeys),
+}));
+
+export const passkeysRelations = relations(passkeys, ({ one }) => ({
+  user: one(users, {
+    fields: [passkeys.userId],
+    references: [users.id],
+  }),
 }));
 
 export const subscriptionsRelations = relations(subscriptions, ({ one, many }) => ({

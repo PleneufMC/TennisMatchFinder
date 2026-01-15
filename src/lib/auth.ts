@@ -1,6 +1,7 @@
 import type { NextAuthOptions } from 'next-auth';
 import type { Adapter, AdapterUser, AdapterAccount, AdapterSession, VerificationToken } from 'next-auth/adapters';
 import EmailProvider from 'next-auth/providers/email';
+import CredentialsProvider from 'next-auth/providers/credentials';
 import { db } from '@/lib/db';
 import { users, accounts, sessions, verificationTokens, players, clubs } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -273,6 +274,42 @@ export const authOptions: NextAuthOptions = {
   adapter: CustomDrizzleAdapter(),
   
   providers: [
+    // Passkey Provider (WebAuthn)
+    CredentialsProvider({
+      id: 'passkey',
+      name: 'Passkey',
+      credentials: {
+        userId: { label: 'User ID', type: 'text' },
+        email: { label: 'Email', type: 'email' },
+      },
+      async authorize(credentials) {
+        // This is called after WebAuthn verification succeeds
+        // The actual authentication happens in /api/auth/passkey/authenticate
+        if (!credentials?.userId || !credentials?.email) {
+          return null;
+        }
+
+        // Verify user exists
+        const result = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, credentials.userId))
+          .limit(1);
+
+        const user = result[0];
+        if (!user || user.email !== credentials.email) {
+          return null;
+        }
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          image: user.image,
+        };
+      },
+    }),
+
     // Magic Link Email Provider
     EmailProvider({
       server: isEmailConfigValid() ? {
