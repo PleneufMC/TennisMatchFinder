@@ -93,6 +93,29 @@ export const clubCreationStatusEnum = pgEnum('club_creation_status', [
   'rejected',
 ]);
 
+// Stripe subscription tiers
+export const subscriptionTierEnum = pgEnum('subscription_tier', [
+  'free',
+  'premium',
+  'pro',
+]);
+
+// Stripe subscription status
+export const subscriptionStatusEnum = pgEnum('subscription_status', [
+  'active',
+  'canceled',
+  'incomplete',
+  'incomplete_expired',
+  'past_due',
+  'paused',
+  'trialing',
+  'unpaid',
+]);
+
+// Type exports for subscription
+export type SubscriptionTier = 'free' | 'premium' | 'pro';
+export type SubscriptionStatus = 'active' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'past_due' | 'paused' | 'trialing' | 'unpaid';
+
 // ============================================
 // NEXT-AUTH TABLES
 // ============================================
@@ -640,22 +663,6 @@ export const chatMessages = pgTable(
 // ============================================
 // SUBSCRIPTION & STRIPE TABLES
 // ============================================
-
-export const subscriptionStatusEnum = pgEnum('subscription_status', [
-  'active',
-  'canceled',
-  'incomplete',
-  'incomplete_expired',
-  'past_due',
-  'trialing',
-  'unpaid',
-]);
-
-export const subscriptionTierEnum = pgEnum('subscription_tier', [
-  'free',
-  'premium',
-  'pro',
-]);
 
 // Subscriptions
 export const subscriptions = pgTable(
@@ -1373,9 +1380,6 @@ export type NewSubscription = typeof subscriptions.$inferInsert;
 
 export type Payment = typeof payments.$inferSelect;
 export type NewPayment = typeof payments.$inferInsert;
-
-export type SubscriptionTier = 'free' | 'premium' | 'pro';
-export type SubscriptionStatus = 'active' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'past_due' | 'trialing' | 'unpaid';
 
 export type Tournament = typeof tournaments.$inferSelect;
 export type NewTournament = typeof tournaments.$inferInsert;

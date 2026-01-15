@@ -7,37 +7,46 @@ import { STRIPE_PLANS } from '@/lib/stripe/config';
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.id || !session.user.email) {
-      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+
+    if (!session?.user?.id || !session?.user?.email) {
+      return NextResponse.json(
+        { error: 'Vous devez être connecté' },
+        { status: 401 }
+      );
     }
 
     const body = await request.json();
-    const { priceId, billingPeriod } = body;
+    const { planId, billingPeriod = 'yearly', priceId: directPriceId } = body;
 
-    // Validate price ID
-    const validPriceIds = [
-      STRIPE_PLANS.PREMIUM.stripePriceIdMonthly,
-      STRIPE_PLANS.PREMIUM.stripePriceIdYearly,
-      STRIPE_PLANS.PRO.stripePriceIdMonthly,
-      STRIPE_PLANS.PRO.stripePriceIdYearly,
-    ].filter(Boolean);
+    let finalPriceId: string | undefined;
 
-    if (!priceId || !validPriceIds.includes(priceId)) {
+    // Support both direct priceId and planId + billingPeriod
+    if (directPriceId) {
+      // Direct price ID from pricing page
+      finalPriceId = directPriceId;
+    } else if (planId && ['premium', 'pro'].includes(planId)) {
+      // Plan ID with billing period
+      const plan = planId === 'premium' ? STRIPE_PLANS.PREMIUM : STRIPE_PLANS.PRO;
+      finalPriceId = billingPeriod === 'yearly' 
+        ? plan.stripePriceIdYearly 
+        : plan.stripePriceIdMonthly;
+    }
+
+    if (!finalPriceId) {
       return NextResponse.json(
-        { error: 'Prix invalide' },
+        { error: 'Prix non configuré pour ce plan' },
         { status: 400 }
       );
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tennismatchfinder.net';
-    
+    // Create checkout session
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tennismatchfinder.com';
     const checkoutSession = await createCheckoutSession(
       session.user.id,
       session.user.email,
-      priceId,
-      `${baseUrl}/settings?subscription=success`,
-      `${baseUrl}/pricing?subscription=canceled`
+      finalPriceId,
+      `${baseUrl}/pricing?success=true`,
+      `${baseUrl}/pricing?canceled=true`
     );
 
     return NextResponse.json({ url: checkoutSession.url });
