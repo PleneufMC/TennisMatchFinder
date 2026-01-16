@@ -404,10 +404,10 @@ export function getEloDeltaColor(delta: number): string {
  */
 export function getEloRankTitle(elo: number): { title: string; color: string; icon: string } {
   if (elo >= 2000) return { title: 'Grand Maître', color: 'text-purple-600', icon: '👑' };
-  if (elo >= 1800) return { title: 'Expert', color: 'text-amber-600', icon: '⭐' };
-  if (elo >= 1600) return { title: 'Avancé', color: 'text-blue-600', icon: '🎯' };
-  if (elo >= 1400) return { title: 'Intermédiaire', color: 'text-green-600', icon: '🎾' };
-  if (elo >= 1200) return { title: 'Confirmé', color: 'text-teal-600', icon: '✨' };
-  if (elo >= 1000) return { title: 'Débutant+', color: 'text-gray-600', icon: '🌱' };
-  return { title: 'Débutant', color: 'text-gray-500', icon: '🔰' };
+  if (elo >= 1800) return { title: 'Expert', color: 'text-red-600', icon: '🏆' };
+  if (elo >= 1600) return { title: 'Avancé', color: 'text-orange-500', icon: '⭐' };
+  if (elo >= 1400) return { title: 'Intermédiaire+', color: 'text-yellow-600', icon: '🎯' };
+  if (elo >= 1200) return { title: 'Intermédiaire', color: 'text-green-600', icon: '🎾' };
+  if (elo >= 1000) return { title: 'Débutant+', color: 'text-blue-600', icon: '📈' };
+  return { title: 'Débutant', color: 'text-gray-600', icon: '🌱' };
 }
