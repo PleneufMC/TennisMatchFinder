@@ -261,5 +261,26 @@
     "hoursAgo": "{count} hours ago",
     "daysAgo": "{count} days ago",
     "weeksAgo": "{count} weeks ago"
+  },
+  "chat": {
+    "title": "Club Chat",
+    "description": "Chat in real-time with other members",
+    "joinClub": "Join a club to access chat rooms",
+    "noClub": "You are not yet affiliated with a club. Join a club to access the chat.",
+    "aiAssistant": "AI Assistant",
+    "aiAssistantDesc": "An AI assistant is present in the chat rooms to help you find partners, answer your tennis questions and animate discussions.",
+    "chatRooms": "Chat Rooms",
+    "chatRoomsDesc": "Choose a room to join the conversation",
+    "unread": "unread",
+    "unreadPlural": "unread",
+    "new": "new",
+    "newPlural": "new",
+    "noRooms": "No rooms available",
+    "noRoomsDesc": "Chat rooms have not been created yet.",
+    "adminCreate": "As an admin, you can create rooms from",
+    "adminSections": "Administration → Rooms",
+    "publicDiscussion": "Public discussion",
+    "aiAvailable": "AI Assistant available",
+    "member": "Member"
   }
 }

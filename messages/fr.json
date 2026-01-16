@@ -261,5 +261,26 @@
     "hoursAgo": "il y a {count} heures",
     "daysAgo": "il y a {count} jours",
     "weeksAgo": "il y a {count} semaines"
+  },
+  "chat": {
+    "title": "Chat du club",
+    "description": "Discutez en temps réel avec les autres membres",
+    "joinClub": "Rejoignez un club pour accéder aux salons de discussion",
+    "noClub": "Vous n'êtes pas encore affilié à un club. Rejoignez un club pour accéder au chat.",
+    "aiAssistant": "Assistant IA",
+    "aiAssistantDesc": "Un assistant IA est présent dans les salons pour vous aider à trouver des partenaires, répondre à vos questions sur le tennis et animer les discussions.",
+    "chatRooms": "Salons de discussion",
+    "chatRoomsDesc": "Choisissez un salon pour rejoindre la conversation",
+    "unread": "non lu",
+    "unreadPlural": "non lus",
+    "new": "nouveau",
+    "newPlural": "nouveaux",
+    "noRooms": "Aucun salon disponible",
+    "noRoomsDesc": "Les salons de discussion n'ont pas encore été créés.",
+    "adminCreate": "En tant qu'admin, vous pouvez créer les salons depuis",
+    "adminSections": "Administration → Salons",
+    "publicDiscussion": "Discussion publique",
+    "aiAvailable": "Assistant IA disponible",
+    "member": "Membre"
   }
 }
