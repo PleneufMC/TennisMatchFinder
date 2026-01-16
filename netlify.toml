@@ -88,9 +88,14 @@
 # Configuration des fonctions serverless
 [functions]
   node_bundler = "esbuild"
+  directory = "netlify/functions"
   
 [functions."api/*"]
   external_node_modules = ["@neondatabase/serverless", "drizzle-orm"]
+
+# Scheduled function for auto-validating matches (every hour)
+[functions."auto-validate-matches"]
+  schedule = "0 * * * *"
 
 # Configuration du contexte de déploiement
 [context.production]
