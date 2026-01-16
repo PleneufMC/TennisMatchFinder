@@ -24,14 +24,21 @@
     "matches": "Matchs",
     "ranking": "Classement",
     "profile": "Profil",
+    "myProfile": "Mon profil",
     "settings": "Paramètres",
     "suggestions": "Suggestions",
     "forum": "Forum",
     "chat": "Messages",
     "notifications": "Notifications",
     "logout": "Déconnexion",
+    "logoutSuccess": "Déconnexion réussie",
     "login": "Connexion",
-    "register": "Inscription"
+    "register": "Inscription",
+    "help": "Aide"
+  },
+  "header": {
+    "club": "Club",
+    "changeTheme": "Changer le thème"
   },
   "auth": {
     "login": {
@@ -46,7 +53,20 @@
       "passkey": "Connexion avec Passkey",
       "orQuickLogin": "Ou connexion rapide",
       "passwordless": "Connexion sans mot de passe",
-      "passwordlessDesc": "Entrez votre email et recevez un lien magique pour vous connecter instantanément."
+      "passwordlessDesc": "Entrez votre email et recevez un lien magique pour vous connecter instantanément.",
+      "emailSent": "Email envoyé !",
+      "checkInbox": "Vérifiez votre boîte mail pour vous connecter.",
+      "error": "Erreur",
+      "errorOccurred": "Une erreur est survenue",
+      "verifyTitle": "Vérifiez votre email",
+      "linkSentTo": "Nous avons envoyé un lien de connexion à",
+      "linkSentGeneric": "Un lien de connexion vous a été envoyé par email.",
+      "clickLink": "Cliquez sur le lien dans l'email pour vous connecter.",
+      "expires": "Le lien expire dans 24 heures.",
+      "resend": "Renvoyer l'email",
+      "loginError": "Erreur de connexion",
+      "invalidLink": "Le lien de connexion est invalide ou a expiré.",
+      "retry": "Réessayer"
     },
     "register": {
       "title": "Inscription",

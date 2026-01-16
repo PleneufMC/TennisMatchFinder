@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import { PlayerAvatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { LanguageSwitcher } from '@/components/language-switcher';
+import { useTranslations } from '@/lib/i18n';
 
 import type { PlayerData } from '@/types/player';
 
@@ -34,15 +35,16 @@ export function Header({ player, notificationCount = 0, onMenuClick }: HeaderPro
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const { t } = useTranslations();
 
   const handleLogout = async () => {
     try {
       await signOut({ redirect: false });
-      toast.success('Déconnexion réussie');
+      toast.success(t('nav.logoutSuccess'));
       router.push('/');
       router.refresh();
     } catch (error) {
-      toast.error('Erreur lors de la déconnexion');
+      toast.error(t('common.error'));
     }
   };
 
@@ -61,7 +63,7 @@ export function Header({ player, notificationCount = 0, onMenuClick }: HeaderPro
         </Button>
 
         <div className="hidden md:flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Club :</span>
+          <span className="text-sm text-muted-foreground">{t('header.club')}:</span>
           <Badge variant="secondary">{player.clubName}</Badge>
         </div>
       </div>
@@ -79,7 +81,7 @@ export function Header({ player, notificationCount = 0, onMenuClick }: HeaderPro
         >
           <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
           <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-          <span className="sr-only">Changer le thème</span>
+          <span className="sr-only">{t('header.changeTheme')}</span>
         </Button>
 
         {/* Notifications */}
@@ -91,7 +93,7 @@ export function Header({ player, notificationCount = 0, onMenuClick }: HeaderPro
                 {notificationCount > 9 ? '9+' : notificationCount}
               </span>
             )}
-            <span className="sr-only">Notifications</span>
+            <span className="sr-only">{t('nav.notifications')}</span>
           </Link>
         </Button>
 
@@ -137,7 +139,7 @@ export function Header({ player, notificationCount = 0, onMenuClick }: HeaderPro
                     onClick={() => setIsProfileOpen(false)}
                   >
                     <User className="h-4 w-4" />
-                    Mon profil
+                    {t('nav.myProfile')}
                   </Link>
 
                   <Link
@@ -146,7 +148,7 @@ export function Header({ player, notificationCount = 0, onMenuClick }: HeaderPro
                     onClick={() => setIsProfileOpen(false)}
                   >
                     <Settings className="h-4 w-4" />
-                    Paramètres
+                    {t('nav.settings')}
                   </Link>
 
                   <Link
@@ -155,7 +157,7 @@ export function Header({ player, notificationCount = 0, onMenuClick }: HeaderPro
                     onClick={() => setIsProfileOpen(false)}
                   >
                     <HelpCircle className="h-4 w-4" />
-                    Aide
+                    {t('nav.help')}
                   </Link>
 
                   <div className="my-1 border-t" />
@@ -165,7 +167,7 @@ export function Header({ player, notificationCount = 0, onMenuClick }: HeaderPro
                     className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-destructive hover:bg-destructive/10"
                   >
                     <LogOut className="h-4 w-4" />
-                    Déconnexion
+                    {t('nav.logout')}
                   </button>
                 </div>
               </div>

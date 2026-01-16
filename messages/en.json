@@ -24,14 +24,21 @@
     "matches": "Matches",
     "ranking": "Ranking",
     "profile": "Profile",
+    "myProfile": "My profile",
     "settings": "Settings",
     "suggestions": "Suggestions",
     "forum": "Forum",
     "chat": "Messages",
     "notifications": "Notifications",
     "logout": "Log out",
+    "logoutSuccess": "Successfully logged out",
     "login": "Log in",
-    "register": "Sign up"
+    "register": "Sign up",
+    "help": "Help"
+  },
+  "header": {
+    "club": "Club",
+    "changeTheme": "Change theme"
   },
   "auth": {
     "login": {
@@ -46,7 +53,20 @@
       "passkey": "Sign in with Passkey",
       "orQuickLogin": "Or quick login",
       "passwordless": "Passwordless login",
-      "passwordlessDesc": "Enter your email and receive a magic link to sign in instantly."
+      "passwordlessDesc": "Enter your email and receive a magic link to sign in instantly.",
+      "emailSent": "Email sent!",
+      "checkInbox": "Check your inbox to sign in.",
+      "error": "Error",
+      "errorOccurred": "An error occurred",
+      "verifyTitle": "Check your email",
+      "linkSentTo": "We sent a login link to",
+      "linkSentGeneric": "A login link has been sent to your email.",
+      "clickLink": "Click the link in the email to sign in.",
+      "expires": "The link expires in 24 hours.",
+      "resend": "Resend email",
+      "loginError": "Login error",
+      "invalidLink": "The login link is invalid or has expired.",
+      "retry": "Try again"
     },
     "register": {
       "title": "Sign up",

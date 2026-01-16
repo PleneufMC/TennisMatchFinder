@@ -7,7 +7,7 @@ import { signIn } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
-import { Mail, ArrowRight, Loader2, CheckCircle, Fingerprint } from 'lucide-react';
+import { Mail, ArrowRight, Loader2, CheckCircle } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,8 +15,10 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { loginMagicLinkSchema, type LoginMagicLinkInput } from '@/lib/validations/auth';
 import { PasskeyLoginButton } from '@/components/auth/passkey-login-button';
+import { useTranslations } from '@/lib/i18n';
 
 export function LoginForm() {
+  const { t } = useTranslations('auth.login');
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
   const verify = searchParams.get('verify');
@@ -45,12 +47,12 @@ export function LoginForm() {
       }
 
       setMagicLinkSent(true);
-      toast.success('Email envoyé !', {
-        description: 'Vérifiez votre boîte mail pour vous connecter.',
+      toast.success(t('emailSent'), {
+        description: t('checkInbox'),
       });
     } catch (err) {
-      toast.error('Erreur', {
-        description: err instanceof Error ? err.message : 'Une erreur est survenue',
+      toast.error(t('error'), {
+        description: err instanceof Error ? err.message : t('errorOccurred'),
       });
     } finally {
       setIsLoading(false);
@@ -65,21 +67,21 @@ export function LoginForm() {
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
             <Mail className="h-6 w-6 text-green-600 dark:text-green-400" />
           </div>
-          <CardTitle>Vérifiez votre email</CardTitle>
+          <CardTitle>{t('verifyTitle')}</CardTitle>
           <CardDescription>
             {magicLinkSent ? (
               <>
-                Nous avons envoyé un lien de connexion à{' '}
+                {t('linkSentTo')}{' '}
                 <strong>{form.getValues('email')}</strong>
               </>
             ) : (
-              'Un lien de connexion vous a été envoyé par email.'
+              t('linkSentGeneric')
             )}
           </CardDescription>
         </CardHeader>
         <CardContent className="text-center text-sm text-muted-foreground">
-          <p>Cliquez sur le lien dans l&apos;email pour vous connecter.</p>
-          <p className="mt-2">Le lien expire dans 24 heures.</p>
+          <p>{t('clickLink')}</p>
+          <p className="mt-2">{t('expires')}</p>
         </CardContent>
         <CardFooter className="flex flex-col gap-2">
           <Button
@@ -87,7 +89,7 @@ export function LoginForm() {
             className="w-full"
             onClick={() => setMagicLinkSent(false)}
           >
-            Renvoyer l&apos;email
+            {t('resend')}
           </Button>
         </CardFooter>
       </Card>
@@ -99,16 +101,16 @@ export function LoginForm() {
     return (
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-red-600">Erreur de connexion</CardTitle>
+          <CardTitle className="text-red-600">{t('loginError')}</CardTitle>
           <CardDescription>
             {error === 'Verification' 
-              ? 'Le lien de connexion est invalide ou a expiré.'
-              : 'Une erreur est survenue lors de la connexion.'}
+              ? t('invalidLink')
+              : t('errorOccurred')}
           </CardDescription>
         </CardHeader>
         <CardFooter>
           <Button asChild className="w-full">
-            <Link href="/login">Réessayer</Link>
+            <Link href="/login">{t('retry')}</Link>
           </Button>
         </CardFooter>
       </Card>
@@ -118,21 +120,21 @@ export function LoginForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl">Connexion</CardTitle>
+        <CardTitle className="text-2xl">{t('title')}</CardTitle>
         <CardDescription>
-          Connectez-vous à votre compte TennisMatchFinder
+          {t('description')}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={form.handleSubmit(handleMagicLinkLogin)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t('email')}</Label>
             <div className="relative">
               <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 id="email"
                 type="email"
-                placeholder="votre@email.com"
+                placeholder={t('emailPlaceholder')}
                 className="pl-10"
                 {...form.register('email')}
               />
@@ -148,11 +150,11 @@ export function LoginForm() {
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Envoi en cours...
+                {t('sending')}
               </>
             ) : (
               <>
-                Recevoir le lien de connexion
+                {t('magicLink')}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </>
             )}
@@ -166,7 +168,7 @@ export function LoginForm() {
           </div>
           <div className="relative flex justify-center text-xs uppercase">
             <span className="bg-card px-2 text-muted-foreground">
-              Ou connexion rapide
+              {t('orQuickLogin')}
             </span>
           </div>
         </div>
@@ -181,9 +183,9 @@ export function LoginForm() {
           <div className="flex items-start gap-3">
             <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
             <div className="text-sm">
-              <p className="font-medium">Connexion sans mot de passe</p>
+              <p className="font-medium">{t('passwordless')}</p>
               <p className="text-muted-foreground mt-1">
-                Entrez votre email et recevez un lien magique pour vous connecter instantanément.
+                {t('passwordlessDesc')}
               </p>
             </div>
           </div>
@@ -191,9 +193,9 @@ export function LoginForm() {
       </CardContent>
       <CardFooter className="flex justify-center">
         <p className="text-sm text-muted-foreground">
-          Pas encore de compte ?{' '}
+          {t('noAccount')}{' '}
           <Link href="/register" className="text-primary hover:underline">
-            S&apos;inscrire
+            {t('signUp')}
           </Link>
         </p>
       </CardFooter>
