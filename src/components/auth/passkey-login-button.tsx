@@ -6,6 +6,7 @@ import { Fingerprint, Loader2 } from 'lucide-react';
 import { startAuthentication, browserSupportsWebAuthn } from '@simplewebauthn/browser';
 import { signIn } from 'next-auth/react';
 import { toast } from 'sonner';
+import { useTranslations } from '@/lib/i18n';
 
 interface PasskeyLoginButtonProps {
   callbackUrl?: string;
@@ -16,6 +17,7 @@ export function PasskeyLoginButton({
   callbackUrl = '/dashboard',
   className 
 }: PasskeyLoginButtonProps) {
+  const { t, locale } = useTranslations('auth.login');
   const [isLoading, setIsLoading] = useState(false);
   const [isSupported, setIsSupported] = useState(false);
 
@@ -26,7 +28,9 @@ export function PasskeyLoginButton({
 
   const handlePasskeyLogin = async () => {
     if (!isSupported) {
-      toast.error('Votre navigateur ne supporte pas les Passkeys');
+      toast.error(locale === 'fr' 
+        ? 'Votre navigateur ne supporte pas les Passkeys' 
+        : 'Your browser does not support Passkeys');
       return;
     }
 
@@ -36,7 +40,9 @@ export function PasskeyLoginButton({
       // Step 1: Get authentication options from server
       const optionsRes = await fetch('/api/auth/passkey/authenticate');
       if (!optionsRes.ok) {
-        throw new Error('Erreur lors de la récupération des options');
+        throw new Error(locale === 'fr' 
+          ? 'Erreur lors de la récupération des options' 
+          : 'Error retrieving options');
       }
       const options = await optionsRes.json();
 
@@ -52,7 +58,7 @@ export function PasskeyLoginButton({
 
       if (!verifyRes.ok) {
         const error = await verifyRes.json();
-        throw new Error(error.error || 'Échec de l\'authentification');
+        throw new Error(error.error || (locale === 'fr' ? 'Échec de l\'authentification' : 'Authentication failed'));
       }
 
       const { userId, email } = await verifyRes.json();
@@ -68,7 +74,7 @@ export function PasskeyLoginButton({
         throw new Error(result.error);
       }
 
-      toast.success('Connexion réussie !');
+      toast.success(locale === 'fr' ? 'Connexion réussie !' : 'Successfully logged in!');
       
       // Redirect
       window.location.href = callbackUrl;
@@ -77,12 +83,12 @@ export function PasskeyLoginButton({
       
       // Handle user cancellation gracefully
       if (error instanceof Error && error.name === 'NotAllowedError') {
-        toast.info('Authentification annulée');
+        toast.info(locale === 'fr' ? 'Authentification annulée' : 'Authentication cancelled');
       } else {
         toast.error(
           error instanceof Error 
             ? error.message 
-            : 'Erreur lors de la connexion'
+            : (locale === 'fr' ? 'Erreur lors de la connexion' : 'Login error')
         );
       }
     } finally {
@@ -108,7 +114,7 @@ export function PasskeyLoginButton({
       ) : (
         <Fingerprint className="mr-2 h-4 w-4" />
       )}
-      Connexion avec Passkey
+      {t('passkey')}
     </Button>
   );
 }

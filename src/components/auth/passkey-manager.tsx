@@ -30,7 +30,8 @@ import {
 import { startRegistration, browserSupportsWebAuthn } from '@simplewebauthn/browser';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { fr, enUS } from 'date-fns/locale';
+import { useTranslations } from '@/lib/i18n';
 
 interface Passkey {
   id: string;
@@ -42,6 +43,10 @@ interface Passkey {
 }
 
 export function PasskeyManager() {
+  const { t, locale } = useTranslations('settings.passkeys');
+  const { t: tCommon } = useTranslations('common');
+  const dateLocale = locale === 'fr' ? fr : enUS;
+
   const [passkeys, setPasskeys] = useState<Passkey[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRegistering, setIsRegistering] = useState(false);
@@ -70,7 +75,9 @@ export function PasskeyManager() {
 
   const handleRegisterPasskey = async () => {
     if (!isSupported) {
-      toast.error('Votre navigateur ne supporte pas les Passkeys');
+      toast.error(locale === 'fr' 
+        ? 'Votre navigateur ne supporte pas les Passkeys' 
+        : 'Your browser does not support Passkeys');
       return;
     }
 
@@ -80,7 +87,9 @@ export function PasskeyManager() {
       // Step 1: Get registration options
       const optionsRes = await fetch('/api/auth/passkey/register');
       if (!optionsRes.ok) {
-        throw new Error('Erreur lors de la récupération des options');
+        throw new Error(locale === 'fr' 
+          ? 'Erreur lors de la récupération des options' 
+          : 'Error retrieving options');
       }
       const options = await optionsRes.json();
 
@@ -99,10 +108,10 @@ export function PasskeyManager() {
 
       if (!verifyRes.ok) {
         const error = await verifyRes.json();
-        throw new Error(error.error || 'Échec de l\'enregistrement');
+        throw new Error(error.error || (locale === 'fr' ? 'Échec de l\'enregistrement' : 'Registration failed'));
       }
 
-      toast.success('Passkey ajoutée avec succès ! 🎉');
+      toast.success(locale === 'fr' ? 'Passkey ajoutée avec succès ! 🎉' : 'Passkey added successfully! 🎉');
       setNewPasskeyName('');
       setShowNameDialog(false);
       fetchPasskeys();
@@ -110,14 +119,14 @@ export function PasskeyManager() {
       console.error('Passkey registration error:', error);
       
       if (error instanceof Error && error.name === 'NotAllowedError') {
-        toast.info('Enregistrement annulé');
+        toast.info(locale === 'fr' ? 'Enregistrement annulé' : 'Registration cancelled');
       } else if (error instanceof Error && error.name === 'InvalidStateError') {
-        toast.error('Cette Passkey est déjà enregistrée');
+        toast.error(locale === 'fr' ? 'Cette Passkey est déjà enregistrée' : 'This Passkey is already registered');
       } else {
         toast.error(
           error instanceof Error 
             ? error.message 
-            : 'Erreur lors de l\'enregistrement'
+            : (locale === 'fr' ? 'Erreur lors de l\'enregistrement' : 'Registration error')
         );
       }
     } finally {
@@ -132,14 +141,14 @@ export function PasskeyManager() {
       });
 
       if (!res.ok) {
-        throw new Error('Erreur lors de la suppression');
+        throw new Error(locale === 'fr' ? 'Erreur lors de la suppression' : 'Deletion error');
       }
 
-      toast.success('Passkey supprimée');
+      toast.success(locale === 'fr' ? 'Passkey supprimée' : 'Passkey deleted');
       fetchPasskeys();
     } catch (error) {
       console.error('Error deleting passkey:', error);
-      toast.error('Erreur lors de la suppression');
+      toast.error(locale === 'fr' ? 'Erreur lors de la suppression' : 'Deletion error');
     }
   };
 
@@ -149,16 +158,17 @@ export function PasskeyManager() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Fingerprint className="h-5 w-5" />
-            Passkeys
+            {t('title')}
           </CardTitle>
           <CardDescription>
-            Connexion biométrique (Touch ID, Face ID)
+            {t('description')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            Votre navigateur ne supporte pas les Passkeys. 
-            Essayez avec un navigateur plus récent (Safari, Chrome, Edge).
+            {locale === 'fr' 
+              ? 'Votre navigateur ne supporte pas les Passkeys. Essayez avec un navigateur plus récent (Safari, Chrome, Edge).'
+              : 'Your browser does not support Passkeys. Try with a newer browser (Safari, Chrome, Edge).'}
           </p>
         </CardContent>
       </Card>
@@ -170,10 +180,10 @@ export function PasskeyManager() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Fingerprint className="h-5 w-5" />
-          Passkeys
+          {t('title')}
         </CardTitle>
         <CardDescription>
-          Connectez-vous rapidement avec Touch ID, Face ID ou votre empreinte digitale
+          {t('description')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -182,10 +192,9 @@ export function PasskeyManager() {
           <div className="flex items-start gap-3">
             <Shield className="h-5 w-5 text-primary mt-0.5" />
             <div>
-              <p className="font-medium text-primary">Connexion sécurisée et rapide</p>
+              <p className="font-medium text-primary">{t('secureLogin')}</p>
               <p className="text-muted-foreground mt-1">
-                Les Passkeys utilisent la biométrie de votre appareil pour vous connecter 
-                sans mot de passe. Plus sécurisé et plus pratique !
+                {t('secureLoginDesc')}
               </p>
             </div>
           </div>
@@ -199,9 +208,9 @@ export function PasskeyManager() {
         ) : passkeys.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <Smartphone className="h-12 w-12 mx-auto mb-3 opacity-50" />
-            <p>Aucune Passkey configurée</p>
+            <p>{t('noPasskeys')}</p>
             <p className="text-sm mt-1">
-              Ajoutez une Passkey pour vous connecter avec votre empreinte ou Face ID
+              {t('noPasskeysDesc')}
             </p>
           </div>
         ) : (
@@ -221,23 +230,23 @@ export function PasskeyManager() {
                       {passkey.credentialBackedUp && (
                         <Badge variant="secondary" className="text-xs">
                           <CheckCircle2 className="h-3 w-3 mr-1" />
-                          Sauvegardée
+                          {t('backedUp')}
                         </Badge>
                       )}
                     </div>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
                       <span className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
-                        Créée {formatDistanceToNow(new Date(passkey.createdAt), { 
+                        {t('created')} {formatDistanceToNow(new Date(passkey.createdAt), { 
                           addSuffix: true, 
-                          locale: fr 
+                          locale: dateLocale 
                         })}
                       </span>
                       {passkey.lastUsedAt && (
                         <span>
-                          • Utilisée {formatDistanceToNow(new Date(passkey.lastUsedAt), { 
+                          • {t('lastUsed')} {formatDistanceToNow(new Date(passkey.lastUsedAt), { 
                             addSuffix: true, 
-                            locale: fr 
+                            locale: dateLocale 
                           })}
                         </span>
                       )}
@@ -253,19 +262,18 @@ export function PasskeyManager() {
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Supprimer cette Passkey ?</AlertDialogTitle>
+                      <AlertDialogTitle>{t('deletePasskey')}</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Vous ne pourrez plus vous connecter avec cette Passkey. 
-                        Cette action est irréversible.
+                        {t('deletePasskeyDesc')}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Annuler</AlertDialogCancel>
+                      <AlertDialogCancel>{tCommon('cancel')}</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={() => handleDeletePasskey(passkey.id)}
                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       >
-                        Supprimer
+                        {tCommon('delete')}
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
@@ -287,29 +295,32 @@ export function PasskeyManager() {
               ) : (
                 <Plus className="mr-2 h-4 w-4" />
               )}
-              Ajouter une Passkey
+              {t('addPasskey')}
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Ajouter une Passkey</AlertDialogTitle>
+              <AlertDialogTitle>{t('addPasskey')}</AlertDialogTitle>
               <AlertDialogDescription>
-                Donnez un nom à cette Passkey pour l&#39;identifier facilement 
-                (ex: &quot;iPhone de Pierre&quot;, &quot;MacBook Pro&quot;)
+                {locale === 'fr'
+                  ? 'Donnez un nom à cette Passkey pour l\'identifier facilement (ex: "iPhone de Pierre", "MacBook Pro")'
+                  : 'Give this Passkey a name to identify it easily (e.g., "Pierre\'s iPhone", "MacBook Pro")'}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <div className="py-4">
-              <Label htmlFor="passkey-name">Nom (optionnel)</Label>
+              <Label htmlFor="passkey-name">
+                {locale === 'fr' ? 'Nom (optionnel)' : 'Name (optional)'}
+              </Label>
               <Input
                 id="passkey-name"
                 value={newPasskeyName}
                 onChange={(e) => setNewPasskeyName(e.target.value)}
-                placeholder="Mon iPhone"
+                placeholder={locale === 'fr' ? 'Mon iPhone' : 'My iPhone'}
                 className="mt-2"
               />
             </div>
             <AlertDialogFooter>
-              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogCancel>{tCommon('cancel')}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleRegisterPasskey}
                 disabled={isRegistering}
@@ -319,7 +330,7 @@ export function PasskeyManager() {
                 ) : (
                   <Fingerprint className="mr-2 h-4 w-4" />
                 )}
-                Continuer
+                {tCommon('confirm')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
