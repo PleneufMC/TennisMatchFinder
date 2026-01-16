@@ -20,6 +20,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { PlayerAvatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { LanguageSwitcher } from '@/components/language-switcher';
 
 import type { PlayerData } from '@/types/player';
 
@@ -67,6 +68,9 @@ export function Header({ player, notificationCount = 0, onMenuClick }: HeaderPro
 
       {/* Partie droite */}
       <div className="flex items-center gap-2">
+        {/* Language Switcher */}
+        <LanguageSwitcher />
+
         {/* Toggle thème */}
         <Button
           variant="ghost"

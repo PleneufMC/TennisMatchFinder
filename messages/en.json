@@ -1,0 +1,245 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "search": "Search",
+    "filter": "Filter",
+    "all": "All",
+    "none": "None",
+    "yes": "Yes",
+    "no": "No",
+    "or": "or",
+    "and": "and",
+    "error": "Error",
+    "success": "Success"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "matches": "Matches",
+    "ranking": "Ranking",
+    "profile": "Profile",
+    "settings": "Settings",
+    "suggestions": "Suggestions",
+    "forum": "Forum",
+    "chat": "Messages",
+    "notifications": "Notifications",
+    "logout": "Log out",
+    "login": "Log in",
+    "register": "Sign up"
+  },
+  "auth": {
+    "login": {
+      "title": "Log in",
+      "description": "Sign in to your TennisMatchFinder account",
+      "email": "Email",
+      "emailPlaceholder": "your@email.com",
+      "magicLink": "Send magic link",
+      "sending": "Sending...",
+      "noAccount": "Don't have an account?",
+      "signUp": "Sign up",
+      "passkey": "Sign in with Passkey",
+      "orQuickLogin": "Or quick login",
+      "passwordless": "Passwordless login",
+      "passwordlessDesc": "Enter your email and receive a magic link to sign in instantly."
+    },
+    "register": {
+      "title": "Sign up",
+      "description": "Create your TennisMatchFinder account",
+      "alreadyAccount": "Already have an account?",
+      "signIn": "Sign in"
+    },
+    "verify": {
+      "title": "Check your email",
+      "description": "A login link has been sent to your email.",
+      "clickLink": "Click the link in the email to sign in.",
+      "expires": "The link expires in 24 hours.",
+      "resend": "Resend email"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome",
+    "yourElo": "Your ELO",
+    "rank": "Rank",
+    "matchesPlayed": "Matches played",
+    "wins": "Wins",
+    "losses": "Losses",
+    "winRate": "Win rate",
+    "recentMatches": "Recent matches",
+    "noMatches": "No matches recorded",
+    "pendingMatches": "Pending matches",
+    "quickActions": "Quick actions",
+    "recordMatch": "Record a match",
+    "findOpponent": "Find an opponent",
+    "viewRanking": "View ranking"
+  },
+  "matches": {
+    "title": "Matches",
+    "newMatch": "New match",
+    "opponent": "Opponent",
+    "score": "Score",
+    "date": "Date",
+    "format": "Format",
+    "surface": "Surface",
+    "status": "Status",
+    "pending": "Pending",
+    "validated": "Validated",
+    "contested": "Contested",
+    "winner": "Winner",
+    "loser": "Loser",
+    "confirmMatch": "Confirm match",
+    "contestMatch": "Contest match",
+    "formats": {
+      "oneSet": "1 set",
+      "twoSets": "Best of 3 sets",
+      "twoSetsSuperTb": "2 sets + Super TB",
+      "threeSets": "3 sets",
+      "superTiebreak": "Super Tie-Break (10 pts)"
+    },
+    "surfaces": {
+      "clay": "Clay",
+      "hard": "Hard",
+      "grass": "Grass",
+      "indoor": "Indoor"
+    }
+  },
+  "ranking": {
+    "title": "Ranking",
+    "clubRanking": "Club ranking",
+    "globalRanking": "Global ranking",
+    "position": "Position",
+    "player": "Player",
+    "elo": "ELO",
+    "matchesCount": "Matches",
+    "legend": "Rank legend",
+    "ranks": {
+      "grandMaster": "Grand Master",
+      "expert": "Expert",
+      "advanced": "Advanced",
+      "intermediatePlus": "Intermediate+",
+      "intermediate": "Intermediate",
+      "beginnerPlus": "Beginner+",
+      "beginner": "Beginner"
+    }
+  },
+  "profile": {
+    "title": "Profile",
+    "editProfile": "Edit profile",
+    "fullName": "Full name",
+    "email": "Email",
+    "phone": "Phone",
+    "city": "City",
+    "club": "Club",
+    "level": "Level",
+    "bio": "Bio",
+    "availability": "Availability",
+    "badges": "Badges",
+    "trophyCase": "Trophy case",
+    "statistics": "Statistics",
+    "eloHistory": "ELO history",
+    "memberSince": "Member since"
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Manage your preferences and account settings",
+    "notifications": {
+      "title": "Notifications",
+      "description": "Choose how you want to be notified",
+      "email": "Email notifications",
+      "emailDesc": "Receive important notifications by email",
+      "matchProposals": "Match proposals",
+      "matchProposalsDesc": "Be notified of new match proposals",
+      "chatMessages": "Chat messages",
+      "chatMessagesDesc": "Notifications for new messages",
+      "matchResults": "Match results",
+      "matchResultsDesc": "Be notified when a match needs to be confirmed"
+    },
+    "privacy": {
+      "title": "Privacy",
+      "description": "Control the visibility of your information",
+      "profileVisible": "Profile visible",
+      "profileVisibleDesc": "Other members can see your profile",
+      "showElo": "Show my ELO",
+      "showEloDesc": "Your ELO ranking is visible to others",
+      "publicHistory": "Public match history",
+      "publicHistoryDesc": "Your matches are visible in the ranking"
+    },
+    "appearance": {
+      "title": "Appearance",
+      "description": "Customize the app appearance",
+      "theme": "Theme",
+      "themeDesc": "Use the sun/moon button in the header to change theme",
+      "automatic": "Automatic"
+    },
+    "language": {
+      "title": "Language & Region",
+      "description": "Localization settings",
+      "language": "Language",
+      "languageDesc": "Interface language",
+      "dateFormat": "Date format",
+      "dateFormatDesc": "Date display format"
+    },
+    "passkeys": {
+      "title": "Passkeys",
+      "description": "Sign in quickly with Touch ID, Face ID or your fingerprint",
+      "secureLogin": "Secure and fast login",
+      "secureLoginDesc": "Passkeys use your device's biometrics to sign you in without a password. More secure and more convenient!",
+      "noPasskeys": "No Passkey configured",
+      "noPasskeysDesc": "Add a Passkey to sign in with your fingerprint or Face ID",
+      "addPasskey": "Add a Passkey",
+      "deletePasskey": "Delete this Passkey?",
+      "deletePasskeyDesc": "You will no longer be able to sign in with this Passkey. This action is irreversible.",
+      "backedUp": "Backed up",
+      "created": "Created",
+      "lastUsed": "Used"
+    },
+    "dangerZone": {
+      "title": "Danger zone",
+      "description": "Irreversible actions on your account",
+      "deleteAccount": "Delete my account",
+      "deleteAccountDesc": "Permanently delete your account and all your data"
+    }
+  },
+  "suggestions": {
+    "title": "Suggestions",
+    "findOpponent": "Find an opponent",
+    "similarLevel": "Similar level",
+    "newMembers": "New members to welcome",
+    "availableNow": "Available now",
+    "proposeMatch": "Propose a match"
+  },
+  "pricing": {
+    "title": "Pricing",
+    "free": "Free",
+    "premium": "Premium",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "perMonth": "/month",
+    "perYear": "/year",
+    "currentPlan": "Current plan",
+    "upgrade": "Upgrade to Premium",
+    "features": "Features",
+    "earlyBird": "Early Bird",
+    "earlyBirdDesc": "100% free access during the Early Bird period"
+  },
+  "errors": {
+    "notFound": "Page not found",
+    "unauthorized": "Unauthorized",
+    "serverError": "Server error",
+    "networkError": "Connection error",
+    "tryAgain": "Try again"
+  },
+  "time": {
+    "justNow": "Just now",
+    "minutesAgo": "{count} minutes ago",
+    "hoursAgo": "{count} hours ago",
+    "daysAgo": "{count} days ago",
+    "weeksAgo": "{count} weeks ago"
+  }
+}

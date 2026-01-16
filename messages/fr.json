@@ -1,0 +1,245 @@
+{
+  "common": {
+    "loading": "Chargement...",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "confirm": "Confirmer",
+    "back": "Retour",
+    "next": "Suivant",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "all": "Tous",
+    "none": "Aucun",
+    "yes": "Oui",
+    "no": "Non",
+    "or": "ou",
+    "and": "et",
+    "error": "Erreur",
+    "success": "Succès"
+  },
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "matches": "Matchs",
+    "ranking": "Classement",
+    "profile": "Profil",
+    "settings": "Paramètres",
+    "suggestions": "Suggestions",
+    "forum": "Forum",
+    "chat": "Messages",
+    "notifications": "Notifications",
+    "logout": "Déconnexion",
+    "login": "Connexion",
+    "register": "Inscription"
+  },
+  "auth": {
+    "login": {
+      "title": "Connexion",
+      "description": "Connectez-vous à votre compte TennisMatchFinder",
+      "email": "Email",
+      "emailPlaceholder": "votre@email.com",
+      "magicLink": "Recevoir le lien de connexion",
+      "sending": "Envoi en cours...",
+      "noAccount": "Pas encore de compte ?",
+      "signUp": "S'inscrire",
+      "passkey": "Connexion avec Passkey",
+      "orQuickLogin": "Ou connexion rapide",
+      "passwordless": "Connexion sans mot de passe",
+      "passwordlessDesc": "Entrez votre email et recevez un lien magique pour vous connecter instantanément."
+    },
+    "register": {
+      "title": "Inscription",
+      "description": "Créez votre compte TennisMatchFinder",
+      "alreadyAccount": "Déjà un compte ?",
+      "signIn": "Se connecter"
+    },
+    "verify": {
+      "title": "Vérifiez votre email",
+      "description": "Un lien de connexion vous a été envoyé par email.",
+      "clickLink": "Cliquez sur le lien dans l'email pour vous connecter.",
+      "expires": "Le lien expire dans 24 heures.",
+      "resend": "Renvoyer l'email"
+    }
+  },
+  "dashboard": {
+    "title": "Tableau de bord",
+    "welcome": "Bienvenue",
+    "yourElo": "Votre ELO",
+    "rank": "Rang",
+    "matchesPlayed": "Matchs joués",
+    "wins": "Victoires",
+    "losses": "Défaites",
+    "winRate": "Taux de victoire",
+    "recentMatches": "Matchs récents",
+    "noMatches": "Aucun match enregistré",
+    "pendingMatches": "Matchs en attente",
+    "quickActions": "Actions rapides",
+    "recordMatch": "Enregistrer un match",
+    "findOpponent": "Trouver un adversaire",
+    "viewRanking": "Voir le classement"
+  },
+  "matches": {
+    "title": "Matchs",
+    "newMatch": "Nouveau match",
+    "opponent": "Adversaire",
+    "score": "Score",
+    "date": "Date",
+    "format": "Format",
+    "surface": "Surface",
+    "status": "Statut",
+    "pending": "En attente",
+    "validated": "Validé",
+    "contested": "Contesté",
+    "winner": "Vainqueur",
+    "loser": "Perdant",
+    "confirmMatch": "Confirmer le match",
+    "contestMatch": "Contester le match",
+    "formats": {
+      "oneSet": "1 set",
+      "twoSets": "2 sets gagnants",
+      "twoSetsSuperTb": "2 sets + Super TB",
+      "threeSets": "3 sets",
+      "superTiebreak": "Super Tie-Break (10 pts)"
+    },
+    "surfaces": {
+      "clay": "Terre battue",
+      "hard": "Dur",
+      "grass": "Gazon",
+      "indoor": "Indoor"
+    }
+  },
+  "ranking": {
+    "title": "Classement",
+    "clubRanking": "Classement du club",
+    "globalRanking": "Classement global",
+    "position": "Position",
+    "player": "Joueur",
+    "elo": "ELO",
+    "matchesCount": "Matchs",
+    "legend": "Légende des rangs",
+    "ranks": {
+      "grandMaster": "Grand Maître",
+      "expert": "Expert",
+      "advanced": "Avancé",
+      "intermediatePlus": "Intermédiaire+",
+      "intermediate": "Intermédiaire",
+      "beginnerPlus": "Débutant+",
+      "beginner": "Débutant"
+    }
+  },
+  "profile": {
+    "title": "Profil",
+    "editProfile": "Modifier le profil",
+    "fullName": "Nom complet",
+    "email": "Email",
+    "phone": "Téléphone",
+    "city": "Ville",
+    "club": "Club",
+    "level": "Niveau",
+    "bio": "Bio",
+    "availability": "Disponibilités",
+    "badges": "Badges",
+    "trophyCase": "Vitrine des trophées",
+    "statistics": "Statistiques",
+    "eloHistory": "Historique ELO",
+    "memberSince": "Membre depuis"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "description": "Gérez vos préférences et paramètres de compte",
+    "notifications": {
+      "title": "Notifications",
+      "description": "Choisissez comment vous souhaitez être notifié",
+      "email": "Notifications par email",
+      "emailDesc": "Recevoir les notifications importantes par email",
+      "matchProposals": "Propositions de match",
+      "matchProposalsDesc": "Être notifié des nouvelles propositions de match",
+      "chatMessages": "Messages du chat",
+      "chatMessagesDesc": "Notifications pour les nouveaux messages",
+      "matchResults": "Résultats de match",
+      "matchResultsDesc": "Être notifié quand un match doit être confirmé"
+    },
+    "privacy": {
+      "title": "Confidentialité",
+      "description": "Contrôlez la visibilité de vos informations",
+      "profileVisible": "Profil visible",
+      "profileVisibleDesc": "Les autres membres peuvent voir votre profil",
+      "showElo": "Afficher mon ELO",
+      "showEloDesc": "Votre classement ELO est visible par les autres",
+      "publicHistory": "Historique des matchs public",
+      "publicHistoryDesc": "Vos matchs sont visibles dans le classement"
+    },
+    "appearance": {
+      "title": "Apparence",
+      "description": "Personnalisez l'apparence de l'application",
+      "theme": "Thème",
+      "themeDesc": "Utilisez le bouton soleil/lune dans l'en-tête pour changer de thème",
+      "automatic": "Automatique"
+    },
+    "language": {
+      "title": "Langue et région",
+      "description": "Paramètres de localisation",
+      "language": "Langue",
+      "languageDesc": "Langue de l'interface",
+      "dateFormat": "Format de date",
+      "dateFormatDesc": "Format d'affichage des dates"
+    },
+    "passkeys": {
+      "title": "Passkeys",
+      "description": "Connectez-vous rapidement avec Touch ID, Face ID ou votre empreinte digitale",
+      "secureLogin": "Connexion sécurisée et rapide",
+      "secureLoginDesc": "Les Passkeys utilisent la biométrie de votre appareil pour vous connecter sans mot de passe. Plus sécurisé et plus pratique !",
+      "noPasskeys": "Aucune Passkey configurée",
+      "noPasskeysDesc": "Ajoutez une Passkey pour vous connecter avec votre empreinte ou Face ID",
+      "addPasskey": "Ajouter une Passkey",
+      "deletePasskey": "Supprimer cette Passkey ?",
+      "deletePasskeyDesc": "Vous ne pourrez plus vous connecter avec cette Passkey. Cette action est irréversible.",
+      "backedUp": "Sauvegardée",
+      "created": "Créée",
+      "lastUsed": "Utilisée"
+    },
+    "dangerZone": {
+      "title": "Zone dangereuse",
+      "description": "Actions irréversibles sur votre compte",
+      "deleteAccount": "Supprimer mon compte",
+      "deleteAccountDesc": "Supprime définitivement votre compte et toutes vos données"
+    }
+  },
+  "suggestions": {
+    "title": "Suggestions",
+    "findOpponent": "Trouver un adversaire",
+    "similarLevel": "Niveau similaire",
+    "newMembers": "Nouveaux membres à accueillir",
+    "availableNow": "Disponibles maintenant",
+    "proposeMatch": "Proposer un match"
+  },
+  "pricing": {
+    "title": "Tarifs",
+    "free": "Gratuit",
+    "premium": "Premium",
+    "monthly": "Mensuel",
+    "yearly": "Annuel",
+    "perMonth": "/mois",
+    "perYear": "/an",
+    "currentPlan": "Plan actuel",
+    "upgrade": "Passer à Premium",
+    "features": "Fonctionnalités",
+    "earlyBird": "Early Bird",
+    "earlyBirdDesc": "Accès 100% gratuit pendant la période Early Bird"
+  },
+  "errors": {
+    "notFound": "Page non trouvée",
+    "unauthorized": "Non autorisé",
+    "serverError": "Erreur serveur",
+    "networkError": "Erreur de connexion",
+    "tryAgain": "Réessayer"
+  },
+  "time": {
+    "justNow": "À l'instant",
+    "minutesAgo": "il y a {count} minutes",
+    "hoursAgo": "il y a {count} heures",
+    "daysAgo": "il y a {count} jours",
+    "weeksAgo": "il y a {count} semaines"
+  }
+}

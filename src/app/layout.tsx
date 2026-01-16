@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import { Suspense } from 'react';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { SessionProvider } from '@/components/providers/session-provider';
+import { I18nProvider } from '@/lib/i18n';
 import { Toaster } from '@/components/ui/toast';
 import { CookieBanner } from '@/components/cookie-banner';
 import { GoogleAnalyticsWithConsent } from '@/components/google-analytics';
@@ -108,7 +109,9 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            {children}
+            <I18nProvider>
+              {children}
+            </I18nProvider>
             <Toaster />
             <CookieBanner />
             {/* Google Analytics - conditionnel au consentement */}
