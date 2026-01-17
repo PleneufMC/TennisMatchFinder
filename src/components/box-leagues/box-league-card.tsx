@@ -1,9 +1,22 @@
 'use client';
 
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { 
   Trophy, 
   Calendar, 
@@ -13,7 +26,16 @@ import {
   Clock,
   ChevronRight,
   Target,
+  Trash2,
+  Loader2,
+  MoreVertical,
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
 import type { BoxLeague } from '@/lib/box-leagues/types';
 import { formatDistanceToNow, format, isAfter, isBefore } from 'date-fns';
@@ -24,6 +46,8 @@ interface BoxLeagueCardProps {
   participantCount?: number;
   isRegistered?: boolean;
   myRank?: number;
+  isAdmin?: boolean;
+  onDeleted?: () => void;
 }
 
 const STATUS_CONFIG = {
@@ -38,7 +62,18 @@ const getStatusConfig = (status: string) => {
   return STATUS_CONFIG[status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.draft;
 };
 
-export function BoxLeagueCard({ league, participantCount = 0, isRegistered, myRank }: BoxLeagueCardProps) {
+export function BoxLeagueCard({ 
+  league, 
+  participantCount = 0, 
+  isRegistered, 
+  myRank,
+  isAdmin = false,
+  onDeleted,
+}: BoxLeagueCardProps) {
+  const router = useRouter();
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  
   const statusConfig = getStatusConfig(league.status);
   const now = new Date();
   const registrationOpen = league.status === 'registration' && isBefore(now, new Date(league.registrationDeadline));
@@ -47,6 +82,30 @@ export function BoxLeagueCard({ league, participantCount = 0, isRegistered, myRa
     : null;
   
   const progressPercent = (participantCount / league.maxPlayers) * 100;
+  const canDelete = isAdmin && ['draft', 'registration', 'cancelled'].includes(league.status);
+
+  async function handleDelete() {
+    try {
+      setDeleting(true);
+      const res = await fetch(`/api/box-leagues/${league.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Erreur lors de la suppression');
+      }
+
+      setShowDeleteDialog(false);
+      onDeleted?.();
+      router.refresh();
+    } catch (err: any) {
+      console.error('Error deleting league:', err);
+      alert(err.message || 'Erreur lors de la suppression');
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   return (
     <Card className="hover:shadow-lg transition-shadow">
@@ -69,7 +128,27 @@ export function BoxLeagueCard({ league, participantCount = 0, isRegistered, myRa
               </CardDescription>
             </div>
           </div>
-          <Badge variant={statusConfig.variant}>{statusConfig.label}</Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant={statusConfig.variant}>{statusConfig.label}</Badge>
+            {canDelete && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive"
+                    onClick={() => setShowDeleteDialog(true)}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Supprimer
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
         </div>
       </CardHeader>
       
@@ -91,7 +170,7 @@ export function BoxLeagueCard({ league, participantCount = 0, isRegistered, myRa
             <div className="flex items-center gap-2 text-amber-600">
               <Clock className="h-4 w-4" />
               <span className="text-xs">
-                Inscriptions jusqu'au {format(new Date(league.registrationDeadline), 'dd MMM', { locale: fr })}
+                Inscriptions jusqu&apos;au {format(new Date(league.registrationDeadline), 'dd MMM', { locale: fr })}
               </span>
             </div>
           )}
@@ -151,12 +230,41 @@ export function BoxLeagueCard({ league, participantCount = 0, isRegistered, myRa
           {registrationOpen && !isRegistered && (
             <Button variant="outline" asChild>
               <Link href={`/box-leagues/${league.id}?register=true`}>
-                S'inscrire
+                S&apos;inscrire
               </Link>
             </Button>
           )}
         </div>
       </CardContent>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer la Box League ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. La Box League &quot;{league.name}&quot; et toutes ses données (participants, matchs) seront supprimées.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Suppression...
+                </>
+              ) : (
+                'Supprimer'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

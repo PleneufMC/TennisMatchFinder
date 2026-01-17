@@ -63,7 +63,7 @@ export default function BoxLeaguesPage() {
   const completedLeagues = leagues.filter(l => l.status === 'completed');
   const myLeagueIds = new Set(myLeagues.map(l => l.id));
 
-  const handleLeagueCreated = () => {
+  const reloadLeagues = () => {
     // Recharger les donnees
     setLoading(true);
     Promise.all([
@@ -74,6 +74,9 @@ export default function BoxLeaguesPage() {
       setMyLeagues(myData.leagues || []);
     }).finally(() => setLoading(false));
   };
+
+  const handleLeagueCreated = reloadLeagues;
+  const handleLeagueDeleted = reloadLeagues;
 
   if (loading) {
     return (
@@ -220,6 +223,8 @@ export default function BoxLeaguesPage() {
                   key={league.id} 
                   league={league}
                   isRegistered={myLeagueIds.has(league.id)}
+                  isAdmin={player?.isAdmin}
+                  onDeleted={handleLeagueDeleted}
                 />
               ))}
             </div>
@@ -237,6 +242,8 @@ export default function BoxLeaguesPage() {
                   key={league.id} 
                   league={league}
                   isRegistered={myLeagueIds.has(league.id)}
+                  isAdmin={player?.isAdmin}
+                  onDeleted={handleLeagueDeleted}
                 />
               ))}
             </div>
@@ -254,6 +261,8 @@ export default function BoxLeaguesPage() {
                   key={league.id} 
                   league={league}
                   isRegistered={myLeagueIds.has(league.id)}
+                  isAdmin={player?.isAdmin}
+                  onDeleted={handleLeagueDeleted}
                 />
               ))}
             </div>
@@ -278,6 +287,8 @@ export default function BoxLeaguesPage() {
                   key={league.id} 
                   league={league}
                   isRegistered={true}
+                  isAdmin={player?.isAdmin}
+                  onDeleted={handleLeagueDeleted}
                 />
               ))}
             </div>
