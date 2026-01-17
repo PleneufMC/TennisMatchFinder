@@ -11,6 +11,7 @@ import {
   getBoxLeaguesByClub,
   createBoxLeague,
   getPlayerActiveLeagues,
+  updateBoxLeagueStatus,
 } from '@/lib/box-leagues';
 import type { BoxLeagueStatus } from '@/lib/box-leagues';
 
@@ -85,6 +86,7 @@ export async function POST(request: NextRequest) {
       relegationSpots,
       poolCount,
       playersPerPool,
+      openRegistration,
     } = body;
 
     // Validation
@@ -115,10 +117,18 @@ export async function POST(request: NextRequest) {
       createdBy: player.id,
     });
 
+    // Si l'option openRegistration est activée, passer directement en mode inscription
+    if (openRegistration && league.id) {
+      await updateBoxLeagueStatus(league.id, 'registration');
+      league.status = 'registration';
+    }
+
     return NextResponse.json({
       success: true,
       league,
-      message: 'Box League créée avec succès',
+      message: openRegistration 
+        ? 'Box League créée et inscriptions ouvertes !' 
+        : 'Box League créée avec succès (en mode brouillon)',
     });
   } catch (error) {
     console.error('Error creating box league:', error);

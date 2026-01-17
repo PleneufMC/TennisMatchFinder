@@ -23,6 +23,12 @@ import {
   AlertCircle,
   Loader2,
   Trash2,
+  Play,
+  Send,
+  Square,
+  XCircle,
+  Settings,
+  UserPlus,
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -74,7 +80,9 @@ export default function BoxLeagueDetailPage({ params }: { params: PageParams }) 
   const [loading, setLoading] = useState(true);
   const [registering, setRegistering] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const { data: session } = useSession();
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -180,6 +188,47 @@ export default function BoxLeagueDetailPage({ params }: { params: PageParams }) 
     }
   }
 
+  async function handleStatusChange(newStatus: string) {
+    if (!league) return;
+
+    try {
+      setUpdatingStatus(true);
+      setError(null);
+      const res = await fetch(`/api/box-leagues/${league.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Erreur lors de la mise à jour du statut');
+      }
+
+      // Recharger les données
+      const detailRes = await fetch(`/api/box-leagues/${league.id}`);
+      const data = await detailRes.json();
+      setLeague(data.league);
+      setStandings(data.standings || []);
+      setMatches(data.matches || []);
+      setMyMatches(data.myMatches || []);
+      
+      // Afficher un message de succès
+      const statusMessages: Record<string, string> = {
+        registration: 'Les inscriptions sont maintenant ouvertes !',
+        active: 'La Box League a démarré !',
+        completed: 'La Box League est terminée.',
+        cancelled: 'La Box League a été annulée.',
+      };
+      setSuccessMessage(statusMessages[newStatus] || 'Statut mis à jour');
+      setTimeout(() => setSuccessMessage(null), 5000);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setUpdatingStatus(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="container mx-auto py-6 px-4 max-w-5xl space-y-6">
@@ -211,6 +260,33 @@ export default function BoxLeagueDetailPage({ params }: { params: PageParams }) 
   const registrationOpen = league.status === 'registration' && isBefore(new Date(), new Date(league.registrationDeadline));
   const myRank = standings.find(s => isRegistered)?.rank;
   const participantCount = standings.length;
+
+  // Déterminer les actions admin disponibles selon le statut actuel
+  const getAvailableStatusActions = () => {
+    if (!isAdmin) return [];
+    
+    switch (league.status) {
+      case 'draft':
+        return [
+          { status: 'registration', label: 'Ouvrir les inscriptions', icon: Send, color: 'bg-green-600 hover:bg-green-700' },
+          { status: 'cancelled', label: 'Annuler', icon: XCircle, color: 'bg-red-600 hover:bg-red-700' },
+        ];
+      case 'registration':
+        return [
+          { status: 'active', label: 'Démarrer la compétition', icon: Play, color: 'bg-blue-600 hover:bg-blue-700', disabled: participantCount < league.minPlayers },
+          { status: 'draft', label: 'Repasser en brouillon', icon: Clock, color: 'bg-gray-600 hover:bg-gray-700' },
+          { status: 'cancelled', label: 'Annuler', icon: XCircle, color: 'bg-red-600 hover:bg-red-700' },
+        ];
+      case 'active':
+        return [
+          { status: 'completed', label: 'Terminer la compétition', icon: Square, color: 'bg-gray-600 hover:bg-gray-700' },
+        ];
+      default:
+        return [];
+    }
+  };
+
+  const availableActions = getAvailableStatusActions();
 
   return (
     <div className="container mx-auto py-6 px-4 max-w-5xl">
@@ -279,6 +355,75 @@ export default function BoxLeagueDetailPage({ params }: { params: PageParams }) 
               }}
             />
           )}
+          {/* Boutons de gestion du statut admin */}
+          {isAdmin && availableActions.length > 0 && (
+            <div className="flex flex-col gap-2">
+              {availableActions.map((action) => {
+                const ActionIcon = action.icon;
+                return (
+                  <AlertDialog key={action.status}>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        size="sm" 
+                        className={`gap-2 text-white ${action.color}`}
+                        disabled={updatingStatus || action.disabled}
+                      >
+                        <ActionIcon className="h-4 w-4" />
+                        {action.label}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>{action.label} ?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          {action.status === 'registration' && (
+                            <>Les joueurs pourront s&apos;inscrire à cette Box League jusqu&apos;au {format(new Date(league.registrationDeadline), 'dd MMMM yyyy', { locale: fr })}.</>
+                          )}
+                          {action.status === 'active' && (
+                            <>La compétition va démarrer avec {participantCount} participants. Les matchs seront générés automatiquement.</>
+                          )}
+                          {action.status === 'completed' && (
+                            <>La compétition sera marquée comme terminée. Les classements finaux seront calculés et les joueurs seront notifiés.</>
+                          )}
+                          {action.status === 'cancelled' && (
+                            <>Cette action est irréversible. La Box League sera annulée et les inscriptions seront fermées.</>
+                          )}
+                          {action.status === 'draft' && (
+                            <>La Box League repassera en mode brouillon. Les inscriptions seront temporairement fermées.</>
+                          )}
+                        </AlertDialogDescription>
+                        {action.disabled && action.status === 'active' && (
+                          <div className="mt-2 p-2 bg-amber-50 dark:bg-amber-950/30 rounded text-sm text-amber-700 dark:text-amber-300">
+                            Minimum {league.minPlayers} participants requis (actuellement {participantCount})
+                          </div>
+                        )}
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Annuler</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleStatusChange(action.status)}
+                          disabled={updatingStatus || action.disabled}
+                          className={action.color}
+                        >
+                          {updatingStatus ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Chargement...
+                            </>
+                          ) : (
+                            <>
+                              <ActionIcon className="h-4 w-4 mr-2" />
+                              Confirmer
+                            </>
+                          )}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                );
+              })}
+            </div>
+          )}
           {/* Bouton suppression admin */}
           {isAdmin && ['draft', 'registration', 'cancelled'].includes(league.status) && (
             <AlertDialog>
@@ -292,7 +437,7 @@ export default function BoxLeagueDetailPage({ params }: { params: PageParams }) 
                 <AlertDialogHeader>
                   <AlertDialogTitle>Supprimer la Box League ?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Cette action est irréversible. La Box League "{league.name}" et toutes ses données (participants, matchs) seront supprimées.
+                    Cette action est irréversible. La Box League &quot;{league.name}&quot; et toutes ses données (participants, matchs) seront supprimées.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -352,13 +497,43 @@ export default function BoxLeagueDetailPage({ params }: { params: PageParams }) 
         </Card>
       </div>
 
+      {/* Success Message */}
+      {successMessage && (
+        <Alert className="mb-6 border-green-500 bg-green-50 dark:bg-green-950/20">
+          <CheckCircle className="h-4 w-4 text-green-600" />
+          <AlertDescription>{successMessage}</AlertDescription>
+        </Alert>
+      )}
+
+      {/* Error Message */}
+      {error && (
+        <Alert className="mb-6 border-red-500 bg-red-50 dark:bg-red-950/20">
+          <AlertCircle className="h-4 w-4 text-red-600" />
+          <AlertDescription className="flex items-center justify-between">
+            <span>{error}</span>
+            <Button variant="ghost" size="sm" onClick={() => setError(null)}>Fermer</Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Admin Alert for Draft status */}
+      {isAdmin && league.status === 'draft' && (
+        <Alert className="mb-6 border-amber-500 bg-amber-50 dark:bg-amber-950/20">
+          <Settings className="h-4 w-4 text-amber-600" />
+          <AlertDescription>
+            <strong>Mode Brouillon :</strong> Cette Box League n&apos;est pas encore visible par les joueurs. 
+            Cliquez sur &quot;Ouvrir les inscriptions&quot; pour permettre aux joueurs de s&apos;inscrire.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Registration Alert */}
       {registrationOpen && !isRegistered && (
         <Alert className="mb-6 border-green-500 bg-green-50 dark:bg-green-950/20">
-          <Clock className="h-4 w-4 text-green-600" />
+          <UserPlus className="h-4 w-4 text-green-600" />
           <AlertDescription className="flex items-center justify-between">
             <span>
-              Inscriptions ouvertes jusqu'au {format(new Date(league.registrationDeadline), 'dd MMMM yyyy', { locale: fr })}
+              Inscriptions ouvertes jusqu&apos;au {format(new Date(league.registrationDeadline), 'dd MMMM yyyy', { locale: fr })}
               {' '}({formatDistanceToNow(new Date(league.registrationDeadline), { locale: fr, addSuffix: true })})
             </span>
             <Button onClick={handleRegister} disabled={registering} className="ml-4">
@@ -370,7 +545,7 @@ export default function BoxLeagueDetailPage({ params }: { params: PageParams }) 
               ) : (
                 <>
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  S'inscrire
+                  S&apos;inscrire
                 </>
               )}
             </Button>

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Trophy, TrendingUp, Dices } from 'lucide-react';
+import { Plus, Trophy, TrendingUp, Dices, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -66,6 +66,7 @@ export function CreateBoxLeagueDialog({ clubId, onSuccess }: CreateBoxLeagueDial
   const [eloRangeEnabled, setEloRangeEnabled] = useState(false);
   const [eloRangeMin, setEloRangeMin] = useState(1000);
   const [eloRangeMax, setEloRangeMax] = useState(1400);
+  const [openRegistration, setOpenRegistration] = useState(true); // Par défaut, ouvrir les inscriptions
 
   const resetForm = () => {
     const now = new Date();
@@ -88,6 +89,7 @@ export function CreateBoxLeagueDialog({ clubId, onSuccess }: CreateBoxLeagueDial
     setEloRangeEnabled(false);
     setEloRangeMin(1000);
     setEloRangeMax(1400);
+    setOpenRegistration(true);
     setError(null);
   };
 
@@ -146,6 +148,7 @@ export function CreateBoxLeagueDialog({ clubId, onSuccess }: CreateBoxLeagueDial
           endDate: leagueEndDate.toISOString(),
           eloRangeMin: eloRangeEnabled ? eloRangeMin : null,
           eloRangeMax: eloRangeEnabled ? eloRangeMax : null,
+          openRegistration,
         }),
       });
 
@@ -465,6 +468,26 @@ export function CreateBoxLeagueDialog({ clubId, onSuccess }: CreateBoxLeagueDial
                 </div>
               </div>
             )}
+
+            {/* Option pour ouvrir les inscriptions immédiatement */}
+            <div className="flex items-center justify-between pt-2 border-t">
+              <div className="space-y-0.5">
+                <Label htmlFor="openRegistration" className="flex items-center gap-2">
+                  <Send className="h-4 w-4 text-green-600" />
+                  Ouvrir les inscriptions immediatement
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  {openRegistration 
+                    ? "Les joueurs pourront s'inscrire des la creation" 
+                    : "La Box League sera creee en mode brouillon"}
+                </p>
+              </div>
+              <Switch
+                id="openRegistration"
+                checked={openRegistration}
+                onCheckedChange={setOpenRegistration}
+              />
+            </div>
           </div>
 
           {/* Recap systeme de points */}
