@@ -52,6 +52,8 @@ export async function createBoxLeague(params: CreateBoxLeagueParams): Promise<Bo
     matchesPerPlayer = 5,
     promotionSpots = 1,
     relegationSpots = 1,
+    poolCount = 1,
+    playersPerPool = 6,
     createdBy,
   } = params;
 
@@ -65,13 +67,16 @@ export async function createBoxLeague(params: CreateBoxLeagueParams): Promise<Bo
       endDate,
       registrationDeadline,
       minPlayers,
-      maxPlayers,
+      maxPlayers: poolCount > 1 ? poolCount * playersPerPool : maxPlayers,
       eloRangeMin: eloRangeMin || null,
       eloRangeMax: eloRangeMax || null,
       division,
       matchesPerPlayer,
       promotionSpots,
       relegationSpots,
+      poolCount,
+      playersPerPool,
+      poolsDrawn: false,
       status: 'draft',
       createdBy,
     })

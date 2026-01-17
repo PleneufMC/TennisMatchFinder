@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Trophy, TrendingUp } from 'lucide-react';
+import { Plus, Trophy, TrendingUp, Dices } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -50,6 +50,8 @@ export function CreateBoxLeagueDialog({ clubId, onSuccess }: CreateBoxLeagueDial
   const [maxPlayers, setMaxPlayers] = useState(6);
   const [promotionSpots, setPromotionSpots] = useState(2);
   const [relegationSpots, setRelegationSpots] = useState(1);
+  const [poolCount, setPoolCount] = useState(1);
+  const [playersPerPool, setPlayersPerPool] = useState(6);
   
   // Dates par defaut
   const today = new Date();
@@ -78,6 +80,8 @@ export function CreateBoxLeagueDialog({ clubId, onSuccess }: CreateBoxLeagueDial
     setMaxPlayers(6);
     setPromotionSpots(2);
     setRelegationSpots(1);
+    setPoolCount(1);
+    setPlayersPerPool(6);
     setRegistrationDeadline(formatDateForInput(in7));
     setStartDate(formatDateForInput(in14));
     setEndDate(formatDateForInput(in45));
@@ -135,6 +139,8 @@ export function CreateBoxLeagueDialog({ clubId, onSuccess }: CreateBoxLeagueDial
           maxPlayers,
           promotionSpots,
           relegationSpots,
+          poolCount,
+          playersPerPool,
           registrationDeadline: regDeadlineDate.toISOString(),
           startDate: leagueStartDate.toISOString(),
           endDate: leagueEndDate.toISOString(),
@@ -319,6 +325,62 @@ export function CreateBoxLeagueDialog({ clubId, onSuccess }: CreateBoxLeagueDial
                 Les {relegationSpots} derniers descendent en division inferieure
               </p>
             </div>
+          </div>
+
+          {/* Poules */}
+          <div className="space-y-4">
+            <Label className="text-base font-semibold flex items-center gap-2">
+              <Dices className="h-4 w-4 text-amber-600" />
+              Configuration des poules
+            </Label>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Nombre de poules</Label>
+                <Select 
+                  value={poolCount.toString()} 
+                  onValueChange={(v) => setPoolCount(parseInt(v))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 poule (pas de tirage)</SelectItem>
+                    <SelectItem value="2">2 poules (A, B)</SelectItem>
+                    <SelectItem value="3">3 poules (A, B, C)</SelectItem>
+                    <SelectItem value="4">4 poules (A, B, C, D)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Joueurs par poule</Label>
+                <Select 
+                  value={playersPerPool.toString()} 
+                  onValueChange={(v) => setPlayersPerPool(parseInt(v))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[4, 5, 6, 7, 8].map(n => (
+                      <SelectItem key={n} value={n.toString()}>{n} joueurs</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {poolCount > 1 && (
+              <div className="p-3 bg-amber-50 dark:bg-amber-950/30 rounded-lg text-sm">
+                <p className="text-amber-800 dark:text-amber-200">
+                  <strong>📋 Capacité totale :</strong> {poolCount * playersPerPool} joueurs ({poolCount} poules × {playersPerPool} joueurs)
+                </p>
+                <p className="text-amber-700 dark:text-amber-300 mt-1">
+                  Le tirage au sort sera disponible une fois les inscriptions terminées.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Dates */}

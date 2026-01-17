@@ -898,6 +898,10 @@ export const boxLeagues = pgTable(
     // Promotion/Relégation
     promotionSpots: integer('promotion_spots').default(1).notNull(), // Nombre de promus
     relegationSpots: integer('relegation_spots').default(1).notNull(), // Nombre de relégués
+    // Poules/Groupes
+    poolCount: integer('pool_count').default(1).notNull(), // Nombre de poules (1 = pas de poules)
+    playersPerPool: integer('players_per_pool').default(6).notNull(), // Joueurs par poule
+    poolsDrawn: boolean('pools_drawn').default(false).notNull(), // Tirage effectué ?
     // Status
     status: boxLeagueStatusEnum('status').default('draft').notNull(),
     // Metadata
@@ -938,6 +942,8 @@ export const boxLeagueParticipants = pgTable(
     finalRank: integer('final_rank'),
     isPromoted: boolean('is_promoted').default(false).notNull(),
     isRelegated: boolean('is_relegated').default(false).notNull(),
+    // Poule assignée
+    poolNumber: integer('pool_number'), // null = pas encore assigné, 1 = Poule A, 2 = Poule B, etc.
     // Status
     isActive: boolean('is_active').default(true).notNull(), // false si retiré
     withdrawReason: text('withdraw_reason'),

@@ -36,7 +36,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useSession } from 'next-auth/react';
-import { StandingsTable, MatchList } from '@/components/box-leagues';
+import { StandingsTable, MatchList, DrawPoolsButton } from '@/components/box-leagues';
 import type { BoxLeague, BoxLeagueStanding, BoxLeagueMatch } from '@/lib/box-leagues/types';
 import { format, formatDistanceToNow, isBefore } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -257,6 +257,27 @@ export default function BoxLeagueDetailPage({ params }: { params: PageParams }) 
               <CheckCircle className="h-3 w-3 mr-1" />
               Inscrit
             </Badge>
+          )}
+          {/* Bouton tirage au sort admin */}
+          {isAdmin && league.poolCount > 1 && ['draft', 'registration'].includes(league.status) && (
+            <DrawPoolsButton
+              leagueId={league.id}
+              leagueName={league.name}
+              poolCount={league.poolCount}
+              participantCount={participantCount}
+              poolsDrawn={league.poolsDrawn}
+              onDrawComplete={() => {
+                // Recharger les données
+                setLoading(true);
+                fetch(`/api/box-leagues/${league.id}`)
+                  .then(r => r.json())
+                  .then(data => {
+                    setLeague(data.league);
+                    setStandings(data.standings || []);
+                  })
+                  .finally(() => setLoading(false));
+              }}
+            />
           )}
           {/* Bouton suppression admin */}
           {isAdmin && ['draft', 'registration', 'cancelled'].includes(league.status) && (

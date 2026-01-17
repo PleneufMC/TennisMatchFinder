@@ -83,6 +83,8 @@ export async function POST(request: NextRequest) {
       matchesPerPlayer,
       promotionSpots,
       relegationSpots,
+      poolCount,
+      playersPerPool,
     } = body;
 
     // Validation
@@ -108,6 +110,8 @@ export async function POST(request: NextRequest) {
       matchesPerPlayer,
       promotionSpots,
       relegationSpots,
+      poolCount,
+      playersPerPool,
       createdBy: player.id,
     });
 

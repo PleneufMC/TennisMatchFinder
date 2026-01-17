@@ -25,6 +25,9 @@ export interface BoxLeague {
   pointsForfeit: number;
   promotionSpots: number;
   relegationSpots: number;
+  poolCount: number;
+  playersPerPool: number;
+  poolsDrawn: boolean;
   status: BoxLeagueStatus;
   createdBy: string | null;
   createdAt: Date;
@@ -49,6 +52,7 @@ export interface BoxLeagueParticipant {
   isPromoted: boolean;
   isRelegated: boolean;
   isActive: boolean;
+  poolNumber: number | null;
   withdrawReason: string | null;
   registeredAt: Date;
   updatedAt: Date;
@@ -116,6 +120,8 @@ export interface CreateBoxLeagueParams {
   matchesPerPlayer?: number;
   promotionSpots?: number;
   relegationSpots?: number;
+  poolCount?: number;
+  playersPerPool?: number;
   createdBy: string;
 }
 
