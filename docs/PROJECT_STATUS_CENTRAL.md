@@ -110,7 +110,7 @@ Analytics: GA4 (G-SK1KGRV9KK) | Meta Pixel
 
 | ID | Story | Status | Priorité | Effort |
 |----|-------|--------|----------|--------|
-| US-51 | Banner cookies RGPD | ⏳ Pending | P0 | 2j |
+| US-51 | ~~Banner cookies RGPD~~ | ✅ Done | — | — |
 | US-52 | Tests unitaires ELO | ⏳ Pending | P0 | 5j |
 | US-53 | Notification badge unlock | ⏳ Pending | P0 | 2h |
 | US-54 | npm audit fix vulnérabilités | ⏳ Pending | P1 | 1j |

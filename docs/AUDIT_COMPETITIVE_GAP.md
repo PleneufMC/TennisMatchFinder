@@ -150,12 +150,11 @@
 - **Benchmark** : Playtomic = chat intégré dans match booking
 - **Recommandation** : **P1** — UX critique pour coordination
 
-### Gap #4 : Banner Cookies RGPD
-- **Impact business** : Risque légal (sanctions jusqu'à 4% CA)
-- **Effort estimation** : 2 jours
-- **Dépendances** : Aucune
-- **Benchmark** : Tous les concurrents sont conformes
-- **Recommandation** : **P0 critique** — implémenter cette semaine
+### ~~Gap #4 : Banner Cookies RGPD~~ ✅ RÉSOLU
+- **Statut** : Déjà implémenté et fonctionnel
+- **Fichiers** : `src/components/cookie-banner.tsx`, `src/hooks/use-cookie-consent.ts`
+- **Fonctionnalités** : Accepter/Refuser/Personnaliser, persistance 365j, modal détaillé
+- **Recommandation** : ~~Aucune action requise~~
 
 ### Gap #5 : Modération (Blocage/Signalement)
 - **Impact business** : Risque communauté toxique, churn

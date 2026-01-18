@@ -24,11 +24,13 @@ TMF possède un USP technique fort (ELO transparent) mais manque de fondations s
 
 | Rang | Feature | ICE Score | Justification |
 |------|---------|-----------|---------------|
-| 1 | Banner cookies RGPD | 90 | Risque légal immédiat |
-| 2 | Tests unitaires ELO | 85 | Protection USP différenciateur |
-| 3 | Notification badge unlock | 80 | Quick win engagement (2h) |
-| 4 | PWA + Push notifications | 75 | Gap critique vs Playtomic |
-| 5 | npm audit fix | 75 | 7 vulnérabilités sécurité |
+| 1 | Tests unitaires ELO | 85 | Protection USP différenciateur |
+| 2 | Notification badge unlock | 80 | Quick win engagement (2h) |
+| 3 | PWA + Push notifications | 75 | Gap critique vs Playtomic |
+| 4 | npm audit fix | 75 | 7 vulnérabilités sécurité |
+| 5 | Corriger 7 casts `as any` | 60 | Type safety |
+
+> ✅ **Banner cookies RGPD** : Déjà implémenté (`src/components/cookie-banner.tsx`)
 
 ---
 
@@ -67,79 +69,15 @@ ICE = (Impact × Confidence × Ease) / 10
 
 ---
 
-### 1.1 Banner Cookies RGPD ⭐ CRITIQUE
+### 1.1 ~~Banner Cookies RGPD~~ ✅ DÉJÀ IMPLÉMENTÉ
 
-**ICE Score** : 90 (Impact: 10, Confidence: 9, Ease: 10)
+> **Statut** : Complet et fonctionnel
+> - `src/components/cookie-banner.tsx` (245 lignes)
+> - `src/hooks/use-cookie-consent.ts` (134 lignes)
+> - Modal de personnalisation avec 3 catégories
+> - Persistance cookie 365 jours
 
-- **Justification** : Non-conformité RGPD = sanctions jusqu'à 4% CA + image de marque
-- **User Story** : En tant que visiteur, je veux donner mon consentement cookies pour être informé du tracking
-- **Critères d'acceptation** :
-  - [ ] Banner visible au premier chargement
-  - [ ] Boutons : Accepter tous, Refuser non-essentiels, Personnaliser
-  - [ ] Consentement stocké localStorage
-  - [ ] GA4 + Meta Pixel conditionnés au consentement
-  - [ ] Lien vers /cookies
-- **Estimation** : 2 jours
-- **Dépendances** : Aucune
-- **Fichiers impactés** :
-  - `src/components/cookie-banner.tsx` (nouveau)
-  - `src/app/layout.tsx`
-  - `src/hooks/use-cookie-consent.ts` (existant, à compléter)
-- **Tests requis** :
-  - [ ] Test consentement persisté après refresh
-  - [ ] Test GA4 non chargé si refus
-
-**Code snippet :**
-```typescript
-// src/components/cookie-banner.tsx
-'use client';
-
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
-
-export function CookieBanner() {
-  const [showBanner, setShowBanner] = useState(false);
-
-  useEffect(() => {
-    const consent = localStorage.getItem('cookie-consent');
-    if (!consent) setShowBanner(true);
-  }, []);
-
-  const handleAccept = () => {
-    localStorage.setItem('cookie-consent', 'all');
-    setShowBanner(false);
-    // Activer GA4/Meta Pixel
-    window.gtag?.('consent', 'update', { analytics_storage: 'granted' });
-  };
-
-  const handleReject = () => {
-    localStorage.setItem('cookie-consent', 'essential');
-    setShowBanner(false);
-  };
-
-  if (!showBanner) return null;
-
-  return (
-    <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 z-50">
-      <div className="container mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-        <p className="text-sm text-muted-foreground">
-          Nous utilisons des cookies pour améliorer votre expérience.{' '}
-          <Link href="/cookies" className="underline">En savoir plus</Link>
-        </p>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleReject}>
-            Refuser
-          </Button>
-          <Button size="sm" onClick={handleAccept}>
-            Accepter
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-```
+**Aucune action requise.**
 
 ---
 
