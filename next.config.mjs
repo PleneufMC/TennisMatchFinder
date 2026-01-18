@@ -1,3 +1,12 @@
+import withSerwistInit from '@serwist/next';
+
+const withSerwist = withSerwistInit({
+  swSrc: 'src/app/sw.ts',
+  swDest: 'public/sw.js',
+  reloadOnOnline: true,
+  disable: process.env.NODE_ENV === 'development', // Désactiver en dev pour éviter les problèmes de cache
+});
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Optimisation des images
@@ -36,6 +45,20 @@ const nextConfig = {
           },
         ],
       },
+      // Service Worker headers
+      {
+        source: '/sw.js',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=0, must-revalidate',
+          },
+          {
+            key: 'Service-Worker-Allowed',
+            value: '/',
+          },
+        ],
+      },
     ];
   },
 
@@ -68,4 +91,4 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+export default withSerwist(nextConfig);

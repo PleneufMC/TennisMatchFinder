@@ -7,6 +7,7 @@ import { BadgeCelebrationProvider } from '@/components/providers/badge-celebrati
 import { I18nProvider } from '@/lib/i18n';
 import { Toaster } from '@/components/ui/toast';
 import { CookieBanner } from '@/components/cookie-banner';
+import { PWAInstallPrompt } from '@/components/pwa/install-prompt';
 import { GoogleAnalyticsWithConsent } from '@/components/google-analytics';
 import { MetaPixelWithConsent } from '@/components/meta-pixel';
 import './globals.css';
@@ -117,6 +118,7 @@ export default function RootLayout({
             </I18nProvider>
             <Toaster />
             <CookieBanner />
+            <PWAInstallPrompt />
             {/* Google Analytics - conditionnel au consentement */}
             {gaId && (
               <Suspense fallback={null}>

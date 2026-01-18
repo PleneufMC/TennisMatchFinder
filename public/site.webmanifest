@@ -3,22 +3,79 @@
   "short_name": "TMF",
   "description": "Trouvez des adversaires de tennis de votre niveau avec notre système ELO innovant",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#f59e0b",
   "orientation": "portrait-primary",
+  "categories": ["sports", "social"],
+  "lang": "fr",
+  "dir": "ltr",
   "icons": [
     {
-      "src": "/images/icon-192.png",
+      "src": "/images/icon-192.svg",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/svg+xml",
+      "purpose": "any"
     },
     {
-      "src": "/images/icon-512.png",
+      "src": "/images/icon-512.svg",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/images/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
     }
-  ]
+  ],
+  "screenshots": [
+    {
+      "src": "/images/screenshot-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Dashboard TennisMatchFinder"
+    },
+    {
+      "src": "/images/screenshot-narrow.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Application mobile TennisMatchFinder"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Nouveau match",
+      "short_name": "Match",
+      "description": "Enregistrer un nouveau match",
+      "url": "/matchs?action=new",
+      "icons": [{ "src": "/images/icon-192.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Suggestions",
+      "short_name": "Suggestions",
+      "description": "Voir les suggestions de partenaires",
+      "url": "/suggestions",
+      "icons": [{ "src": "/images/icon-192.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Classement",
+      "short_name": "ELO",
+      "description": "Voir le classement du club",
+      "url": "/classement",
+      "icons": [{ "src": "/images/icon-192.svg", "sizes": "192x192" }]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
 }
