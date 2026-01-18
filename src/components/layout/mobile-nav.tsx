@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { X, Trophy, Swords, Users, MessageSquare, MessageCircle, User, LayoutDashboard, Award, Zap, Medal, Crown, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -74,8 +75,14 @@ export function MobileNav({ isOpen, onClose, isAdmin = false }: MobileNavProps) 
       >
         <div className="flex h-16 items-center justify-between border-b px-4">
           <div className="flex items-center space-x-2">
-            <span className="text-2xl">🎾</span>
-            <span className="font-bold">TennisMatchFinder</span>
+            <Image
+              src="/images/logo.png"
+              alt="TMF Logo"
+              width={32}
+              height={32}
+              className="rounded-full"
+            />
+            <span className="font-bold text-green-600">TennisMatchFinder</span>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="h-5 w-5" />

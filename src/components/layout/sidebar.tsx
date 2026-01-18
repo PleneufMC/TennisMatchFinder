@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   Trophy,
@@ -66,13 +67,25 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
       <div className="flex h-16 items-center justify-between border-b px-4">
         {!collapsed && (
           <Link href="/dashboard" className="flex items-center space-x-2">
-            <span className="text-2xl">🎾</span>
-            <span className="font-bold">TMF</span>
+            <Image
+              src="/images/logo.png"
+              alt="TMF Logo"
+              width={32}
+              height={32}
+              className="rounded-full"
+            />
+            <span className="font-bold text-green-600">TMF</span>
           </Link>
         )}
         {collapsed && (
           <Link href="/dashboard" className="mx-auto">
-            <span className="text-2xl">🎾</span>
+            <Image
+              src="/images/logo.png"
+              alt="TMF Logo"
+              width={32}
+              height={32}
+              className="rounded-full"
+            />
           </Link>
         )}
         <Button

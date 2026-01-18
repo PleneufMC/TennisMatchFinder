@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function AuthLayout({
   children,
@@ -11,8 +12,14 @@ export default function AuthLayout({
       <header className="border-b">
         <div className="container flex h-16 items-center px-4">
           <Link href="/" className="flex items-center space-x-2">
-            <span className="text-2xl">🎾</span>
-            <span className="font-bold text-xl">TennisMatchFinder</span>
+            <Image
+              src="/images/logo.png"
+              alt="TMF Logo"
+              width={32}
+              height={32}
+              className="rounded-full"
+            />
+            <span className="font-bold text-xl text-green-600">TennisMatchFinder</span>
           </Link>
         </div>
       </header>

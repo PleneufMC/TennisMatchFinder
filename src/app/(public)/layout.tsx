@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 
 export default function PublicLayout({
@@ -12,8 +13,14 @@ export default function PublicLayout({
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between px-4">
           <Link href="/" className="flex items-center space-x-2">
-            <span className="text-2xl">🎾</span>
-            <span className="font-bold text-xl">TennisMatchFinder</span>
+            <Image
+              src="/images/logo.png"
+              alt="TMF Logo"
+              width={32}
+              height={32}
+              className="rounded-full"
+            />
+            <span className="font-bold text-xl text-green-600">TennisMatchFinder</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-6">
@@ -57,8 +64,14 @@ export default function PublicLayout({
           <div className="grid gap-8 md:grid-cols-4">
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <span className="text-2xl">🎾</span>
-                <span className="font-bold">TennisMatchFinder</span>
+                <Image
+                  src="/images/logo.png"
+                  alt="TMF Logo"
+                  width={28}
+                  height={28}
+                  className="rounded-full"
+                />
+                <span className="font-bold text-green-600">TennisMatchFinder</span>
               </div>
               <p className="text-sm text-muted-foreground">
                 La plateforme de mise en relation pour les joueurs de tennis passionnés.
