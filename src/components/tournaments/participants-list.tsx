@@ -106,7 +106,7 @@ export function ParticipantsList({
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {participant.eloAtRegistration} ELO à l'inscription
+                      {participant.eloAtRegistration} ELO à l&apos;inscription
                     </p>
                   </div>
 

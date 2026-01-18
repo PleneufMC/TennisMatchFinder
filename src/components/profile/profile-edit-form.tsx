@@ -211,7 +211,7 @@ export function ProfileEditForm({ player }: ProfileEditFormProps) {
         <CardHeader>
           <CardTitle>Photo de profil</CardTitle>
           <CardDescription>
-            Cliquez sur l'avatar pour changer votre photo
+            Cliquez sur l&apos;avatar pour changer votre photo
           </CardDescription>
         </CardHeader>
         <CardContent className="flex items-center gap-6">

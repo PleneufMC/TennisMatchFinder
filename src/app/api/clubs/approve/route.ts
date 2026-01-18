@@ -4,6 +4,9 @@ import { clubCreationRequests, clubs, players, users, chatRooms } from '@/lib/db
 import { eq } from 'drizzle-orm';
 import { sendClubCreationConfirmationEmail } from '@/lib/email/send-email';
 
+// Force dynamic pour éviter le pre-rendering statique
+export const dynamic = 'force-dynamic';
+
 // GET: Approuver ou rejeter une demande via le lien email
 export async function GET(request: NextRequest) {
   try {

@@ -315,7 +315,7 @@ export default function TournamentDetailPage({ params }: { params: PageParams })
         <Alert className="mb-4 border-amber-200 bg-amber-50 dark:bg-amber-950/30">
           <AlertCircle className="h-4 w-4 text-amber-600" />
           <AlertDescription className="text-amber-800 dark:text-amber-200">
-            Le paiement a ete annule. Vous pouvez reessayer en cliquant sur "S'inscrire".
+            Le paiement a ete annule. Vous pouvez reessayer en cliquant sur &quot;S&apos;inscrire&quot;.
           </AlertDescription>
         </Alert>
       )}

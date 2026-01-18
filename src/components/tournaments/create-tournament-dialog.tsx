@@ -416,7 +416,7 @@ export function CreateTournamentDialog({ clubId, onSuccess }: CreateTournamentDi
               <div className="space-y-0.5">
                 <Label htmlFor="isPaid">Inscription payante</Label>
                 <p className="text-sm text-muted-foreground">
-                  Les joueurs devront payer pour s'inscrire
+                  Les joueurs devront payer pour s&apos;inscrire
                 </p>
               </div>
               <Switch
@@ -429,7 +429,7 @@ export function CreateTournamentDialog({ clubId, onSuccess }: CreateTournamentDi
             {isPaid && (
               <div className="pl-4 border-l-2 border-green-200">
                 <div className="space-y-2">
-                  <Label htmlFor="entryFee">Frais d'inscription (EUR)</Label>
+                  <Label htmlFor="entryFee">Frais d&apos;inscription (EUR)</Label>
                   <div className="flex items-center gap-2">
                     <Input
                       id="entryFee"
@@ -443,7 +443,7 @@ export function CreateTournamentDialog({ clubId, onSuccess }: CreateTournamentDi
                     <span className="text-muted-foreground">EUR</span>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Le paiement sera effectue via Stripe lors de l'inscription
+                    Le paiement sera effectue via Stripe lors de l&apos;inscription
                   </p>
                 </div>
               </div>

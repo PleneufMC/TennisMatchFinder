@@ -1,13 +1,11 @@
+'use client';
+
 /**
  * Page Offline — Affichée quand l'utilisateur est hors connexion
  */
 
 import { WifiOff, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
-export const metadata = {
-  title: 'Hors connexion',
-};
 
 export default function OfflinePage() {
   return (

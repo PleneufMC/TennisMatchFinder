@@ -251,7 +251,7 @@ export function TournamentBracket({
       <Card>
         <CardContent className="py-8 text-center text-muted-foreground">
           <Trophy className="h-12 w-12 mx-auto mb-2 opacity-50" />
-          <p>Le bracket n'a pas encore été généré</p>
+          <p>Le bracket n&apos;a pas encore été généré</p>
         </CardContent>
       </Card>
     );

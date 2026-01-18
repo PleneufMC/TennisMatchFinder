@@ -389,7 +389,7 @@ export function MatchForm({ currentPlayer, opponents, clubId }: MatchFormProps) 
               className="flex items-center gap-2 text-primary hover:underline text-sm"
             >
               <UserPlus className="h-4 w-4" />
-              Votre adversaire n'est pas membre ? Invitez-le !
+              Votre adversaire n&apos;est pas membre ? Invitez-le !
             </button>
 
             {showInviteForm && (
@@ -423,7 +423,7 @@ export function MatchForm({ currentPlayer, opponents, clubId }: MatchFormProps) 
                   ) : (
                     <Mail className="h-4 w-4 mr-2" />
                   )}
-                  Envoyer l'invitation
+                  Envoyer l&apos;invitation
                 </Button>
               </div>
             )}

@@ -200,7 +200,7 @@ export default function TournamentsPage() {
             <div>
               <h3 className="font-semibold mb-1">Comment ça marche ?</h3>
               <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Inscrivez-vous pendant la période d'inscription</li>
+                <li>• Inscrivez-vous pendant la période d&apos;inscription</li>
                 <li>• Le bracket est généré automatiquement selon votre ELO</li>
                 <li>• Affrontez vos adversaires en élimination directe</li>
                 <li>• Tous les matchs comptent pour votre classement ELO !</li>

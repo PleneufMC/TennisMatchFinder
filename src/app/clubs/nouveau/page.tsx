@@ -42,10 +42,10 @@ export default async function NouveauClubPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CheckCircle className="h-6 w-6 text-green-500" />
-                Vous êtes déjà membre d'un club
+                Vous êtes déjà membre d&apos;un club
               </CardTitle>
               <CardDescription>
-                Vous ne pouvez pas créer un nouveau club car vous êtes déjà membre d'un club.
+                Vous ne pouvez pas créer un nouveau club car vous êtes déjà membre d&apos;un club.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -86,7 +86,7 @@ export default async function NouveauClubPage() {
                 Demande en cours
               </CardTitle>
               <CardDescription>
-                Votre demande de création de club est en attente d'approbation.
+                Votre demande de création de club est en attente d&apos;approbation.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -111,7 +111,7 @@ export default async function NouveauClubPage() {
               <Button variant="outline" asChild>
                 <Link href="/">
                   <ArrowLeft className="h-4 w-4 mr-2" />
-                  Retour à l'accueil
+                  Retour à l&apos;accueil
                 </Link>
               </Button>
             </CardContent>
@@ -129,7 +129,7 @@ export default async function NouveauClubPage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center text-sm text-muted-foreground hover:text-primary mb-4">
             <ArrowLeft className="h-4 w-4 mr-1" />
-            Retour à l'accueil
+            Retour à l&apos;accueil
           </Link>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             🎾 Créer votre club
@@ -182,7 +182,7 @@ export default async function NouveauClubPage() {
         {/* Info */}
         <p className="text-center text-sm text-muted-foreground mt-6">
           En créant un club, vous acceptez nos{' '}
-          <Link href="/terms" className="underline">conditions d'utilisation</Link>.
+          <Link href="/terms" className="underline">conditions d&apos;utilisation</Link>.
         </p>
       </div>
     </div>

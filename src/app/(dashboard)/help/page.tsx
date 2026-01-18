@@ -44,7 +44,7 @@ export default async function HelpPage() {
       <div>
         <h1 className="text-3xl font-bold flex items-center gap-2">
           <HelpCircle className="h-8 w-8" />
-          Centre d'aide
+          Centre d&apos;aide
         </h1>
         <p className="text-muted-foreground">
           Trouvez des réponses à vos questions
@@ -136,7 +136,7 @@ export default async function HelpPage() {
                 <p>Facteurs qui influencent vos gains/pertes :</p>
                 <ul className="list-disc list-inside space-y-1 ml-2">
                   <li><strong>+15%</strong> si vous jouez contre un nouvel adversaire</li>
-                  <li><strong>+20%</strong> pour une victoire "exploit" (adversaire &gt; 100 pts au-dessus)</li>
+                  <li><strong>+20%</strong> pour une victoire &quot;exploit&quot; (adversaire &gt; 100 pts au-dessus)</li>
                   <li><strong>-5%</strong> par match récent contre le même adversaire</li>
                   <li><strong>+10%</strong> si vous avez joué 3+ adversaires différents cette semaine</li>
                 </ul>
@@ -170,9 +170,9 @@ export default async function HelpPage() {
               </AccordionTrigger>
               <AccordionContent className="text-muted-foreground">
                 <p>
-                  La confirmation par l'adversaire garantit l'intégrité du classement.
+                  La confirmation par l&apos;adversaire garantit l&apos;intégrité du classement.
                   Cela évite les erreurs de saisie et assure que les deux joueurs 
-                  sont d'accord sur le résultat. Si votre adversaire refuse, 
+                  sont d&apos;accord sur le résultat. Si votre adversaire refuse, 
                   le match est annulé et vous pouvez le déclarer à nouveau avec le bon score.
                 </p>
               </AccordionContent>
@@ -226,7 +226,7 @@ export default async function HelpPage() {
                 <ul className="list-disc list-inside space-y-1 ml-2">
                   <li>Messages en temps réel</li>
                   <li>Messages supprimés après <strong>24 heures</strong></li>
-                  <li>Idéal pour : "Qui joue ce soir ?", "Court libre ?"</li>
+                  <li>Idéal pour : &quot;Qui joue ce soir ?&quot;, &quot;Court libre ?&quot;</li>
                 </ul>
                 <p className="mt-3"><strong>📋 Forum</strong> - Pour les discussions durables :</p>
                 <ul className="list-disc list-inside space-y-1 ml-2">
@@ -245,7 +245,7 @@ export default async function HelpPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Mail className="h-5 w-5" />
-            Besoin d'aide supplémentaire ?
+            Besoin d&apos;aide supplémentaire ?
           </CardTitle>
           <CardDescription>
             Notre équipe est là pour vous aider

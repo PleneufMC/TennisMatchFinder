@@ -140,7 +140,7 @@ export function RegisterFormCity({ clubs }: RegisterFormCityProps) {
                 <ul className="list-disc list-inside space-y-1 text-xs">
                   <li>Vous pouvez vous connecter avec votre email</li>
                   <li>Accès limité sans club affilié</li>
-                  <li>Vous pourrez rejoindre d'autres clubs</li>
+                  <li>Vous pourrez rejoindre d&apos;autres clubs</li>
                 </ul>
               </div>
             </>
@@ -173,7 +173,7 @@ export function RegisterFormCity({ clubs }: RegisterFormCityProps) {
             className="w-full"
             onClick={() => router.push('/')}
           >
-            Retour à l'accueil
+            Retour à l&apos;accueil
           </Button>
         </CardFooter>
       </Card>
@@ -289,7 +289,7 @@ export function RegisterFormCity({ clubs }: RegisterFormCityProps) {
               </>
             ) : (
               <>
-                S'inscrire
+                S&apos;inscrire
                 <ArrowRight className="ml-2 h-4 w-4" />
               </>
             )}
@@ -311,7 +311,7 @@ export function RegisterFormCity({ clubs }: RegisterFormCityProps) {
         <p className="mt-4 text-center text-xs text-muted-foreground">
           En vous inscrivant, vous acceptez nos{' '}
           <Link href="/terms" className="text-primary hover:underline">
-            conditions d'utilisation
+            conditions d&apos;utilisation
           </Link>{' '}
           et notre{' '}
           <Link href="/privacy" className="text-primary hover:underline">

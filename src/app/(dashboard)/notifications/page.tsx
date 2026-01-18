@@ -97,7 +97,7 @@ export default async function NotificationsPage() {
               <Bell className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
               <h3 className="text-lg font-semibold mb-2">Aucune notification</h3>
               <p className="text-muted-foreground">
-                Vous n'avez pas encore de notifications
+                Vous n&apos;avez pas encore de notifications
               </p>
             </div>
           )}

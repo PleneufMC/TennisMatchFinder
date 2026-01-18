@@ -90,7 +90,7 @@ export function ClubCreationForm({ userEmail, userName }: ClubCreationFormProps)
           Vous recevrez une réponse par email à <strong>{userEmail}</strong> sous 24-48h.
         </p>
         <Button variant="outline" onClick={() => router.push('/')}>
-          Retour à l'accueil
+          Retour à l&apos;accueil
         </Button>
       </div>
     );
@@ -222,7 +222,7 @@ export function ClubCreationForm({ userEmail, userName }: ClubCreationFormProps)
             placeholder="50"
           />
           <p className="text-xs text-muted-foreground">
-            Cela nous aide à dimensionner l'infrastructure.
+            Cela nous aide à dimensionner l&apos;infrastructure.
           </p>
         </div>
       </div>
@@ -235,8 +235,8 @@ export function ClubCreationForm({ userEmail, userName }: ClubCreationFormProps)
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             Votre demande sera examinée par notre équipe. Vous recevrez une réponse 
-            par email sous 24 à 48 heures. En cas d'approbation, vous deviendrez 
-            automatiquement l'administrateur du club.
+            par email sous 24 à 48 heures. En cas d&apos;approbation, vous deviendrez 
+            automatiquement l&apos;administrateur du club.
           </AlertDescription>
         </Alert>
 

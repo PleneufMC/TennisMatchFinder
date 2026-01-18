@@ -215,10 +215,10 @@ export function CookieBanner() {
                   </Label>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Nous aident à comprendre comment vous utilisez le site pour l'améliorer.
+                  Nous aident à comprendre comment vous utilisez le site pour l&apos;améliorer.
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Note : Aucun cookie analytique tiers n'est actuellement utilisé.
+                  Note : Aucun cookie analytique tiers n&apos;est actuellement utilisé.
                 </p>
               </div>
               <Switch

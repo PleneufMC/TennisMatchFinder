@@ -137,7 +137,7 @@ export function RegisterCityForm({ clubs }: RegisterCityFormProps) {
               <div className="flex items-start gap-3">
                 <Clock className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-medium text-amber-800 dark:text-amber-200">Demande d'adhésion en attente</h4>
+                  <h4 className="font-medium text-amber-800 dark:text-amber-200">Demande d&apos;adhésion en attente</h4>
                   <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
                     Un administrateur du club va examiner votre demande.
                     Vous serez notifié par email une fois votre adhésion validée.

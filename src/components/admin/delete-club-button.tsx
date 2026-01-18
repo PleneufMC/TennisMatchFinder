@@ -79,7 +79,7 @@ export function DeleteClubButton({ clubId, clubName, playersCount, isOwnClub }: 
         <AlertDialogHeader>
           <AlertDialogTitle>Supprimer le club ?</AlertDialogTitle>
           <AlertDialogDescription>
-            Cette action est irréversible. Le club <strong>"{clubName}"</strong> sera définitivement supprimé.
+            Cette action est irréversible. Le club <strong>&quot;{clubName}&quot;</strong> sera définitivement supprimé.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
