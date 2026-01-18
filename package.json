@@ -89,6 +89,7 @@
     "tailwindcss": "^3.4.1",
     "tailwindcss-animate": "^1.0.7",
     "typescript": "^5.3.3",
+    "web-push": "^3.6.7",
     "zod": "^3.22.4"
   },
   "devDependencies": {
@@ -98,6 +99,7 @@
     "@testing-library/react": "^16.3.1",
     "@types/jest": "^30.0.0",
     "@types/serviceworker": "^0.0.176",
+    "@types/web-push": "^3.6.4",
     "drizzle-kit": "^0.30.1",
     "eslint": "^8.56.0",
     "eslint-config-next": "^14.2.35",

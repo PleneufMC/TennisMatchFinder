@@ -61,8 +61,8 @@ self.addEventListener('push', (event: PushEvent) => {
     
     const options: NotificationOptions = {
       body: data.body || data.message || '',
-      icon: '/images/icon-192.svg',
-      badge: '/images/icon-192.svg',
+      icon: '/images/icon-192.png',
+      badge: '/images/icon-192.png',
       tag: data.tag || 'tmf-notification',
       data: {
         url: data.url || data.link || '/',

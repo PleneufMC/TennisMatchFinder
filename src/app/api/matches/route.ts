@@ -16,6 +16,7 @@ import {
 } from '@/lib/elo/format-coefficients';
 import { getAutoValidateDate, VALIDATION_MESSAGES } from '@/lib/constants/validation';
 import { withRateLimit } from '@/lib/rate-limit';
+import { sendPushToUser, PushNotifications } from '@/lib/push';
 
 // GET: Liste des matchs du joueur
 export async function GET(request: NextRequest) {
@@ -299,6 +300,17 @@ export async function POST(request: NextRequest) {
         autoValidateAt: autoValidateAt.toISOString(),
       },
     });
+
+    // Envoyer une notification push à l'adversaire
+    try {
+      await sendPushToUser(
+        opponentId,
+        PushNotifications.matchRecorded(player.fullName, newMatch.id)
+      );
+    } catch (pushError) {
+      // Ne pas faire échouer la requête si push échoue
+      console.error('[Push] Error sending match notification:', pushError);
+    }
 
     return NextResponse.json({
       success: true,

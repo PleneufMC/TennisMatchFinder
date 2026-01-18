@@ -561,6 +561,30 @@ export const notifications = pgTable(
 );
 
 // ============================================
+// PUSH SUBSCRIPTIONS (Web Push Notifications)
+// ============================================
+
+export const pushSubscriptions = pgTable(
+  'push_subscriptions',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => players.id, { onDelete: 'cascade' }),
+    endpoint: text('endpoint').notNull().unique(),
+    p256dh: text('p256dh').notNull(), // Public key for encryption
+    auth: text('auth').notNull(), // Auth secret
+    userAgent: text('user_agent'), // Browser/device info
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+    lastUsedAt: timestamp('last_used_at', { mode: 'date' }),
+  },
+  (table) => ({
+    userIdIdx: index('push_subscriptions_user_id_idx').on(table.userId),
+    endpointIdx: index('push_subscriptions_endpoint_idx').on(table.endpoint),
+  })
+);
+
+// ============================================
 // CLUB JOIN REQUESTS (Demandes d'adhésion)
 // ============================================
 
@@ -1454,3 +1478,6 @@ export type TournamentFormat = 'single_elimination' | 'double_elimination' | 'co
 
 export type MatchRating = typeof matchRatings.$inferSelect;
 export type NewMatchRating = typeof matchRatings.$inferInsert;
+
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+export type NewPushSubscription = typeof pushSubscriptions.$inferInsert;

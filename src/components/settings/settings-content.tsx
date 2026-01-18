@@ -1,6 +1,6 @@
 'use client';
 
-import { Settings, Bell, Shield, Palette, Globe, Trash2 } from 'lucide-react';
+import { Settings, Bell, Shield, Palette, Globe, Trash2, Smartphone } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { LocationSettings } from '@/components/profile/location-settings';
 import { PasskeyManager } from '@/components/auth/passkey-manager';
 import { LanguageSwitcher } from '@/components/language-switcher';
+import { PushNotificationToggle } from '@/components/push';
 import { useTranslations } from '@/lib/i18n';
 
 export function SettingsContent() {
@@ -32,7 +33,25 @@ export function SettingsContent() {
       </div>
 
       <div className="grid gap-6">
-        {/* Notifications */}
+        {/* Notifications Push */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Smartphone className="h-5 w-5" />
+              {locale === 'fr' ? 'Notifications Push' : 'Push Notifications'}
+            </CardTitle>
+            <CardDescription>
+              {locale === 'fr' 
+                ? 'Recevez des notifications même quand l\'application n\'est pas ouverte'
+                : 'Receive notifications even when the app is not open'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PushNotificationToggle variant="card" />
+          </CardContent>
+        </Card>
+
+        {/* Notifications Email */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

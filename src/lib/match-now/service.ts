@@ -8,6 +8,7 @@
 import { db } from '@/lib/db';
 import { matchNowAvailability, matchNowResponses, players, notifications } from '@/lib/db/schema';
 import { eq, and, gte, lte, desc, sql, ne } from 'drizzle-orm';
+import { sendPushToUser, sendPushToUsers, PushNotifications } from '@/lib/push';
 
 // Durée par défaut de disponibilité (2 heures)
 const DEFAULT_AVAILABILITY_DURATION_MS = 2 * 60 * 60 * 1000;
@@ -373,6 +374,16 @@ export async function respondToAvailability(
       link: '/match-now',
       data: { availabilityId, responderId },
     });
+
+    // Envoyer une notification push
+    try {
+      await sendPushToUser(
+        availability.playerId,
+        PushNotifications.matchNow(responder.fullName)
+      );
+    } catch (error) {
+      console.error('[Push] Error sending match now response notification:', error);
+    }
   }
 
   return response as MatchNowResponse;
@@ -540,6 +551,17 @@ async function notifyCompatiblePlayers(
 
   if (notificationValues.length > 0) {
     await db.insert(notifications).values(notificationValues);
+
+    // Envoyer des notifications push aux joueurs compatibles
+    try {
+      const playerIds = compatiblePlayers.map(p => p.id);
+      await sendPushToUsers(
+        playerIds,
+        PushNotifications.matchNow(creator.fullName)
+      );
+    } catch (error) {
+      console.error('[Push] Error sending match now notifications:', error);
+    }
   }
 }
 
