@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { matches, players, eloHistory, notifications } from '@/lib/db/schema';
-import { eq, and, lte, isNull } from 'drizzle-orm';
+import { eq, and, lte, sql } from 'drizzle-orm';
 import { VALIDATION_MESSAGES } from '@/lib/constants/validation';
 import { triggerBadgeCheckAfterMatch } from '@/lib/gamification/badge-checker';
 
@@ -76,32 +76,29 @@ export async function POST(request: NextRequest) {
           .set({ currentElo: player2NewElo, updatedAt: now })
           .where(eq(players.id, match.player2Id));
 
-        // Mettre à jour les stats
-        const player1Stats = match.winnerId === match.player1Id
-          ? { wins: 1, losses: 0 }
-          : { wins: 0, losses: 1 };
-        
-        const player2Stats = match.winnerId === match.player2Id
-          ? { wins: 1, losses: 0 }
-          : { wins: 0, losses: 1 };
+        // Mettre à jour les stats avec Drizzle (sécurisé contre injection SQL)
+        const player1IsWinner = match.winnerId === match.player1Id;
+        const player2IsWinner = match.winnerId === match.player2Id;
 
-        await db.execute(
-          `UPDATE players SET 
-            matches_played = matches_played + 1, 
-            wins = wins + ${player1Stats.wins},
-            losses = losses + ${player1Stats.losses},
-            last_match_at = NOW()
-          WHERE id = '${match.player1Id}'`
-        );
+        await db
+          .update(players)
+          .set({
+            matchesPlayed: sql`${players.matchesPlayed} + 1`,
+            wins: player1IsWinner ? sql`${players.wins} + 1` : players.wins,
+            losses: player1IsWinner ? players.losses : sql`${players.losses} + 1`,
+            lastMatchAt: now,
+          })
+          .where(eq(players.id, match.player1Id));
 
-        await db.execute(
-          `UPDATE players SET 
-            matches_played = matches_played + 1, 
-            wins = wins + ${player2Stats.wins},
-            losses = losses + ${player2Stats.losses},
-            last_match_at = NOW()
-          WHERE id = '${match.player2Id}'`
-        );
+        await db
+          .update(players)
+          .set({
+            matchesPlayed: sql`${players.matchesPlayed} + 1`,
+            wins: player2IsWinner ? sql`${players.wins} + 1` : players.wins,
+            losses: player2IsWinner ? players.losses : sql`${players.losses} + 1`,
+            lastMatchAt: now,
+          })
+          .where(eq(players.id, match.player2Id));
 
         // Enregistrer l'historique ELO
         const player1EloDelta = match.player1EloAfter - match.player1EloBefore;

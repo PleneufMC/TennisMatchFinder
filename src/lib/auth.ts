@@ -6,6 +6,12 @@ import { db } from '@/lib/db';
 import { users, accounts, sessions, verificationTokens, players, clubs } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 
+// Only log in development mode to avoid leaking sensitive data in production
+const isDev = process.env.NODE_ENV === 'development';
+const debugLog = (...args: unknown[]) => {
+  if (isDev) console.log(...args);
+};
+
 /**
  * Custom Drizzle Adapter for NextAuth
  * Compatible with next-auth@4.x without @auth/drizzle-adapter
@@ -383,27 +389,24 @@ export const authOptions: NextAuthOptions = {
 
   callbacks: {
     async jwt({ token, user, account, trigger }) {
-      console.log('[Auth JWT] Trigger:', trigger, 'User:', user?.id, 'Token sub:', token.sub);
+      debugLog('[Auth JWT] Trigger:', trigger, 'User:', user?.id);
       
       // Add user id to JWT token on first sign in
       if (user) {
         token.id = user.id;
         token.email = user.email;
-        console.log('[Auth JWT] Setting token.id from user:', user.id);
       }
       // Ensure token always has id from sub (NextAuth standard)
       if (!token.id && token.sub) {
         token.id = token.sub;
-        console.log('[Auth JWT] Setting token.id from sub:', token.sub);
       }
       
-      console.log('[Auth JWT] Final token.id:', token.id);
       return token;
     },
 
     async session({ session, token }) {
       const startTime = Date.now();
-      console.log('[Auth Session] START - token:', JSON.stringify({ id: token.id, sub: token.sub, email: token.email }));
+      debugLog('[Auth Session] START');
       
       // Add user id from JWT to session
       if (session.user && token) {
@@ -416,11 +419,9 @@ export const authOptions: NextAuthOptions = {
         }
         
         session.user.id = userId;
-        console.log('[Auth Session] User ID set:', userId);
         
         // Fetch player data from database
         try {
-          console.log('[Auth Session] Fetching player from DB...');
           const playerResult = await db
             .select({
               id: players.id,
@@ -436,11 +437,9 @@ export const authOptions: NextAuthOptions = {
             .where(eq(players.id, userId))
             .limit(1);
           
-          console.log('[Auth Session] DB result:', playerResult.length, 'players found');
-          
           if (playerResult[0]) {
             const player = playerResult[0];
-            console.log('[Auth Session] Player found:', { id: player.id, fullName: player.fullName, clubId: player.clubId });
+            debugLog('[Auth Session] Player found:', player.fullName);
             
             // Fetch club info only if player has a club
             let club: { name: string; slug: string } | undefined;
@@ -454,9 +453,6 @@ export const authOptions: NextAuthOptions = {
                 .where(eq(clubs.id, player.clubId))
                 .limit(1);
               club = clubResult[0];
-              console.log('[Auth Session] Club found:', club?.name);
-            } else {
-              console.log('[Auth Session] Player has no club (independent player)');
             }
             
             const playerData = {
@@ -473,9 +469,8 @@ export const authOptions: NextAuthOptions = {
             };
             
             (session.user as any).player = playerData;
-            console.log('[Auth Session] SUCCESS - Player attached to session');
           } else {
-            console.log('[Auth Session] WARNING - No player found for user:', userId);
+            debugLog('[Auth Session] No player found for user');
             // Set empty player to differentiate from "loading" state
             (session.user as any).player = null;
           }
@@ -486,7 +481,7 @@ export const authOptions: NextAuthOptions = {
         }
       }
       
-      console.log('[Auth Session] END - Duration:', Date.now() - startTime, 'ms, hasPlayer:', !!(session.user as any)?.player);
+      debugLog('[Auth Session] END - Duration:', Date.now() - startTime, 'ms');
       return session;
     },
 
@@ -505,14 +500,14 @@ export const authOptions: NextAuthOptions = {
 
   events: {
     async createUser({ user }) {
-      console.log('New user created:', user.email);
+      debugLog('New user created:', user.email);
       // Note: L'email de bienvenue est envoyé lors de l'approbation de la demande d'adhésion
       // car les utilisateurs sont créés dans le contexte d'un club spécifique
     },
 
     async signIn({ user, isNewUser }) {
       if (isNewUser) {
-        console.log('New user signed in:', user.email);
+        debugLog('New user signed in:', user.email);
       }
     },
   },
