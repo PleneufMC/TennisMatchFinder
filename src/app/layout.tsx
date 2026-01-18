@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import { Suspense } from 'react';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { SessionProvider } from '@/components/providers/session-provider';
+import { BadgeCelebrationProvider } from '@/components/providers/badge-celebration-provider';
 import { I18nProvider } from '@/lib/i18n';
 import { Toaster } from '@/components/ui/toast';
 import { CookieBanner } from '@/components/cookie-banner';
@@ -110,7 +111,9 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <I18nProvider>
-              {children}
+              <BadgeCelebrationProvider>
+                {children}
+              </BadgeCelebrationProvider>
             </I18nProvider>
             <Toaster />
             <CookieBanner />
