@@ -20,15 +20,15 @@ TMF possède un USP technique fort (ELO transparent) mais manque de fondations s
 3. **Mois 2-3** : Engagement avancé (challenges, chat)
 4. **Q2** : Activation paywall avec base solide
 
-### Top 5 Priorités Immédiates
+### Top 5 Priorités Immédiates (Mise à jour 18/01/2026)
 
-| Rang | Feature | ICE Score | Justification |
-|------|---------|-----------|---------------|
-| 1 | Tests unitaires ELO | 85 | Protection USP différenciateur |
-| 2 | Notification badge unlock | 80 | Quick win engagement (2h) |
-| 3 | PWA + Push notifications | 75 | Gap critique vs Playtomic |
-| 4 | npm audit fix | 75 | 7 vulnérabilités sécurité |
-| 5 | Corriger 7 casts `as any` | 60 | Type safety |
+| Rang | Feature | ICE Score | Statut |
+|------|---------|-----------|--------|
+| ~~1~~ | ~~Tests unitaires ELO~~ | ~~85~~ | ✅ **FAIT** - 59 tests (commit 4fe9dcc) |
+| ~~2~~ | ~~Notification badge unlock~~ | ~~80~~ | ✅ **FAIT** - BadgeCelebrationProvider (commit 42f20f1) |
+| 3 | PWA + Push notifications | 75 | ⏳ Priorité suivante |
+| ~~4~~ | ~~npm audit fix~~ | ~~75~~ | ✅ **Analysé** - devDependencies only, acceptable |
+| ~~5~~ | ~~Corriger 6 casts `as any`~~ | ~~60~~ | ✅ **FAIT** - Tous supprimés (commit 0b24af7) |
 
 > ✅ **Déjà implémenté** :
 > - Banner cookies RGPD (`src/components/cookie-banner.tsx`)
@@ -83,21 +83,27 @@ ICE = (Impact × Confidence × Ease) / 10
 
 ---
 
-### 1.2 Tests Unitaires Système ELO ⭐ CRITIQUE
+### 1.2 ~~Tests Unitaires Système ELO~~ ✅ TERMINÉ
 
-**ICE Score** : 85 (Impact: 10, Confidence: 9, Ease: 9)
+**Commit** : `4fe9dcc` (18 janvier 2026)
 
-- **Justification** : 0% couverture sur le core différenciateur = risque régression majeure
-- **User Story** : En tant que développeur, je veux des tests ELO pour éviter les régressions
-- **Critères d'acceptation** :
-  - [ ] >80% couverture sur `src/lib/elo/`
-  - [ ] Tests calculateExpectedScore
-  - [ ] Tests calculateKFactor (4 cas)
-  - [ ] Tests modificateurs (nouvel adversaire, répétition, upset, diversité)
-  - [ ] Tests limites ELO (100 min, 3000 max)
-- **Estimation** : 5 jours
-- **Dépendances** : Jest configuré (déjà présent)
-- **Fichiers impactés** :
+**Résultats** :
+- 59 tests passés en 0.9 seconde
+- Couverture complète de `src/lib/elo/`
+- Fichier créé : `src/lib/elo/__tests__/calculator.test.ts` (635 lignes)
+
+**Tests créés** :
+- ✅ calculateExpectedScore (6 tests)
+- ✅ getKFactor (4 tests)
+- ✅ calculateEloChange avec tous modificateurs (20 tests)
+- ✅ calculateNewElo limites 100-3000 (3 tests)
+- ✅ calculateEloTrend (4 tests)
+- ✅ Helpers UI (10 tests)
+- ✅ Scénarios réels (4 tests)
+
+**Commande** : `npm test`
+
+**Fichiers impactés** :
   - `src/lib/elo/__tests__/calculator.test.ts` (nouveau)
   - `src/lib/elo/__tests__/modifiers.test.ts` (nouveau)
 - **Tests requis** : Auto-référent
