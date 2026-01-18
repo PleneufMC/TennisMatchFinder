@@ -111,7 +111,7 @@
 | **Responsive design** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐ (Tailwind) | 🟡 | — |
 | **Mode sombre** | ⭐⭐⭐ | ⭐⭐⭐ | ❌ | ⭐⭐⭐⭐ (next-themes) | 🟢 | — |
 | **Offline mode** | ⭐⭐⭐ | ⭐⭐ | ❌ | ❌ | 🔴 | P3 |
-| **Multilingue** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐ (FR only) | ⭐⭐⭐ (FR/EN partiel) | 🟠 | P1 |
+| **Multilingue** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐ (FR only) | ⭐⭐⭐⭐ (FR/EN complet) | 🟡 | — |
 
 **Verdict Mobile** : **Gap critique** — sans PWA/push, perte de 50%+ d'engagement potentiel.
 
@@ -177,12 +177,11 @@
 - **Benchmark** : UTR = analytics complets, A/B testing
 - **Recommandation** : **P1** — data-driven decisions
 
-### Gap #8 : Multilingue Complet (EN)
-- **Impact business** : Marché anglophone inaccessible
-- **Effort estimation** : 2 semaines
-- **Dépendances** : i18n framework (next-intl déjà partiellement)
-- **État actuel** : FR/EN partiel, ~40% traduit
-- **Recommandation** : **P1** — expansion internationale
+### ~~Gap #8 : Multilingue Complet (EN)~~ ✅ RÉSOLU
+- **Statut** : Déjà implémenté et complet
+- **Fichiers** : `messages/fr.json`, `messages/en.json` (286 lignes chacun)
+- **Framework** : Custom React Context avec sélecteur langue
+- **Recommandation** : ~~Aucune action requise~~
 
 ### Gap #9 : Suppression Compte RGPD
 - **Impact business** : Non-conformité RGPD, risque légal

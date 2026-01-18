@@ -30,7 +30,9 @@ TMF possède un USP technique fort (ELO transparent) mais manque de fondations s
 | 4 | npm audit fix | 75 | 7 vulnérabilités sécurité |
 | 5 | Corriger 7 casts `as any` | 60 | Type safety |
 
-> ✅ **Banner cookies RGPD** : Déjà implémenté (`src/components/cookie-banner.tsx`)
+> ✅ **Déjà implémenté** :
+> - Banner cookies RGPD (`src/components/cookie-banner.tsx`)
+> - Multilingue FR/EN (`messages/fr.json`, `messages/en.json` — 286 lignes chacun)
 
 ---
 
@@ -404,18 +406,16 @@ declare module 'next-auth' {
 
 ---
 
-### 3.2 Multilingue Complet (EN)
+### ~~3.2 Multilingue Complet (EN)~~ ✅ DÉJÀ IMPLÉMENTÉ
 
-**ICE Score** : 56 (Impact: 7, Confidence: 8, Ease: 10)
+> **Statut** : Complet et fonctionnel
+> - `messages/fr.json` (286 lignes)
+> - `messages/en.json` (286 lignes)
+> - `src/lib/i18n/` (framework custom React Context)
+> - Sélecteur de langue avec drapeaux 🇫🇷 🇬🇧
+> - Persistance cookie 1 an
 
-- **Justification** : Marché anglophone, clubs internationaux
-- **Estimation** : 10 jours
-- **État actuel** : FR/EN partiellement implémenté (next-intl)
-- **Priorité traductions** :
-  1. UI principale (dashboard, navigation)
-  2. Emails transactionnels
-  3. Pages légales
-  4. Forum (garder contenu en langue originale)
+**Aucune action requise.**
 
 ---
 
