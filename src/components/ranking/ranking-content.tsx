@@ -67,11 +67,11 @@ export function RankingContent({ player, players }: RankingContentProps) {
       {/* En-tête */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Trophy className="h-8 w-8 text-yellow-500" />
+          <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
+            <Trophy className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-500" />
             {t('title')}
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm sm:text-base text-muted-foreground">
             {t('clubRanking')}
           </p>
         </div>
@@ -125,57 +125,58 @@ export function RankingContent({ player, players }: RankingContentProps) {
                   key={rankedPlayer.id}
                   href={`/profil/${rankedPlayer.id}`}
                   className={cn(
-                    'flex items-center gap-4 p-4 rounded-lg border transition-colors hover:bg-muted/50',
+                    'flex items-center gap-2 sm:gap-4 p-3 sm:p-4 rounded-lg border transition-colors hover:bg-muted/50',
                     isCurrentUser && 'bg-primary/5 border-primary/30'
                   )}
                 >
                   {/* Rang */}
-                  <div className="flex-shrink-0 w-10 text-center">
-                    {rank === 1 && <span className="text-2xl">🥇</span>}
-                    {rank === 2 && <span className="text-2xl">🥈</span>}
-                    {rank === 3 && <span className="text-2xl">🥉</span>}
-                    {rank > 3 && <span className="text-lg font-bold text-muted-foreground">{rank}</span>}
+                  <div className="flex-shrink-0 w-8 sm:w-10 text-center">
+                    {rank === 1 && <span className="text-xl sm:text-2xl">🥇</span>}
+                    {rank === 2 && <span className="text-xl sm:text-2xl">🥈</span>}
+                    {rank === 3 && <span className="text-xl sm:text-2xl">🥉</span>}
+                    {rank > 3 && <span className="text-base sm:text-lg font-bold text-muted-foreground">{rank}</span>}
                   </div>
 
                   {/* Avatar et nom */}
                   <PlayerAvatar
                     src={null}
                     name={rankedPlayer.fullName}
-                    size="md"
+                    size="sm"
+                    className="sm:w-10 sm:h-10"
                   />
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium truncate">
+                    <div className="flex items-center gap-1 sm:gap-2">
+                      <p className="font-medium text-sm sm:text-base truncate max-w-[100px] sm:max-w-none">
                         {rankedPlayer.fullName}
                       </p>
                       {isCurrentUser && (
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="text-xs flex-shrink-0">
                           {locale === 'fr' ? 'Vous' : 'You'}
                         </Badge>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
                       <span className={rankInfo.color}>
-                        {rankInfo.icon} {rankInfo.title}
+                        {rankInfo.icon} <span className="hidden xs:inline">{rankInfo.title}</span>
                       </span>
-                      <span>•</span>
-                      <span>{rankedPlayer.matchesPlayed} {locale === 'fr' ? 'matchs' : 'matches'}</span>
+                      <span className="hidden sm:inline">•</span>
+                      <span className="hidden sm:inline">{rankedPlayer.matchesPlayed} {locale === 'fr' ? 'matchs' : 'matches'}</span>
                     </div>
                   </div>
 
-                  {/* Stats */}
-                  <div className="text-right">
-                    <div className="text-xl font-bold">
+                  {/* Stats - toujours visible */}
+                  <div className="text-right flex-shrink-0">
+                    <div className="text-lg sm:text-xl font-bold">
                       {rankedPlayer.currentElo}
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                      {rankedPlayer.wins}{locale === 'fr' ? 'V' : 'W'} - {rankedPlayer.losses}{locale === 'fr' ? 'D' : 'L'}
+                    <div className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
+                      {rankedPlayer.wins}{locale === 'fr' ? 'V' : 'W'} • {rankedPlayer.losses}{locale === 'fr' ? 'D' : 'L'}
                     </div>
                   </div>
 
-                  {/* Série */}
+                  {/* Série - masquée sur mobile */}
                   {rankedPlayer.winStreak >= 3 && (
-                    <Badge className="hidden sm:flex">
+                    <Badge className="hidden md:flex flex-shrink-0">
                       🔥 {rankedPlayer.winStreak}
                     </Badge>
                   )}
@@ -198,35 +199,35 @@ export function RankingContent({ player, players }: RankingContentProps) {
         <CardHeader>
           <CardTitle className="text-lg">{t('legend')}</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-            <div className="flex items-center gap-2">
+        <CardContent className="p-3 sm:p-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 text-xs sm:text-sm">
+            <div className="flex items-center gap-1 sm:gap-2">
               <span>👑</span>
-              <span className="text-purple-600">{t('ranks.grandMaster')} (2000+)</span>
+              <span className="text-purple-600 truncate">{t('ranks.grandMaster')} (2000+)</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
               <span>🏆</span>
-              <span className="text-red-600">{t('ranks.expert')} (1800+)</span>
+              <span className="text-red-600 truncate">{t('ranks.expert')} (1800+)</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
               <span>⭐</span>
-              <span className="text-orange-500">{t('ranks.advanced')} (1600+)</span>
+              <span className="text-orange-500 truncate">{t('ranks.advanced')} (1600+)</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
               <span>🎯</span>
-              <span className="text-yellow-600">{t('ranks.intermediatePlus')} (1400+)</span>
+              <span className="text-yellow-600 truncate">{t('ranks.intermediatePlus')} (1400+)</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
               <span>🎾</span>
-              <span className="text-green-600">{t('ranks.intermediate')} (1200+)</span>
+              <span className="text-green-600 truncate">{t('ranks.intermediate')} (1200+)</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
               <span>📈</span>
-              <span className="text-blue-600">{t('ranks.beginnerPlus')} (1000+)</span>
+              <span className="text-blue-600 truncate">{t('ranks.beginnerPlus')} (1000+)</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
               <span>🌱</span>
-              <span className="text-gray-600">{t('ranks.beginner')} (&lt;1000)</span>
+              <span className="text-gray-600 truncate">{t('ranks.beginner')} (&lt;1000)</span>
             </div>
           </div>
         </CardContent>
