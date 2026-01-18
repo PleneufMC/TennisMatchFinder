@@ -23,6 +23,14 @@ import {
 } from './schema';
 import { eq, and, or, desc, asc, sql, count, inArray } from 'drizzle-orm';
 
+// Valid forum categories from schema
+type ForumCategory = 'général' | 'recherche-partenaire' | 'résultats' | 'équipement' | 'annonces';
+const VALID_FORUM_CATEGORIES: ForumCategory[] = ['général', 'recherche-partenaire', 'résultats', 'équipement', 'annonces'];
+
+function isValidForumCategory(category: string): category is ForumCategory {
+  return VALID_FORUM_CATEGORIES.includes(category as ForumCategory);
+}
+
 // ============================================
 // PLAYER QUERIES
 // ============================================
@@ -202,8 +210,8 @@ export async function getForumThreadsByClub(
 ): Promise<(ForumThread & { author: Player | null })[]> {
   let whereClause = eq(forumThreads.clubId, clubId);
   
-  if (options?.category) {
-    whereClause = and(whereClause, eq(forumThreads.category, options.category as any))!;
+  if (options?.category && isValidForumCategory(options.category)) {
+    whereClause = and(whereClause, eq(forumThreads.category, options.category))!;
   }
 
   const result = await db

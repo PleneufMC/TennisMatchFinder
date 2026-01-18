@@ -3,6 +3,14 @@ import { db } from '@/lib/db';
 import { forumThreads, forumReplies, forumReactions, players } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
+// Valid forum categories from schema
+type ForumCategory = 'général' | 'recherche-partenaire' | 'résultats' | 'équipement' | 'annonces';
+const VALID_CATEGORIES: ForumCategory[] = ['général', 'recherche-partenaire', 'résultats', 'équipement', 'annonces'];
+
+function isValidCategory(category: string): category is ForumCategory {
+  return VALID_CATEGORIES.includes(category as ForumCategory);
+}
+
 /**
  * Webhook pour les actions du bot N8N
  * POST /api/webhooks/n8n-bot
@@ -53,11 +61,14 @@ async function handleCreateThread(data: {
 }) {
   const { clubId, title, content, category = 'annonces' } = data;
 
+  // Validate category
+  const validCategory: ForumCategory = isValidCategory(category) ? category : 'annonces';
+
   const result = await db.insert(forumThreads).values({
     clubId,
     title,
     content,
-    category: category as any,
+    category: validCategory,
     isBot: true,
     authorId: null,
   }).returning();

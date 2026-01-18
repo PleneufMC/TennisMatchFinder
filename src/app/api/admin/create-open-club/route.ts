@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions);
     
     const isAuthorized = adminKey === process.env.ADMIN_SECRET_KEY || 
-                         (session?.user as any)?.player?.isAdmin === true;
+                         session?.user?.player?.isAdmin === true;
     
     if (!isAuthorized) {
       return NextResponse.json(

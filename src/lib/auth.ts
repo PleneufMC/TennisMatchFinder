@@ -468,16 +468,16 @@ export const authOptions: NextAuthOptions = {
               isVerified: player.isVerified,
             };
             
-            (session.user as any).player = playerData;
+            session.user.player = playerData;
           } else {
             debugLog('[Auth Session] No player found for user');
             // Set empty player to differentiate from "loading" state
-            (session.user as any).player = null;
+            session.user.player = null;
           }
         } catch (error) {
           console.error('[Auth Session] ERROR - DB fetch failed:', error);
           // Don't crash, just log
-          (session.user as any).player = null;
+          session.user.player = null;
         }
       }
       
