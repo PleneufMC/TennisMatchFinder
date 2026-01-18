@@ -1,9 +1,14 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { createPortalSession } from '@/lib/stripe/subscription';
+import { withRateLimit } from '@/lib/rate-limit';
 
-export async function POST() {
+export async function POST(request: NextRequest) {
+  // Rate limiting - 10 requêtes par minute
+  const rateLimitResponse = await withRateLimit(request, 'stripe');
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const session = await getServerSession(authOptions);
 

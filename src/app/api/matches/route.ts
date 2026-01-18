@@ -15,9 +15,14 @@ import {
   type MatchFormat 
 } from '@/lib/elo/format-coefficients';
 import { getAutoValidateDate, VALIDATION_MESSAGES } from '@/lib/constants/validation';
+import { withRateLimit } from '@/lib/rate-limit';
 
 // GET: Liste des matchs du joueur
 export async function GET(request: NextRequest) {
+  // Rate limiting - 30 requêtes par minute
+  const rateLimitResponse = await withRateLimit(request, 'matches');
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const player = await getServerPlayer();
     if (!player) {
@@ -95,6 +100,10 @@ export async function GET(request: NextRequest) {
 
 // POST: Créer un nouveau match
 export async function POST(request: NextRequest) {
+  // Rate limiting - 30 requêtes par minute
+  const rateLimitResponse = await withRateLimit(request, 'matches');
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const player = await getServerPlayer();
     if (!player) {

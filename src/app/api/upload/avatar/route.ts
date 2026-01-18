@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { withRateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
+  // Rate limiting - 5 uploads par minute
+  const rateLimitResponse = await withRateLimit(request, 'upload');
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const session = await getServerSession(authOptions);
     

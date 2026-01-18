@@ -3,8 +3,13 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { createCheckoutSession } from '@/lib/stripe/subscription';
 import { STRIPE_PLANS } from '@/lib/stripe/config';
+import { withRateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
+  // Rate limiting - 10 requêtes par minute
+  const rateLimitResponse = await withRateLimit(request, 'stripe');
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const session = await getServerSession(authOptions);
 

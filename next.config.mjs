@@ -1,3 +1,4 @@
+import { withSentryConfig } from '@sentry/nextjs';
 import withSerwistInit from '@serwist/next';
 
 const withSerwist = withSerwistInit({
@@ -91,4 +92,48 @@ const nextConfig = {
   },
 };
 
-export default withSerwist(nextConfig);
+// Sentry configuration options
+const sentryWebpackPluginOptions = {
+  // Suppresses source map uploading logs during build
+  silent: true,
+  
+  // For all available options, see:
+  // https://github.com/getsentry/sentry-webpack-plugin#options
+  
+  // Upload source maps to Sentry (requires SENTRY_AUTH_TOKEN)
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  
+  // Only upload source maps in production
+  dryRun: process.env.NODE_ENV !== 'production' || !process.env.SENTRY_AUTH_TOKEN,
+};
+
+// Sentry Next.js SDK options
+const sentryOptions = {
+  // Automatically instrument Next.js
+  autoInstrumentServerFunctions: true,
+  autoInstrumentMiddleware: true,
+  autoInstrumentAppDirectory: true,
+  
+  // Tunnel route for bypassing ad blockers (optional)
+  // tunnelRoute: '/monitoring-tunnel',
+  
+  // Hide source maps from browser
+  hideSourceMaps: true,
+  
+  // Disable Sentry CLI during build if no auth token
+  disableLogger: true,
+  
+  // Skip build if Sentry is not configured
+  skipBuildCheck: true,
+};
+
+// Apply both Serwist and Sentry
+const configWithSerwist = withSerwist(nextConfig);
+
+// Wrap with Sentry only if DSN is configured
+const finalConfig = process.env.NEXT_PUBLIC_SENTRY_DSN || process.env.SENTRY_DSN
+  ? withSentryConfig(configWithSerwist, sentryWebpackPluginOptions, sentryOptions)
+  : configWithSerwist;
+
+export default finalConfig;

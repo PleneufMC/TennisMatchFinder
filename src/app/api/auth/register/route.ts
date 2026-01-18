@@ -3,8 +3,13 @@ import { db } from '@/lib/db';
 import { users, clubs } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { createJoinRequest, hasUserPendingRequest, getPlayerById } from '@/lib/db/queries';
+import { withRateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
+  // Rate limiting - 3 inscriptions par 5 minutes
+  const rateLimitResponse = await withRateLimit(request, 'register');
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const body = await request.json();
     const { email, fullName, clubSlug, selfAssessedLevel, phone, message } = body;

@@ -12,11 +12,16 @@ import { users, players, clubs } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { createJoinRequest, hasUserPendingRequest } from '@/lib/db/queries';
 import { SPECIAL_CLUBS } from '@/lib/constants/admins';
+import { withRateLimit } from '@/lib/rate-limit';
 
 // Slug du club par défaut pour les joueurs indépendants
 const OPEN_CLUB_SLUG = SPECIAL_CLUBS.OPEN_CLUB_SLUG;
 
 export async function POST(request: NextRequest) {
+  // Rate limiting - 3 inscriptions par 5 minutes
+  const rateLimitResponse = await withRateLimit(request, 'register');
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const body = await request.json();
     const { email, fullName, city, selfAssessedLevel, clubSlug } = body;
