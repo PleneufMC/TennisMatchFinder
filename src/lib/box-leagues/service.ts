@@ -592,7 +592,7 @@ export async function isPlayerRegistered(
 }
 
 /**
- * Récupère les Box Leagues actives pour un joueur avec le nombre de participants
+ * Récupère les Box Leagues actives pour un joueur avec le nombre de participants et leurs infos
  */
 export async function getPlayerActiveLeagues(playerId: string): Promise<BoxLeague[]> {
   const participations = await db
@@ -616,9 +616,10 @@ export async function getPlayerActiveLeagues(playerId: string): Promise<BoxLeagu
     ))
     .orderBy(desc(boxLeagues.startDate));
 
-  // Ajouter le nombre de participants pour chaque league
-  const leaguesWithCount = await Promise.all(
+  // Ajouter le nombre de participants ET la liste des participants pour chaque league
+  const leaguesWithParticipants = await Promise.all(
     leagues.map(async (league) => {
+      // Compter les participants
       const [countResult] = await db
         .select({ count: sql<number>`count(*)::int` })
         .from(boxLeagueParticipants)
@@ -627,12 +628,30 @@ export async function getPlayerActiveLeagues(playerId: string): Promise<BoxLeagu
           eq(boxLeagueParticipants.isActive, true)
         ));
 
+      // Récupérer la liste des participants avec leurs infos
+      const participantsData = await db
+        .select({
+          id: players.id,
+          fullName: players.fullName,
+          avatarUrl: players.avatarUrl,
+          currentElo: players.currentElo,
+        })
+        .from(boxLeagueParticipants)
+        .innerJoin(players, eq(boxLeagueParticipants.playerId, players.id))
+        .where(and(
+          eq(boxLeagueParticipants.leagueId, league.id),
+          eq(boxLeagueParticipants.isActive, true)
+        ))
+        .orderBy(desc(players.currentElo))
+        .limit(10);
+
       return {
         ...league,
         participantCount: countResult?.count || 0,
+        participants: participantsData,
       } as BoxLeague;
     })
   );
 
-  return leaguesWithCount;
+  return leaguesWithParticipants;
 }
