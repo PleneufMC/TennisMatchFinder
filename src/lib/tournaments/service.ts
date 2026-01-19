@@ -73,25 +73,60 @@ export async function getTournamentById(id: string): Promise<Tournament | null> 
 
 export async function getTournamentsByClub(
   clubId: string,
-  filters?: { status?: TournamentStatus }
+  filters?: { status?: TournamentStatus; includeParticipants?: boolean }
 ): Promise<Tournament[]> {
-  let query = db
+  const whereCondition = filters?.status
+    ? and(eq(tournaments.clubId, clubId), eq(tournaments.status, filters.status))
+    : eq(tournaments.clubId, clubId);
+
+  const results = await db
     .select()
     .from(tournaments)
-    .where(eq(tournaments.clubId, clubId));
+    .where(whereCondition)
+    .orderBy(desc(tournaments.startDate));
 
-  if (filters?.status) {
-    query = db
-      .select()
-      .from(tournaments)
-      .where(and(
-        eq(tournaments.clubId, clubId),
-        eq(tournaments.status, filters.status)
-      ));
-  }
+  // Ajouter le nombre de participants pour chaque tournoi
+  const tournamentsWithCount = await Promise.all(
+    results.map(async (tournament) => {
+      const [countResult] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(tournamentParticipants)
+        .where(and(
+          eq(tournamentParticipants.tournamentId, tournament.id),
+          eq(tournamentParticipants.isActive, true)
+        ));
 
-  const results = await query.orderBy(desc(tournaments.startDate));
-  return results as Tournament[];
+      // Optionnellement récupérer la liste des participants
+      let participantsList: Tournament['participants'] = undefined;
+      if (filters?.includeParticipants) {
+        const participantsData = await db
+          .select({
+            id: players.id,
+            fullName: players.fullName,
+            avatarUrl: players.avatarUrl,
+            currentElo: players.currentElo,
+          })
+          .from(tournamentParticipants)
+          .innerJoin(players, eq(tournamentParticipants.playerId, players.id))
+          .where(and(
+            eq(tournamentParticipants.tournamentId, tournament.id),
+            eq(tournamentParticipants.isActive, true)
+          ))
+          .orderBy(desc(players.currentElo))
+          .limit(10);
+
+        participantsList = participantsData;
+      }
+
+      return {
+        ...tournament,
+        participantCount: countResult?.count || 0,
+        participants: participantsList,
+      } as Tournament;
+    })
+  );
+
+  return tournamentsWithCount;
 }
 
 export async function updateTournamentStatus(

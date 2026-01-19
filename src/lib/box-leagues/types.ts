@@ -32,6 +32,14 @@ export interface BoxLeague {
   createdBy: string | null;
   createdAt: Date;
   updatedAt: Date;
+  // Computed field (joined)
+  participantCount?: number;
+  participants?: Array<{
+    id: string;
+    fullName: string;
+    avatarUrl: string | null;
+    currentElo: number;
+  }>;
 }
 
 export interface BoxLeagueParticipant {

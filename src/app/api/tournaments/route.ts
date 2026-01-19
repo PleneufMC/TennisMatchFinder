@@ -44,11 +44,12 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const status = searchParams.get('status') as TournamentStatus | null;
     const my = searchParams.get('my') === 'true';
+    const includeParticipants = searchParams.get('includeParticipants') === 'true';
 
-    // Récupérer les tournois du club
+    // Récupérer les tournois du club avec le nombre de participants
     const tournaments = await getTournamentsByClub(
       player.clubId,
-      status ? { status } : undefined
+      { status: status || undefined, includeParticipants }
     );
 
     // Si "my" est true, filtrer les tournois où le joueur est inscrit

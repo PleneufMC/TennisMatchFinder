@@ -29,13 +29,15 @@ export async function GET(request: NextRequest) {
     const myLeagues = searchParams.get('my') === 'true';
 
     let leagues: Awaited<ReturnType<typeof getBoxLeaguesByClub>> = [];
+    const includeParticipants = searchParams.get('includeParticipants') === 'true';
+    
     try {
       if (myLeagues) {
         // Récupérer uniquement les leagues auxquelles le joueur participe
         leagues = await getPlayerActiveLeagues(player.id);
       } else if (player.clubId) {
-        // Récupérer toutes les leagues du club
-        leagues = await getBoxLeaguesByClub(player.clubId, status || undefined);
+        // Récupérer toutes les leagues du club avec le nombre de participants
+        leagues = await getBoxLeaguesByClub(player.clubId, status || undefined, includeParticipants);
       }
       // Si pas de clubId, retourner un array vide
     } catch (dbError) {

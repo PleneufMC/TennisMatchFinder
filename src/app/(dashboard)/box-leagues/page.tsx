@@ -32,9 +32,9 @@ export default function BoxLeaguesPage() {
       try {
         setLoading(true);
         
-        // Fetch toutes les leagues
+        // Fetch toutes les leagues avec les participants
         const [allRes, myRes] = await Promise.all([
-          fetch('/api/box-leagues'),
+          fetch('/api/box-leagues?includeParticipants=true'),
           fetch('/api/box-leagues?my=true'),
         ]);
 
@@ -64,10 +64,10 @@ export default function BoxLeaguesPage() {
   const myLeagueIds = new Set(myLeagues.map(l => l.id));
 
   const reloadLeagues = () => {
-    // Recharger les donnees
+    // Recharger les donnees avec les participants
     setLoading(true);
     Promise.all([
-      fetch('/api/box-leagues').then(r => r.json()),
+      fetch('/api/box-leagues?includeParticipants=true').then(r => r.json()),
       fetch('/api/box-leagues?my=true').then(r => r.json()),
     ]).then(([allData, myData]) => {
       setLeagues(allData.leagues || []);

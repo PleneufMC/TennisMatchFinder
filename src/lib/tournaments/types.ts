@@ -40,6 +40,14 @@ export interface Tournament {
   createdBy: string | null;
   createdAt: Date;
   updatedAt: Date;
+  // Computed fields (joined)
+  participantCount?: number;
+  participants?: Array<{
+    id: string;
+    fullName: string;
+    avatarUrl: string | null;
+    currentElo: number;
+  }>;
 }
 
 export interface TournamentParticipant {

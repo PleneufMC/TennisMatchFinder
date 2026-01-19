@@ -22,7 +22,6 @@ import { fr } from 'date-fns/locale';
 
 interface TournamentCardProps {
   tournament: Tournament;
-  participantCount?: number;
   isRegistered?: boolean;
   mySeed?: number | null;
 }
@@ -70,7 +69,10 @@ function safeFormat(date: Date | string | null | undefined, formatStr: string): 
   }
 }
 
-export function TournamentCard({ tournament, participantCount = 0, isRegistered, mySeed }: TournamentCardProps) {
+export function TournamentCard({ tournament, isRegistered, mySeed }: TournamentCardProps) {
+  // Utiliser participantCount de tournament (retourné par l'API)
+  const participantCount = tournament.participantCount ?? 0;
+  
   const statusConfig = getStatusConfig(tournament.status);
   const now = new Date();
   
@@ -174,6 +176,38 @@ export function TournamentCard({ tournament, participantCount = 0, isRegistered,
             <span className="font-medium">{participantCount} / {tournament.maxParticipants}</span>
           </div>
           <Progress value={progressPercent} className="h-2" />
+          
+          {/* Avatars des participants */}
+          {tournament.participants && tournament.participants.length > 0 && (
+            <div className="flex items-center gap-1 mt-2">
+              <div className="flex -space-x-2">
+                {tournament.participants.slice(0, 5).map((participant) => (
+                  <div
+                    key={participant.id}
+                    className="relative h-7 w-7 rounded-full border-2 border-background overflow-hidden bg-muted"
+                    title={`${participant.fullName} (${participant.currentElo} ELO)`}
+                  >
+                    {participant.avatarUrl ? (
+                      <img
+                        src={participant.avatarUrl}
+                        alt={participant.fullName}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center text-xs font-medium text-muted-foreground">
+                        {participant.fullName.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {participantCount > 5 && (
+                <span className="text-xs text-muted-foreground ml-1">
+                  +{participantCount - 5}
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         {/* User Status */}

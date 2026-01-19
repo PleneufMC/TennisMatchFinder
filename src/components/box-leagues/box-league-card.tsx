@@ -43,7 +43,6 @@ import { fr } from 'date-fns/locale';
 
 interface BoxLeagueCardProps {
   league: BoxLeague;
-  participantCount?: number;
   isRegistered?: boolean;
   myRank?: number;
   isAdmin?: boolean;
@@ -64,7 +63,6 @@ const getStatusConfig = (status: string) => {
 
 export function BoxLeagueCard({ 
   league, 
-  participantCount = 0, 
   isRegistered, 
   myRank,
   isAdmin = false,
@@ -73,6 +71,9 @@ export function BoxLeagueCard({
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  
+  // Utiliser participantCount de la league (retourné par l'API)
+  const participantCount = league.participantCount ?? 0;
   
   const statusConfig = getStatusConfig(league.status);
   const now = new Date();
@@ -186,6 +187,38 @@ export function BoxLeagueCard({
             <span className="font-medium">{participantCount} / {league.maxPlayers}</span>
           </div>
           <Progress value={progressPercent} className="h-2" />
+          
+          {/* Avatars des participants */}
+          {league.participants && league.participants.length > 0 && (
+            <div className="flex items-center gap-1 mt-2">
+              <div className="flex -space-x-2">
+                {league.participants.slice(0, 5).map((participant) => (
+                  <div
+                    key={participant.id}
+                    className="relative h-7 w-7 rounded-full border-2 border-background overflow-hidden bg-muted"
+                    title={`${participant.fullName} (${participant.currentElo} ELO)`}
+                  >
+                    {participant.avatarUrl ? (
+                      <img
+                        src={participant.avatarUrl}
+                        alt={participant.fullName}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center text-xs font-medium text-muted-foreground">
+                        {participant.fullName.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {participantCount > 5 && (
+                <span className="text-xs text-muted-foreground ml-1">
+                  +{participantCount - 5}
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         {/* User Status */}

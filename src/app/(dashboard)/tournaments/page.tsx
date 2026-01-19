@@ -38,7 +38,7 @@ export default function TournamentsPage() {
         setError(null);
         
         const [allRes, myRes] = await Promise.all([
-          fetch('/api/tournaments'),
+          fetch('/api/tournaments?includeParticipants=true'),
           fetch('/api/tournaments?my=true'),
         ]);
 
@@ -74,10 +74,10 @@ export default function TournamentsPage() {
   const myTournamentIds = new Set(myTournaments.map(t => t.id));
 
   const handleTournamentCreated = () => {
-    // Recharger les donnees
+    // Recharger les données avec les participants
     setLoading(true);
     Promise.all([
-      fetch('/api/tournaments').then(r => r.json()),
+      fetch('/api/tournaments?includeParticipants=true').then(r => r.json()),
       fetch('/api/tournaments?my=true').then(r => r.json()),
     ]).then(([allData, myData]) => {
       setTournaments(allData.tournaments || []);
