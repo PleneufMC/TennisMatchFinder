@@ -57,7 +57,7 @@ Certains d'entre vous ont signalé que l'onglet "Mes leagues" affichait "0/18 pa
 La prochaine version (v1.5) se concentrera sur :
 - 💳 Plans Premium avec fonctionnalités exclusives
 - 📊 Statistiques avancées pour les admins
-- 🌍 Préparation de la version internationale
+- 📅 Intégration Google Calendar
 
 ---
 

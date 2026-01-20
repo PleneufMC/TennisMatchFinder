@@ -388,11 +388,11 @@ migrations/match-format-coefficients.sql
 - [ ] 🆓 Soft paywall avec tier Gratuit
 - [ ] 📊 Analytics admin avancées
 
-### v1.6.0 — Intégrations & International (Mars 2026)
+### v1.6.0 — Intégrations (Mars 2026)
 - [ ] 📅 Intégration **Google Calendar**
 - [ ] 💬 Intégration **WhatsApp**
-- [ ] 🌍 **Version anglaise** (i18n)
 - [ ] 📱 Mode hors-ligne amélioré
+- [ ] 🔔 Notifications par email améliorées
 
 ### v2.0.0 — Expansion (Q2-Q3 2026)
 - [ ] 🗺️ **Classements départementaux**
