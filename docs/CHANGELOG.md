@@ -4,6 +4,111 @@ Toutes les modifications notables de ce projet sont documentées dans ce fichier
 
 ---
 
+## [1.4.0] - 2026-01-20 — "Push & Polish"
+
+### 🎉 Nouveautés majeures
+
+#### 🔔 Notifications Push PWA
+- **Nouveau** : Notifications push natives via Web Push API
+- **Nouveau** : Configuration VAPID pour l'authentification sécurisée
+- **Nouveau** : Table `push_subscriptions` pour stocker les abonnements
+- **Nouveau** : Composant `PushNotificationToggle` dans les paramètres
+- **Nouveau** : Hook `usePushNotifications` pour la gestion côté client
+- **Nouveau** : Service `src/lib/push/` pour l'envoi des notifications
+- **Nouveau** : Notifications automatiques pour :
+  - Match enregistré (notification à l'adversaire)
+  - Match confirmé/contesté (notification au rapporteur)
+  - Match Now - disponibilité (notification aux joueurs compatibles)
+  - Réponse Match Now (notification au demandeur)
+
+#### 🎨 Nouveau Branding
+- **Nouveau** : Logo redesigné (cercle vert avec graphique de progression)
+- **Nouveau** : Couleur thème passée de orange (#f59e0b) à vert (#22c55e)
+- **Nouveau** : Icônes PWA optimisées (192x192, 512x512 PNG)
+- **Nouveau** : Favicon, apple-touch-icon mis à jour
+- **Nouveau** : Sidebar, mobile-nav, layouts avec nouveau logo Image component
+
+#### 🐛 Corrections de bugs
+
+##### Box Leagues - Compteur de participants
+- **Corrigé** : L'onglet "Mes leagues" affichait "0/18" au lieu du vrai nombre
+- **Corrigé** : `getPlayerActiveLeagues()` retourne maintenant `participantCount` ET `participants`
+- **Corrigé** : Avatars des participants visibles dans les cartes Box League
+
+##### Build Netlify
+- **Corrigé** : Exclusion de `playwright.config.ts` du build TypeScript
+- **Corrigé** : Déclaration de types locale pour `web-push` (production build)
+- **Corrigé** : ESLint et devDependencies en production
+
+### 🔧 Améliorations techniques
+
+- **Amélioration** : Service Worker mis à jour pour les notifications push
+- **Amélioration** : Icônes de notification en PNG (compatibilité navigateurs)
+- **Amélioration** : Rate limiting sur les routes sensibles
+- **Amélioration** : Monitoring Sentry intégré
+
+### 📊 Schema DB — Nouvelles tables
+
+```sql
+-- Table push_subscriptions (nouvelle)
+CREATE TABLE push_subscriptions (
+  id UUID PRIMARY KEY,
+  user_id UUID REFERENCES players(id) ON DELETE CASCADE,
+  endpoint TEXT NOT NULL UNIQUE,
+  p256dh TEXT NOT NULL,
+  auth TEXT NOT NULL,
+  user_agent TEXT,
+  created_at TIMESTAMP,
+  updated_at TIMESTAMP
+);
+```
+
+### 📁 Fichiers créés
+
+```
+src/
+├── lib/push/
+│   └── index.ts                    # Service notifications push
+├── app/api/push/
+│   ├── subscribe/route.ts          # API abonnement
+│   └── unsubscribe/route.ts        # API désabonnement
+├── hooks/
+│   └── use-push-notifications.ts   # Hook React
+├── components/push/
+│   ├── push-notification-toggle.tsx # Toggle UI
+│   └── index.ts
+├── types/
+│   └── web-push.d.ts               # Types pour production
+public/images/
+├── logo.png                        # Nouveau logo
+├── icon-192.png                    # Icône PWA
+├── icon-512.png                    # Icône PWA
+├── favicon.ico                     # Favicon
+└── apple-touch-icon.png            # iOS
+drizzle/
+└── 0010_push_subscriptions.sql     # Migration
+```
+
+### ⚙️ Configuration Netlify requise
+
+```env
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=BL...
+VAPID_PRIVATE_KEY=...
+VAPID_SUBJECT=mailto:pleneuftrading@gmail.com
+```
+
+### 📈 Statistiques
+
+| Métrique | Valeur |
+|----------|--------|
+| Fichiers créés | 11 |
+| Fichiers modifiés | 15 |
+| Lignes de code ajoutées | ~800 |
+| Commits | 6 |
+| Migrations SQL | 1 |
+
+---
+
 ## [1.3.0] - 2026-01-14 — "Réputation & Anti-Churn"
 
 ### 🎉 Nouveautés majeures
@@ -270,17 +375,24 @@ migrations/match-format-coefficients.sql
 - [x] 🛡️ Auto-validation matchs (24h)
 - [x] ⚖️ Système de contestation (7 jours)
 
-### v1.4.0 — Monétisation (Février 2026)
-- [ ] 💳 Intégration **Stripe**
+### v1.4.0 — Push & Polish ✅ TERMINÉ (20 janvier 2026)
+- [x] 🔔 Notifications Push PWA (VAPID)
+- [x] 🎨 Nouveau logo et branding vert
+- [x] 🐛 Fix compteur participants Box Leagues
+- [x] 🛡️ Rate limiting + Sentry monitoring
+- [x] 🔧 Corrections build Netlify
+
+### v1.5.0 — Monétisation (Février 2026)
+- [ ] 💳 Intégration **Stripe** complète
 - [ ] 📦 Plans Premium (€99/an) et Pro (€149/an)
 - [ ] 🆓 Soft paywall avec tier Gratuit
 - [ ] 📊 Analytics admin avancées
 
-### v1.5.0 — Intégrations & International (Mars 2026)
+### v1.6.0 — Intégrations & International (Mars 2026)
 - [ ] 📅 Intégration **Google Calendar**
 - [ ] 💬 Intégration **WhatsApp**
 - [ ] 🌍 **Version anglaise** (i18n)
-- [ ] 📱 PWA améliorée
+- [ ] 📱 Mode hors-ligne amélioré
 
 ### v2.0.0 — Expansion (Q2-Q3 2026)
 - [ ] 🗺️ **Classements départementaux**
@@ -302,4 +414,4 @@ Merci de faire partie de l'aventure ! 🎾
 
 ---
 
-*Dernière mise à jour : 14 janvier 2026*
+*Dernière mise à jour : 20 janvier 2026*

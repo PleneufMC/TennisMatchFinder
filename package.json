@@ -1,6 +1,6 @@
 {
   "name": "tennismatchfinder",
-  "version": "1.1.0",
+  "version": "1.4.0",
   "private": true,
   "description": "Plateforme SaaS de mise en relation pour joueurs de tennis avec système ELO innovant",
   "scripts": {
