@@ -188,36 +188,63 @@ export function BoxLeagueCard({
           </div>
           <Progress value={progressPercent} className="h-2" />
           
-          {/* Avatars des participants */}
+          {/* Liste des participants avec noms visibles */}
           {league.participants && league.participants.length > 0 && (
-            <div className="flex items-center gap-1 mt-2">
-              <div className="flex -space-x-2">
-                {league.participants.slice(0, 5).map((participant) => (
+            <div className="mt-3 space-y-2">
+              {/* Affichage des participants avec photo et nom */}
+              <div className="flex flex-wrap gap-2">
+                {league.participants.slice(0, 6).map((participant) => (
                   <div
                     key={participant.id}
-                    className="relative h-7 w-7 rounded-full border-2 border-background overflow-hidden bg-muted"
-                    title={`${participant.fullName} (${participant.currentElo} ELO)`}
+                    className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-muted/50 border border-border/50 hover:bg-muted transition-colors"
+                    title={`${participant.currentElo} ELO`}
                   >
-                    {participant.avatarUrl ? (
-                      <img
-                        src={participant.avatarUrl}
-                        alt={participant.fullName}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="h-full w-full flex items-center justify-center text-xs font-medium text-muted-foreground">
-                        {participant.fullName.charAt(0).toUpperCase()}
-                      </div>
-                    )}
+                    <div className="relative h-5 w-5 rounded-full overflow-hidden bg-muted flex-shrink-0">
+                      {participant.avatarUrl ? (
+                        <img
+                          src={participant.avatarUrl}
+                          alt={participant.fullName}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center text-[10px] font-medium text-muted-foreground bg-primary/10">
+                          {participant.fullName.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-xs font-medium truncate max-w-[80px]">
+                      {participant.fullName.split(' ')[0]}
+                    </span>
                   </div>
                 ))}
+                {participantCount > 6 && (
+                  <div className="flex items-center px-2 py-1 rounded-full bg-primary/10 text-primary">
+                    <span className="text-xs font-medium">
+                      +{participantCount - 6} autres
+                    </span>
+                  </div>
+                )}
               </div>
-              {participantCount > 5 && (
-                <span className="text-xs text-muted-foreground ml-1">
-                  +{participantCount - 5}
-                </span>
+              
+              {/* Message d'encouragement si peu de participants */}
+              {registrationOpen && participantCount < league.maxPlayers && (
+                <p className="text-xs text-muted-foreground italic">
+                  {participantCount === 0 
+                    ? "Soyez le premier à vous inscrire !" 
+                    : participantCount < 3 
+                      ? "Rejoignez-les, il reste des places !"
+                      : `Encore ${league.maxPlayers - participantCount} places disponibles`
+                  }
+                </p>
               )}
             </div>
+          )}
+          
+          {/* Message si aucun participant */}
+          {(!league.participants || league.participants.length === 0) && registrationOpen && (
+            <p className="text-xs text-muted-foreground italic mt-2">
+              Soyez le premier à vous inscrire !
+            </p>
           )}
         </div>
 
