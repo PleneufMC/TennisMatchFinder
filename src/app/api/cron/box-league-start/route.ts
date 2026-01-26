@@ -21,6 +21,7 @@ import {
   notifications 
 } from '@/lib/db/schema';
 import { eq, and, lte, sql } from 'drizzle-orm';
+import { notifyBoxLeagueStarted, notifyBoxLeagueCancelled } from '@/lib/whatsapp';
 
 export const dynamic = 'force-dynamic';
 
@@ -82,6 +83,8 @@ interface ParticipantData {
   playerId: string;
   eloAtStart: number;
   playerName: string;
+  whatsappNumber: string | null;
+  whatsappOptIn: boolean;
 }
 
 export async function POST(request: NextRequest) {
@@ -125,13 +128,15 @@ export async function POST(request: NextRequest) {
 
     for (const league of leaguesToProcess) {
       try {
-        // Récupérer les participants actifs
+        // Récupérer les participants actifs avec leurs préférences WhatsApp
         const participants = await db
           .select({
             id: boxLeagueParticipants.id,
             playerId: boxLeagueParticipants.playerId,
             eloAtStart: boxLeagueParticipants.eloAtStart,
             playerName: players.fullName,
+            whatsappNumber: players.whatsappNumber,
+            whatsappOptIn: players.whatsappOptIn,
           })
           .from(boxLeagueParticipants)
           .innerJoin(players, eq(boxLeagueParticipants.playerId, players.id))
@@ -165,6 +170,16 @@ export async function POST(request: NextRequest) {
               link: `/box-leagues`,
               data: { leagueId: league.id },
             });
+
+            // Notification WhatsApp si activé
+            if (participant.whatsappOptIn && participant.whatsappNumber) {
+              await notifyBoxLeagueCancelled(
+                participant.whatsappNumber,
+                participant.playerName,
+                league.name,
+                'Pas assez de participants (minimum 2 requis)'
+              );
+            }
           }
 
           results.push({
@@ -243,10 +258,11 @@ export async function POST(request: NextRequest) {
           })
           .where(eq(boxLeagues.id, league.id));
 
-        // Notifier tous les participants
+        // Notifier tous les participants (in-app + WhatsApp)
         const notificationPromises = pools.flatMap((pool, poolIndex) =>
-          pool.map((participant) =>
-            db.insert(notifications).values({
+          pool.map(async (participant) => {
+            // Notification in-app
+            await db.insert(notifications).values({
               userId: participant.playerId,
               type: 'box_league_started',
               title: `🏆 ${league.name} démarre !`,
@@ -259,8 +275,21 @@ export async function POST(request: NextRequest) {
                 poolNumber: poolIndex + 1,
                 poolLetter: poolNumberToLetter(poolIndex + 1),
               },
-            })
-          )
+            });
+
+            // Notification WhatsApp si activé
+            if (participant.whatsappOptIn && participant.whatsappNumber) {
+              const poolLetter = optimalPoolCount > 1 ? poolNumberToLetter(poolIndex + 1) : null;
+              const matchCount = Math.floor(matchesToCreate.length / optimalPoolCount);
+              await notifyBoxLeagueStarted(
+                participant.whatsappNumber,
+                participant.playerName,
+                league.name,
+                poolLetter,
+                matchCount
+              );
+            }
+          })
         );
 
         await Promise.all(notificationPromises);

@@ -278,6 +278,10 @@ export const players = pgTable(
     isVerified: boolean('is_verified').default(false).notNull(),
     isActive: boolean('is_active').default(true).notNull(),
     onboardingCompleted: boolean('onboarding_completed').default(false).notNull(),
+    // WhatsApp notifications
+    whatsappNumber: varchar('whatsapp_number', { length: 20 }), // Format international: +33612345678
+    whatsappOptIn: boolean('whatsapp_opt_in').default(false).notNull(), // Consentement explicite
+    whatsappVerified: boolean('whatsapp_verified').default(false).notNull(), // Numéro vérifié
     lastActiveAt: timestamp('last_active_at', { mode: 'date' }).defaultNow().notNull(),
     lastMatchAt: timestamp('last_match_at', { mode: 'date' }),
     createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
