@@ -98,6 +98,10 @@
 [functions."auto-validate-matches"]
   schedule = "0 * * * *"
 
+# Scheduled function for auto-starting box leagues after registration deadline (every hour)
+[functions."box-league-start"]
+  schedule = "30 * * * *"
+
 # Configuration du contexte de déploiement
 [context.production]
   environment = { NODE_ENV = "production" }

@@ -2,12 +2,13 @@
  * API Route: Draw Pools for Box League
  * 
  * POST - Effectue le tirage au sort pour répartir les joueurs en poules
+ *        S'adapte automatiquement au nombre réel de participants
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerPlayer } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
-import { boxLeagues, boxLeagueParticipants, players, notifications } from '@/lib/db/schema';
+import { boxLeagues, boxLeagueParticipants, boxLeagueMatches, players, notifications } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
@@ -46,6 +47,24 @@ function distributeInPools<T>(items: T[], poolCount: number): T[][] {
 // Convertir numéro de poule en lettre
 function poolNumberToLetter(num: number): string {
   return String.fromCharCode(64 + num); // 1 -> A, 2 -> B, 3 -> C
+}
+
+// Calcule le nombre optimal de poules selon le nombre de participants
+function calculateOptimalPoolCount(participantCount: number, requestedPoolCount: number, playersPerPool: number): number {
+  // Cas spéciaux : pas assez de monde
+  if (participantCount < 2) return 0; // Annulation
+  if (participantCount <= 6) return 1; // Une seule poule
+  
+  // Calculer le nombre idéal de poules
+  const idealPoolCount = Math.ceil(participantCount / playersPerPool);
+  
+  // Ne pas dépasser le nombre demandé initialement
+  const actualPoolCount = Math.min(idealPoolCount, requestedPoolCount);
+  
+  // S'assurer qu'on a au moins 2 joueurs par poule
+  const minPoolCount = Math.floor(participantCount / 2);
+  
+  return Math.min(actualPoolCount, minPoolCount);
 }
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
@@ -113,20 +132,30 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         )
       );
 
-    if (participants.length < league.poolCount * 2) {
+    // Vérification minimum : il faut au moins 2 participants
+    if (participants.length < 2) {
       return NextResponse.json(
         { 
-          error: `Pas assez de participants. Minimum requis: ${league.poolCount * 2} joueurs pour ${league.poolCount} poules.` 
+          error: `Pas assez de participants. Minimum requis: 2 joueurs (actuellement: ${participants.length}).` 
         },
         { status: 400 }
       );
     }
 
+    // Calculer le nombre optimal de poules (s'adapte au nombre réel de participants)
+    const optimalPoolCount = calculateOptimalPoolCount(
+      participants.length,
+      league.poolCount,
+      league.playersPerPool
+    );
+
+    const poolCountChanged = optimalPoolCount !== league.poolCount;
+
     // Mélanger les participants
     const shuffledParticipants = shuffleArray(participants);
 
     // Répartir en poules
-    const pools = distributeInPools(shuffledParticipants, league.poolCount);
+    const pools = distributeInPools(shuffledParticipants, optimalPoolCount);
 
     // Mettre à jour chaque participant avec son numéro de poule
     const updatePromises = pools.flatMap((pool, poolIndex) =>
@@ -143,11 +172,38 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     await Promise.all(updatePromises);
 
-    // Marquer le tirage comme effectué
+    // Générer les matchs round-robin pour chaque poule
+    const matchesToCreate: Array<{
+      leagueId: string;
+      player1Id: string;
+      player2Id: string;
+      deadline: Date;
+    }> = [];
+
+    for (const pool of pools) {
+      for (let i = 0; i < pool.length; i++) {
+        for (let j = i + 1; j < pool.length; j++) {
+          matchesToCreate.push({
+            leagueId,
+            player1Id: pool[i]!.playerId,
+            player2Id: pool[j]!.playerId,
+            deadline: league.endDate,
+          });
+        }
+      }
+    }
+
+    if (matchesToCreate.length > 0) {
+      await db.insert(boxLeagueMatches).values(matchesToCreate);
+    }
+
+    // Marquer le tirage comme effectué + mettre à jour le poolCount si adapté + passer en active
     await db
       .update(boxLeagues)
       .set({ 
         poolsDrawn: true,
+        poolCount: optimalPoolCount,
+        status: 'active',
         updatedAt: new Date(),
       })
       .where(eq(boxLeagues.id, leagueId));
@@ -157,9 +213,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       pool.map((participant) =>
         db.insert(notifications).values({
           userId: participant.playerId,
-          type: 'box_league_pool_assigned',
-          title: `🎲 Tirage au sort effectué !`,
-          message: `Tu as été placé dans la Poule ${poolNumberToLetter(poolIndex + 1)} pour "${league.name}". Bonne chance !`,
+          type: 'box_league_started',
+          title: `🏆 ${league.name} démarre !`,
+          message: optimalPoolCount > 1
+            ? `Tu es dans la Poule ${poolNumberToLetter(poolIndex + 1)}. ${pool.length} joueurs dans ta poule. C'est parti !`
+            : `La compétition démarre avec ${participants.length} joueurs. C'est parti !`,
           link: `/box-leagues/${leagueId}`,
           data: {
             leagueId,
@@ -183,10 +241,17 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       })),
     }));
 
+    // Message informatif si le nombre de poules a été adapté
+    const adaptationMessage = poolCountChanged 
+      ? ` (adapté de ${league.poolCount} à ${optimalPoolCount} poule(s) selon le nombre d'inscrits)`
+      : '';
+
     return NextResponse.json({
       success: true,
-      message: `Tirage effectué ! ${participants.length} joueurs répartis en ${league.poolCount} poules.`,
+      message: `Tirage effectué et compétition démarrée ! ${participants.length} joueurs répartis en ${optimalPoolCount} poule(s)${adaptationMessage}. ${matchesToCreate.length} matchs générés.`,
       pools: result,
+      matchesGenerated: matchesToCreate.length,
+      poolCountAdapted: poolCountChanged,
     });
   } catch (error) {
     console.error('Error drawing pools:', error);
