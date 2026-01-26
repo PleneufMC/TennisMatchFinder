@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Bell, Send, Users, User, CheckCircle, Smartphone, Loader2 } from 'lucide-react';
+import { ArrowLeft, Bell, Send, Users, User, CheckCircle, Smartphone, Loader2, MessageCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,27 +20,41 @@ export default function NotificationsPage() {
   const [target, setTarget] = useState<'all' | 'active'>('all');
   const [sendPush, setSendPush] = useState(true);
   const [sendInApp, setSendInApp] = useState(true);
+  const [sendWhatsApp, setSendWhatsApp] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [pushStats, setPushStats] = useState<{ totalSubscriptions: number; uniqueUsers: number } | null>(null);
+  const [whatsappStats, setWhatsappStats] = useState<{ totalOptIn: number; activeOptIn: number; isConfigured: boolean } | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
 
-  // Load push stats on mount
+  // Load push and WhatsApp stats on mount
   useEffect(() => {
-    async function loadPushStats() {
+    async function loadStats() {
       try {
-        const res = await fetch('/api/admin/push/broadcast');
-        if (res.ok) {
-          const data = await res.json();
+        // Load push stats
+        const pushRes = await fetch('/api/admin/push/broadcast');
+        if (pushRes.ok) {
+          const data = await pushRes.json();
           setPushStats(data.stats);
         }
+
+        // Load WhatsApp stats
+        const whatsappRes = await fetch('/api/admin/whatsapp/broadcast');
+        if (whatsappRes.ok) {
+          const data = await whatsappRes.json();
+          setWhatsappStats({
+            totalOptIn: data.stats?.totalOptIn || 0,
+            activeOptIn: data.stats?.activeOptIn || 0,
+            isConfigured: data.isConfigured || false,
+          });
+        }
       } catch (error) {
-        console.error('Error loading push stats:', error);
+        console.error('Error loading stats:', error);
       } finally {
         setLoadingStats(false);
       }
     }
-    loadPushStats();
+    loadStats();
   }, []);
 
   const handleSend = async () => {
@@ -49,7 +63,7 @@ export default function NotificationsPage() {
       return;
     }
 
-    if (!sendPush && !sendInApp) {
+    if (!sendPush && !sendInApp && !sendWhatsApp) {
       toast.error('Sélectionnez au moins un type de notification');
       return;
     }
@@ -59,6 +73,7 @@ export default function NotificationsPage() {
     try {
       let inAppCount = 0;
       let pushCount = 0;
+      let whatsappCount = 0;
 
       // Send in-app notifications
       if (sendInApp) {
@@ -87,14 +102,33 @@ export default function NotificationsPage() {
           pushCount = data.stats?.sent || 0;
         }
       }
+
+      // Send WhatsApp notifications
+      if (sendWhatsApp) {
+        const whatsappMessage = `🎾 ${title}\n\n${message}${url ? `\n\n👉 tennismatchfinder.net${url}` : ''}`;
+        const response = await fetch('/api/admin/whatsapp/broadcast', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            message: whatsappMessage,
+            targetActive: target === 'active',
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          whatsappCount = data.stats?.sent || 0;
+        }
+      }
       
       setSent(true);
       
       const messages = [];
-      if (sendInApp && inAppCount > 0) messages.push(`${inAppCount} notification${inAppCount > 1 ? 's' : ''} in-app`);
-      if (sendPush && pushCount > 0) messages.push(`${pushCount} notification${pushCount > 1 ? 's' : ''} push`);
+      if (sendInApp && inAppCount > 0) messages.push(`${inAppCount} in-app`);
+      if (sendPush && pushCount > 0) messages.push(`${pushCount} push`);
+      if (sendWhatsApp && whatsappCount > 0) messages.push(`${whatsappCount} WhatsApp`);
       
-      toast.success(messages.length > 0 ? messages.join(' + ') : 'Notification envoyée');
+      toast.success(messages.length > 0 ? `Envoyé : ${messages.join(' + ')}` : 'Notification envoyée');
       
       // Reset form after success
       setTimeout(() => {
@@ -197,6 +231,20 @@ export default function NotificationsPage() {
                     </div>
                     <Switch checked={sendPush} onCheckedChange={setSendPush} />
                   </div>
+                  {whatsappStats?.isConfigured && (
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-950/30">
+                      <div className="flex items-center gap-3">
+                        <MessageCircle className="h-5 w-5 text-green-600" />
+                        <div>
+                          <p className="font-medium">WhatsApp</p>
+                          <p className="text-xs text-muted-foreground">
+                            Message direct ({whatsappStats?.totalOptIn || 0} membre{(whatsappStats?.totalOptIn || 0) > 1 ? 's' : ''} opt-in)
+                          </p>
+                        </div>
+                      </div>
+                      <Switch checked={sendWhatsApp} onCheckedChange={setSendWhatsApp} />
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -270,7 +318,7 @@ export default function NotificationsPage() {
               {/* Bouton d'envoi */}
               <Button 
                 onClick={handleSend} 
-                disabled={isSending || !title.trim() || !message.trim() || (!sendPush && !sendInApp)}
+                disabled={isSending || !title.trim() || !message.trim() || (!sendPush && !sendInApp && !sendWhatsApp)}
                 className="w-full"
               >
                 {isSending ? (
@@ -302,9 +350,10 @@ export default function NotificationsPage() {
               <ul className="text-sm text-blue-700 dark:text-blue-300 mt-1 space-y-1">
                 <li><strong>In-App</strong> : Visibles dans le centre de notifications de l&apos;app</li>
                 <li><strong>Push</strong> : Envoyées sur les téléphones/ordinateurs des membres qui ont activé les notifications push</li>
+                <li><strong>WhatsApp</strong> : Message direct aux membres qui ont activé WhatsApp dans leurs paramètres</li>
               </ul>
               <p className="text-sm text-blue-700 dark:text-blue-300 mt-2">
-                💡 Conseil : Utilisez les deux pour les annonces importantes !
+                💡 Conseil : Utilisez WhatsApp pour les annonces urgentes et importantes !
               </p>
             </div>
           </div>
