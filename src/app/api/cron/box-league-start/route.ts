@@ -60,22 +60,169 @@ function poolNumberToLetter(num: number): string {
   return String.fromCharCode(64 + num); // 1 -> A, 2 -> B, 3 -> C
 }
 
-// Calcule le nombre optimal de poules selon le nombre de participants
+/**
+ * Configuration des poules équilibrées
+ * 
+ * Règles :
+ * - Poule idéale : 4-6 joueurs (6-15 matchs par joueur)
+ * - Minimum absolu : 2 joueurs par poule
+ * - Maximum recommandé : 6 joueurs par poule (sinon trop de matchs)
+ * - Seuil de fusion : si la différence entre poules > 2, on fusionne
+ */
+const POOL_CONFIG = {
+  MIN_PLAYERS_PER_POOL: 3,  // Minimum pour un round-robin intéressant
+  IDEAL_PLAYERS_PER_POOL: 4, // Taille idéale (6 matchs par joueur)
+  MAX_PLAYERS_PER_POOL: 6,   // Maximum avant que ça devienne trop long
+  MAX_SINGLE_POOL: 8,        // Au-delà, on divise obligatoirement
+  IMBALANCE_THRESHOLD: 2,    // Différence max acceptée entre poules
+};
+
+/**
+ * Calcule le nombre de matchs round-robin pour une poule
+ * Formule : n(n-1)/2 où n = nombre de joueurs
+ */
+function calculateMatchesForPool(playerCount: number): number {
+  return (playerCount * (playerCount - 1)) / 2;
+}
+
+/**
+ * Calcule la configuration optimale des poules
+ * 
+ * @param participantCount - Nombre total de participants
+ * @param requestedPoolCount - Nombre de poules demandé par l'admin
+ * @param playersPerPool - Nombre de joueurs par poule demandé
+ * @returns Configuration optimale { poolCount, poolSizes, totalMatches }
+ */
+function calculateOptimalPoolConfiguration(
+  participantCount: number, 
+  requestedPoolCount: number, 
+  playersPerPool: number
+): { poolCount: number; poolSizes: number[]; totalMatches: number; reason: string } {
+  
+  // Cas 1: Pas assez de joueurs → Annulation
+  if (participantCount < 2) {
+    return { poolCount: 0, poolSizes: [], totalMatches: 0, reason: 'Pas assez de participants (minimum 2)' };
+  }
+  
+  // Cas 2: 2-3 joueurs → Une seule poule obligatoire
+  if (participantCount <= 3) {
+    return { 
+      poolCount: 1, 
+      poolSizes: [participantCount], 
+      totalMatches: calculateMatchesForPool(participantCount),
+      reason: `Poule unique de ${participantCount} joueurs`
+    };
+  }
+  
+  // Cas 3: 4-8 joueurs → Préférer une seule poule si <= MAX_SINGLE_POOL
+  if (participantCount <= POOL_CONFIG.MAX_SINGLE_POOL) {
+    // Une seule poule est plus équitable
+    if (participantCount <= POOL_CONFIG.MAX_PLAYERS_PER_POOL || requestedPoolCount === 1) {
+      return { 
+        poolCount: 1, 
+        poolSizes: [participantCount], 
+        totalMatches: calculateMatchesForPool(participantCount),
+        reason: `Poule unique de ${participantCount} joueurs (équilibré)`
+      };
+    }
+    
+    // Si l'admin veut plusieurs poules et qu'on a assez de joueurs
+    if (requestedPoolCount >= 2 && participantCount >= 6) {
+      const poolSizes = distributePlayersEvenly(participantCount, 2);
+      const totalMatches = poolSizes.reduce((sum, size) => sum + calculateMatchesForPool(size), 0);
+      return { 
+        poolCount: 2, 
+        poolSizes,
+        totalMatches,
+        reason: `2 poules équilibrées (${poolSizes.join(' + ')} joueurs)`
+      };
+    }
+    
+    // Sinon, une seule poule
+    return { 
+      poolCount: 1, 
+      poolSizes: [participantCount], 
+      totalMatches: calculateMatchesForPool(participantCount),
+      reason: `Poule unique de ${participantCount} joueurs`
+    };
+  }
+  
+  // Cas 4: Plus de 8 joueurs → Calculer le nombre optimal de poules
+  
+  // Calculer le nombre idéal basé sur la taille de poule demandée
+  let idealPoolCount = Math.ceil(participantCount / playersPerPool);
+  
+  // Ne pas dépasser le nombre demandé
+  idealPoolCount = Math.min(idealPoolCount, requestedPoolCount);
+  
+  // S'assurer qu'on a au moins MIN_PLAYERS_PER_POOL par poule
+  const maxPoolCount = Math.floor(participantCount / POOL_CONFIG.MIN_PLAYERS_PER_POOL);
+  idealPoolCount = Math.min(idealPoolCount, maxPoolCount);
+  
+  // Minimum 1 poule
+  idealPoolCount = Math.max(idealPoolCount, 1);
+  
+  // Distribuer les joueurs équitablement
+  const poolSizes = distributePlayersEvenly(participantCount, idealPoolCount);
+  
+  // Vérifier l'équilibre : si la différence est trop grande, réduire le nombre de poules
+  const minPoolSize = Math.min(...poolSizes);
+  const maxPoolSize = Math.max(...poolSizes);
+  
+  if (maxPoolSize - minPoolSize > POOL_CONFIG.IMBALANCE_THRESHOLD && idealPoolCount > 1) {
+    // Trop de déséquilibre, essayer avec moins de poules
+    const reducedPoolCount = idealPoolCount - 1;
+    const reducedPoolSizes = distributePlayersEvenly(participantCount, reducedPoolCount);
+    const reducedMinSize = Math.min(...reducedPoolSizes);
+    const reducedMaxSize = Math.max(...reducedPoolSizes);
+    
+    // Si c'est mieux équilibré, utiliser cette configuration
+    if (reducedMaxSize - reducedMinSize < maxPoolSize - minPoolSize) {
+      const totalMatches = reducedPoolSizes.reduce((sum, size) => sum + calculateMatchesForPool(size), 0);
+      return { 
+        poolCount: reducedPoolCount, 
+        poolSizes: reducedPoolSizes,
+        totalMatches,
+        reason: `${reducedPoolCount} poules équilibrées (${reducedPoolSizes.join(' + ')} joueurs) - fusionné pour équilibre`
+      };
+    }
+  }
+  
+  const totalMatches = poolSizes.reduce((sum, size) => sum + calculateMatchesForPool(size), 0);
+  return { 
+    poolCount: idealPoolCount, 
+    poolSizes,
+    totalMatches,
+    reason: `${idealPoolCount} poules (${poolSizes.join(' + ')} joueurs)`
+  };
+}
+
+/**
+ * Distribue N joueurs en P poules de tailles aussi égales que possible
+ * Ex: 7 joueurs, 2 poules → [4, 3]
+ * Ex: 11 joueurs, 3 poules → [4, 4, 3]
+ */
+function distributePlayersEvenly(playerCount: number, poolCount: number): number[] {
+  if (poolCount <= 0) return [];
+  if (poolCount === 1) return [playerCount];
+  
+  const baseSize = Math.floor(playerCount / poolCount);
+  const remainder = playerCount % poolCount;
+  
+  // Créer les poules : les premières ont baseSize + 1, les autres baseSize
+  const poolSizes: number[] = [];
+  for (let i = 0; i < poolCount; i++) {
+    poolSizes.push(baseSize + (i < remainder ? 1 : 0));
+  }
+  
+  // Trier par taille décroissante pour cohérence
+  return poolSizes.sort((a, b) => b - a);
+}
+
+// Ancienne fonction maintenue pour compatibilité (retourne juste le count)
 function calculateOptimalPoolCount(participantCount: number, requestedPoolCount: number, playersPerPool: number): number {
-  // Cas spéciaux : pas assez de monde
-  if (participantCount < 2) return 0; // Annulation
-  if (participantCount <= 6) return 1; // Une seule poule
-  
-  // Calculer le nombre idéal de poules
-  const idealPoolCount = Math.ceil(participantCount / playersPerPool);
-  
-  // Ne pas dépasser le nombre demandé initialement
-  const actualPoolCount = Math.min(idealPoolCount, requestedPoolCount);
-  
-  // S'assurer qu'on a au moins 2 joueurs par poule
-  const minPoolCount = Math.floor(participantCount / 2);
-  
-  return Math.min(actualPoolCount, minPoolCount);
+  const config = calculateOptimalPoolConfiguration(participantCount, requestedPoolCount, playersPerPool);
+  return config.poolCount;
 }
 
 interface ParticipantData {
@@ -195,17 +342,66 @@ export async function POST(request: NextRequest) {
         }
 
         // Cas 2: Assez de participants → Calculer les poules et démarrer
-        const optimalPoolCount = calculateOptimalPoolCount(
+        const poolConfig = calculateOptimalPoolConfiguration(
           participants.length,
           league.poolCount,
           league.playersPerPool
         );
 
-        // Mélanger les participants
-        const shuffledParticipants = shuffleArray(participants);
+        console.log(`CRON: League "${league.name}" pool config:`, poolConfig);
 
-        // Répartir en poules
-        const pools = distributeInPools(shuffledParticipants, optimalPoolCount);
+        // Mélanger les participants (par ELO pour un meilleur équilibrage)
+        // On trie par ELO puis on distribue en serpentin pour équilibrer les niveaux
+        const sortedByElo = [...participants].sort((a, b) => b.eloAtStart - a.eloAtStart);
+        
+        // Distribuer selon les tailles de poules calculées
+        const pools: ParticipantData[][] = [];
+        let playerIndex = 0;
+        
+        for (const poolSize of poolConfig.poolSizes) {
+          const pool: ParticipantData[] = [];
+          for (let i = 0; i < poolSize && playerIndex < sortedByElo.length; i++) {
+            // Distribution en serpentin pour équilibrer les ELO entre poules
+            if (poolConfig.poolCount > 1) {
+              // Serpentin : 0,1,1,0,0,1,1,0...
+              const round = Math.floor(playerIndex / poolConfig.poolCount);
+              const posInRound = playerIndex % poolConfig.poolCount;
+              const targetPoolIndex = round % 2 === 0 ? posInRound : poolConfig.poolCount - 1 - posInRound;
+              
+              // Si cette poule est déjà pleine, passer à la suivante
+              while (pools[targetPoolIndex] && pools[targetPoolIndex].length >= poolConfig.poolSizes[targetPoolIndex]!) {
+                playerIndex++;
+                if (playerIndex >= sortedByElo.length) break;
+              }
+            }
+            
+            pool.push(sortedByElo[playerIndex]!);
+            playerIndex++;
+          }
+          if (pool.length > 0) {
+            pools.push(pool);
+          }
+        }
+        
+        // Fallback : si la distribution serpentin a échoué, utiliser distribution simple
+        if (pools.length === 0 || pools.reduce((sum, p) => sum + p.length, 0) !== participants.length) {
+          pools.length = 0;
+          playerIndex = 0;
+          const shuffledParticipants = shuffleArray(participants);
+          
+          for (const poolSize of poolConfig.poolSizes) {
+            const pool: ParticipantData[] = [];
+            for (let i = 0; i < poolSize && playerIndex < shuffledParticipants.length; i++) {
+              pool.push(shuffledParticipants[playerIndex]!);
+              playerIndex++;
+            }
+            if (pool.length > 0) {
+              pools.push(pool);
+            }
+          }
+        }
+        
+        const optimalPoolCount = pools.length;
 
         // Mettre à jour chaque participant avec son numéro de poule
         const updatePromises = pools.flatMap((pool, poolIndex) =>
@@ -261,32 +457,36 @@ export async function POST(request: NextRequest) {
         // Notifier tous les participants (in-app + WhatsApp)
         const notificationPromises = pools.flatMap((pool, poolIndex) =>
           pool.map(async (participant) => {
+            // Calculer le nombre de matchs pour CE joueur (dans SA poule)
+            const matchesForPlayer = pool.length - 1; // Round-robin : joue contre tous les autres de sa poule
+            
             // Notification in-app
             await db.insert(notifications).values({
               userId: participant.playerId,
               type: 'box_league_started',
               title: `🏆 ${league.name} démarre !`,
               message: optimalPoolCount > 1
-                ? `Tu es dans la Poule ${poolNumberToLetter(poolIndex + 1)}. ${pool.length} joueurs, ${matchesToCreate.length / optimalPoolCount} matchs à jouer. C'est parti !`
-                : `La compétition démarre avec ${participants.length} joueurs. ${matchesToCreate.length} matchs à jouer. C'est parti !`,
+                ? `Tu es dans la Poule ${poolNumberToLetter(poolIndex + 1)} (${pool.length} joueurs). Tu as ${matchesForPlayer} matchs à jouer. C'est parti !`
+                : `La compétition démarre avec ${participants.length} joueurs. Tu as ${matchesForPlayer} matchs à jouer contre chaque adversaire. C'est parti !`,
               link: `/box-leagues/${league.id}`,
               data: {
                 leagueId: league.id,
                 poolNumber: poolIndex + 1,
                 poolLetter: poolNumberToLetter(poolIndex + 1),
+                poolSize: pool.length,
+                matchCount: matchesForPlayer,
               },
             });
 
             // Notification WhatsApp si activé
             if (participant.whatsappOptIn && participant.whatsappNumber) {
               const poolLetter = optimalPoolCount > 1 ? poolNumberToLetter(poolIndex + 1) : null;
-              const matchCount = Math.floor(matchesToCreate.length / optimalPoolCount);
               await notifyBoxLeagueStarted(
                 participant.whatsappNumber,
                 participant.playerName,
                 league.name,
                 poolLetter,
-                matchCount
+                matchesForPlayer
               );
             }
           })
@@ -294,13 +494,16 @@ export async function POST(request: NextRequest) {
 
         await Promise.all(notificationPromises);
 
+        // Créer le résumé des tailles de poules
+        const poolSizeSummary = pools.map((p, i) => `${poolNumberToLetter(i + 1)}:${p.length}`).join(', ');
+
         results.push({
           leagueId: league.id,
           leagueName: league.name,
           action: 'started',
           participants: participants.length,
           pools: optimalPoolCount,
-          message: `Démarrée avec ${participants.length} joueurs en ${optimalPoolCount} poule(s), ${matchesToCreate.length} matchs générés`,
+          message: `Démarrée avec ${participants.length} joueurs en ${optimalPoolCount} poule(s) [${poolSizeSummary}], ${matchesToCreate.length} matchs générés. ${poolConfig.reason}`,
         });
 
         console.log(`CRON: League "${league.name}" started successfully`);
