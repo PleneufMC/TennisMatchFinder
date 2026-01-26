@@ -91,33 +91,64 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     const { leagueId } = await params;
     const body = await request.json();
-    const { status } = body as { status: BoxLeagueStatus };
+    const { status, registrationDeadline, startDate, endDate } = body as { 
+      status?: BoxLeagueStatus;
+      registrationDeadline?: string;
+      startDate?: string;
+      endDate?: string;
+    };
 
-    if (!status) {
-      return NextResponse.json(
-        { error: 'Statut requis' },
-        { status: 400 }
-      );
+    const league = await getBoxLeagueById(leagueId);
+    if (!league) {
+      return NextResponse.json({ error: 'Box League non trouvée' }, { status: 404 });
     }
 
-    const validStatuses: BoxLeagueStatus[] = ['draft', 'registration', 'active', 'completed', 'cancelled'];
-    if (!validStatuses.includes(status)) {
-      return NextResponse.json(
-        { error: 'Statut invalide' },
-        { status: 400 }
-      );
+    // Vérifier que la league appartient au club du joueur
+    if (league.clubId !== player.clubId) {
+      return NextResponse.json({ error: 'Accès non autorisé' }, { status: 403 });
     }
 
-    await updateBoxLeagueStatus(leagueId, status);
+    // Si on met à jour le statut
+    if (status) {
+      const validStatuses: BoxLeagueStatus[] = ['draft', 'registration', 'active', 'completed', 'cancelled'];
+      if (!validStatuses.includes(status)) {
+        return NextResponse.json(
+          { error: 'Statut invalide' },
+          { status: 400 }
+        );
+      }
+      await updateBoxLeagueStatus(leagueId, status);
+    }
+
+    // Si on met à jour les dates (uniquement si la league n'est pas encore active)
+    if ((registrationDeadline || startDate || endDate) && ['draft', 'registration'].includes(league.status)) {
+      const updateData: Record<string, Date> = {};
+      
+      if (registrationDeadline) {
+        updateData.registrationDeadline = new Date(registrationDeadline);
+      }
+      if (startDate) {
+        updateData.startDate = new Date(startDate);
+      }
+      if (endDate) {
+        updateData.endDate = new Date(endDate);
+      }
+
+      if (Object.keys(updateData).length > 0) {
+        await db.update(boxLeagues)
+          .set(updateData)
+          .where(eq(boxLeagues.id, leagueId));
+      }
+    }
 
     return NextResponse.json({
       success: true,
-      message: `Statut mis à jour: ${status}`,
+      message: 'Box League mise à jour',
     });
   } catch (error) {
-    console.error('Error updating box league status:', error);
+    console.error('Error updating box league:', error);
     return NextResponse.json(
-      { error: 'Erreur lors de la mise à jour du statut' },
+      { error: 'Erreur lors de la mise à jour' },
       { status: 500 }
     );
   }
