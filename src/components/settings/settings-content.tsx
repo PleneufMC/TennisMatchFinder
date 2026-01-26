@@ -10,6 +10,7 @@ import { LocationSettings } from '@/components/profile/location-settings';
 import { PasskeyManager } from '@/components/auth/passkey-manager';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { PushNotificationToggle } from '@/components/push';
+import { WhatsAppSettings } from '@/components/settings/whatsapp-settings';
 import { useTranslations } from '@/lib/i18n';
 
 export function SettingsContent() {
@@ -50,6 +51,9 @@ export function SettingsContent() {
             <PushNotificationToggle variant="card" />
           </CardContent>
         </Card>
+
+        {/* Notifications WhatsApp */}
+        <WhatsAppSettings />
 
         {/* Notifications Email */}
         <Card>
