@@ -282,6 +282,10 @@ export const players = pgTable(
     whatsappNumber: varchar('whatsapp_number', { length: 20 }), // Format international: +33612345678
     whatsappOptIn: boolean('whatsapp_opt_in').default(false).notNull(), // Consentement explicite
     whatsappVerified: boolean('whatsapp_verified').default(false).notNull(), // Numéro vérifié
+    // Weekly challenge streak
+    currentStreak: integer('current_streak').default(0).notNull(), // Semaines consécutives validées
+    bestStreak: integer('best_streak').default(0).notNull(), // Meilleur streak historique
+    lastStreakUpdate: timestamp('last_streak_update', { mode: 'date' }), // Dernière mise à jour du streak
     lastActiveAt: timestamp('last_active_at', { mode: 'date' }).defaultNow().notNull(),
     lastMatchAt: timestamp('last_match_at', { mode: 'date' }),
     createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
@@ -1408,6 +1412,44 @@ export const matchRatingsRelations = relations(matchRatings, ({ one }) => ({
 }));
 
 // ============================================
+// WEEKLY CHALLENGES
+// ============================================
+
+export const playerWeeklyActivity = pgTable(
+  'player_weekly_activity',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    playerId: uuid('player_id')
+      .notNull()
+      .references(() => players.id, { onDelete: 'cascade' }),
+    // Semaine (format ISO: YYYY-WXX, ex: 2026-W05)
+    weekYear: integer('week_year').notNull(), // 2026
+    weekNumber: integer('week_number').notNull(), // 1-53
+    // Activité de la semaine
+    matchesPlayed: integer('matches_played').default(0).notNull(),
+    proposalsSent: integer('proposals_sent').default(0).notNull(),
+    // Validation du challenge
+    challengeValidated: boolean('challenge_validated').default(false).notNull(),
+    // Timestamps
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (table) => ({
+    playerIdIdx: index('player_weekly_activity_player_id_idx').on(table.playerId),
+    weekIdx: index('player_weekly_activity_week_idx').on(table.weekYear, table.weekNumber),
+    // Contrainte unique: un seul enregistrement par joueur par semaine
+    playerWeekUnique: index('player_weekly_activity_player_week_unique').on(table.playerId, table.weekYear, table.weekNumber),
+  })
+);
+
+export const playerWeeklyActivityRelations = relations(playerWeeklyActivity, ({ one }) => ({
+  player: one(players, {
+    fields: [playerWeeklyActivity.playerId],
+    references: [players.id],
+  }),
+}));
+
+// ============================================
 // ACCOUNT DELETION (RGPD)
 // ============================================
 
@@ -1540,3 +1582,6 @@ export type NewMatchRating = typeof matchRatings.$inferInsert;
 
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
 export type NewPushSubscription = typeof pushSubscriptions.$inferInsert;
+
+export type PlayerWeeklyActivity = typeof playerWeeklyActivity.$inferSelect;
+export type NewPlayerWeeklyActivity = typeof playerWeeklyActivity.$inferInsert;

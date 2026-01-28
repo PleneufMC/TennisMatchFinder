@@ -4,6 +4,7 @@ import { matches, players, notifications, eloHistory } from '@/lib/db/schema';
 import { getServerPlayer } from '@/lib/auth-helpers';
 import { eq, and, or } from 'drizzle-orm';
 import { triggerBadgeCheckAfterMatch } from '@/lib/gamification/badge-checker';
+import { incrementWeeklyMatchCount } from '@/lib/challenges/weekly-activity';
 
 // POST: Confirmer ou rejeter un match
 export async function POST(
@@ -206,6 +207,12 @@ export async function POST(
     );
 
     // Note: Les notifications sont déjà créées par triggerBadgeCheckAfterMatch
+
+    // 6. Incrémenter le compteur de matchs hebdomadaires pour les deux joueurs
+    await Promise.all([
+      incrementWeeklyMatchCount(match.player1Id),
+      incrementWeeklyMatchCount(match.player2Id),
+    ]);
 
     return NextResponse.json({
       success: true,

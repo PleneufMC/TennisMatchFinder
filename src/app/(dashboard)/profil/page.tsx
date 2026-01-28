@@ -20,6 +20,8 @@ import { levelLabels, weekdayLabels, timeSlotLabels, surfaceLabels } from '@/lib
 import { TrophyCase } from '@/components/gamification';
 import { RivalryCard } from '@/components/rivalries';
 import { ReputationBadge } from '@/components/reputation/reputation-badge';
+import { WeeklyStreakCard } from '@/components/challenges';
+import { getPlayerStreakInfo, getPlayerWeeklyActivity } from '@/lib/challenges/weekly-activity';
 
 export const metadata: Metadata = {
   title: 'Mon profil',
@@ -33,11 +35,13 @@ export default async function ProfilPage() {
     redirect('/login');
   }
 
-  // Récupérer les badges, l'historique ELO et les rivalités
-  const [badges, eloHistory, rivalries] = await Promise.all([
+  // Récupérer les badges, l'historique ELO, les rivalités et le streak
+  const [badges, eloHistory, rivalries, streakInfo, weeklyActivity] = await Promise.all([
     getBadgesByPlayer(player.id),
     getEloHistoryByPlayer(player.id, { limit: 10 }),
     getPlayerRivalries(player.id, 5),
+    getPlayerStreakInfo(player.id),
+    getPlayerWeeklyActivity(player.id),
   ]);
 
   const rankInfo = getEloRankTitle(player.currentElo);
@@ -300,6 +304,16 @@ export default async function ProfilPage() {
 
         </div>
       </div>
+
+      {/* Challenge Hebdomadaire */}
+      <WeeklyStreakCard
+        currentStreak={streakInfo.currentStreak}
+        bestStreak={streakInfo.bestStreak}
+        currentWeekValidated={streakInfo.currentWeekValidated}
+        nextBadge={streakInfo.nextBadge}
+        matchesThisWeek={weeklyActivity?.matchesPlayed || 0}
+        proposalsThisWeek={weeklyActivity?.proposalsSent || 0}
+      />
 
       {/* Rivalités */}
       {rivalries.length > 0 && (
