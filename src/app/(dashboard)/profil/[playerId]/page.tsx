@@ -15,6 +15,7 @@ import { getEloRankTitle } from '@/lib/elo';
 import { levelLabels, weekdayLabels, timeSlotLabels, surfaceLabels } from '@/lib/validations/profile';
 import { TrophyCase } from '@/components/gamification';
 import { StartConversationButton } from '@/components/messages/start-conversation-button';
+import { PlayerActionsMenu } from '@/components/moderation';
 
 export const dynamic = 'force-dynamic';
 
@@ -103,7 +104,7 @@ export default async function PlayerProfilePage({ params }: PageProps) {
         </div>
         
         {/* Actions */}
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <StartConversationButton playerId={player.id} />
           <Button asChild>
             <Link href={`/matchs/nouveau?opponent=${player.id}`}>
@@ -111,6 +112,7 @@ export default async function PlayerProfilePage({ params }: PageProps) {
               Proposer un match
             </Link>
           </Button>
+          <PlayerActionsMenu playerId={player.id} playerName={player.fullName} />
         </div>
       </div>
 

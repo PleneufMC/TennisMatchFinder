@@ -1532,6 +1532,115 @@ export const directMessagesRelations = relations(directMessages, ({ one }) => ({
 }));
 
 // ============================================
+// PLAYER BLOCKS & REPORTS
+// ============================================
+
+// Player blocks (blocage entre joueurs)
+export const playerBlocks = pgTable(
+  'player_blocks',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    blockerId: uuid('blocker_id')
+      .notNull()
+      .references(() => players.id, { onDelete: 'cascade' }),
+    blockedId: uuid('blocked_id')
+      .notNull()
+      .references(() => players.id, { onDelete: 'cascade' }),
+    reason: text('reason'), // Raison optionnelle (privée)
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (table) => ({
+    blockerIdIdx: index('player_blocks_blocker_id_idx').on(table.blockerId),
+    blockedIdIdx: index('player_blocks_blocked_id_idx').on(table.blockedId),
+    // Un joueur ne peut bloquer un autre qu'une fois
+    uniqueBlock: index('player_blocks_unique_idx').on(table.blockerId, table.blockedId),
+  })
+);
+
+// Report categories enum
+export const reportCategoryEnum = pgEnum('report_category', [
+  'spam',           // Spam, publicité
+  'harassment',     // Harcèlement, insultes
+  'fake_profile',   // Faux profil, usurpation
+  'cheating',       // Triche (scores falsifiés)
+  'inappropriate',  // Contenu inapproprié
+  'other',          // Autre
+]);
+
+// Report status enum
+export const reportStatusEnum = pgEnum('report_status', [
+  'pending',    // En attente de traitement
+  'reviewing',  // En cours d'examen
+  'resolved',   // Résolu (action prise)
+  'dismissed',  // Rejeté (pas de violation)
+]);
+
+// Player reports (signalements)
+export const playerReports = pgTable(
+  'player_reports',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    reporterId: uuid('reporter_id')
+      .notNull()
+      .references(() => players.id, { onDelete: 'cascade' }),
+    reportedId: uuid('reported_id')
+      .notNull()
+      .references(() => players.id, { onDelete: 'cascade' }),
+    category: reportCategoryEnum('category').notNull(),
+    description: text('description').notNull(), // Détails du signalement
+    // Evidence (optional)
+    evidenceUrls: jsonb('evidence_urls').default([]), // Screenshots, liens, etc.
+    // Status
+    status: reportStatusEnum('status').default('pending').notNull(),
+    // Admin handling
+    handledBy: uuid('handled_by').references(() => players.id, { onDelete: 'set null' }),
+    handledAt: timestamp('handled_at', { mode: 'date' }),
+    adminNotes: text('admin_notes'), // Notes internes de l'admin
+    resolution: varchar('resolution', { length: 100 }), // 'warning', 'temp_ban', 'perm_ban', 'no_action'
+    // Timestamps
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (table) => ({
+    reporterIdIdx: index('player_reports_reporter_id_idx').on(table.reporterId),
+    reportedIdIdx: index('player_reports_reported_id_idx').on(table.reportedId),
+    statusIdx: index('player_reports_status_idx').on(table.status),
+    createdAtIdx: index('player_reports_created_at_idx').on(table.createdAt),
+  })
+);
+
+export const playerBlocksRelations = relations(playerBlocks, ({ one }) => ({
+  blocker: one(players, {
+    fields: [playerBlocks.blockerId],
+    references: [players.id],
+    relationName: 'blocksInitiated',
+  }),
+  blocked: one(players, {
+    fields: [playerBlocks.blockedId],
+    references: [players.id],
+    relationName: 'blocksReceived',
+  }),
+}));
+
+export const playerReportsRelations = relations(playerReports, ({ one }) => ({
+  reporter: one(players, {
+    fields: [playerReports.reporterId],
+    references: [players.id],
+    relationName: 'reportsSubmitted',
+  }),
+  reported: one(players, {
+    fields: [playerReports.reportedId],
+    references: [players.id],
+    relationName: 'reportsReceived',
+  }),
+  handler: one(players, {
+    fields: [playerReports.handledBy],
+    references: [players.id],
+    relationName: 'reportsHandled',
+  }),
+}));
+
+// ============================================
 // ACCOUNT DELETION (RGPD)
 // ============================================
 
@@ -1673,3 +1782,12 @@ export type NewDirectConversation = typeof directConversations.$inferInsert;
 
 export type DirectMessage = typeof directMessages.$inferSelect;
 export type NewDirectMessage = typeof directMessages.$inferInsert;
+
+export type PlayerBlock = typeof playerBlocks.$inferSelect;
+export type NewPlayerBlock = typeof playerBlocks.$inferInsert;
+
+export type PlayerReport = typeof playerReports.$inferSelect;
+export type NewPlayerReport = typeof playerReports.$inferInsert;
+
+export type ReportCategory = 'spam' | 'harassment' | 'fake_profile' | 'cheating' | 'inappropriate' | 'other';
+export type ReportStatus = 'pending' | 'reviewing' | 'resolved' | 'dismissed';

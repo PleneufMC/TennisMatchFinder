@@ -102,17 +102,36 @@ export async function GET(request: NextRequest) {
       .where(eq(users.id, request_.userId))
       .limit(1);
 
-    // 3. Créer le profil joueur (admin du club)
-    await db.insert(players).values({
-      id: request_.userId, // Lié à l'utilisateur
-      clubId: newClub.id,
-      fullName: request_.requesterName,
-      phone: request_.requesterPhone,
-      selfAssessedLevel: 'intermédiaire',
-      isAdmin: true, // ADMIN DU CLUB
-      isVerified: true,
-      isActive: true,
-    });
+    // 3. ⚠️ ANTI-DOUBLE COMPTE: Vérifier si un profil joueur existe déjà
+    const [existingPlayer] = await db
+      .select()
+      .from(players)
+      .where(eq(players.id, request_.userId))
+      .limit(1);
+
+    if (existingPlayer) {
+      // Le joueur existe déjà - mettre à jour son profil au lieu de créer un nouveau
+      await db.update(players)
+        .set({
+          clubId: newClub.id,
+          isAdmin: true,
+          isActive: true,
+          updatedAt: new Date(),
+        })
+        .where(eq(players.id, request_.userId));
+    } else {
+      // Créer le profil joueur (admin du club)
+      await db.insert(players).values({
+        id: request_.userId, // Lié à l'utilisateur
+        clubId: newClub.id,
+        fullName: request_.requesterName,
+        phone: request_.requesterPhone,
+        selfAssessedLevel: 'intermédiaire',
+        isAdmin: true, // ADMIN DU CLUB
+        isVerified: true,
+        isActive: true,
+      });
+    }
 
     // 4. Créer les salons de chat par défaut
     await db.insert(chatRooms).values([

@@ -13,6 +13,7 @@ import { eq, and, or, desc, lt, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import Pusher from 'pusher';
 import { sendPushToUser } from '@/lib/push';
+import { isBlocked } from '@/lib/moderation';
 
 export const dynamic = 'force-dynamic';
 
@@ -201,6 +202,19 @@ export async function POST(
       return NextResponse.json(
         { error: 'Conversation non trouvée' },
         { status: 404 }
+      );
+    }
+
+    // Check if either player has blocked the other
+    const otherParticipantId = conversation.participant1Id === player.id 
+      ? conversation.participant2Id 
+      : conversation.participant1Id;
+    
+    const blocked = await isBlocked(player.id, otherParticipantId);
+    if (blocked) {
+      return NextResponse.json(
+        { error: 'Vous ne pouvez pas envoyer de message à ce joueur' },
+        { status: 403 }
       );
     }
 

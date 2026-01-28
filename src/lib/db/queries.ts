@@ -950,6 +950,44 @@ export async function approveJoinRequest(
     throw new Error('Cette demande a déjà été traitée');
   }
 
+  // ⚠️ ANTI-DOUBLE COMPTE: Vérifier si un profil joueur existe déjà
+  const [existingPlayer] = await db
+    .select()
+    .from(players)
+    .where(eq(players.id, request.userId))
+    .limit(1);
+
+  if (existingPlayer) {
+    // Le joueur existe déjà - mettre à jour son club au lieu de créer un nouveau profil
+    const [updatedPlayer] = await db
+      .update(players)
+      .set({
+        clubId: request.clubId,
+        isActive: true,
+        updatedAt: new Date(),
+      })
+      .where(eq(players.id, request.userId))
+      .returning();
+
+    // Update request status
+    const [updatedRequest] = await db
+      .update(clubJoinRequests)
+      .set({
+        status: 'approved',
+        reviewedBy: reviewerId,
+        reviewedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(clubJoinRequests.id, requestId))
+      .returning();
+
+    if (!updatedRequest || !updatedPlayer) {
+      throw new Error('Failed to process join request');
+    }
+
+    return { request: updatedRequest, player: updatedPlayer };
+  }
+
   // Update request status
   const [updatedRequest] = await db
     .update(clubJoinRequests)
@@ -966,7 +1004,7 @@ export async function approveJoinRequest(
     throw new Error('Failed to update join request');
   }
 
-  // Create player profile
+  // Create player profile (nouveau joueur)
   const [player] = await db
     .insert(players)
     .values({
