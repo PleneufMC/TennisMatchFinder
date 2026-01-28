@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 export const dynamic = 'force-dynamic';
 
 import Link from 'next/link';
-import { Settings, UserPlus, Users, BarChart3, Bell, Shield, Hash, Building2, Globe, MessageCircle } from 'lucide-react';
+import { Settings, UserPlus, Users, BarChart3, Bell, Shield, Hash, Building2, Globe, MessageCircle, LayoutDashboard } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { getServerPlayer } from '@/lib/auth-helpers';
@@ -55,6 +55,14 @@ export default async function AdminPage() {
   const activePlayers = allPlayers.filter(p => p.isActive).length;
 
   const adminLinks = [
+    {
+      href: '/admin/club-dashboard',
+      title: 'Dashboard Club',
+      description: 'KPIs, activité et alertes membres',
+      icon: LayoutDashboard,
+      badgeVariant: 'default' as const,
+      highlight: true, // Nouveau dashboard B2B
+    },
     {
       href: '/admin/demandes',
       title: 'Demandes d\'adhésion',
@@ -169,14 +177,25 @@ export default async function AdminPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {adminLinks.map((link) => (
           <Link key={link.href} href={link.href}>
-            <Card className="h-full transition-colors hover:bg-muted/50">
+            <Card className={`h-full transition-colors ${
+              link.highlight 
+                ? 'border-primary/50 bg-primary/5 hover:bg-primary/10 ring-2 ring-primary/20' 
+                : 'hover:bg-muted/50'
+            }`}>
               <CardHeader className="flex flex-row items-center gap-4 space-y-0">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${
+                  link.highlight ? 'bg-primary/20' : 'bg-primary/10'
+                }`}>
                   <link.icon className="h-6 w-6 text-primary" />
                 </div>
                 <div className="flex-1">
                   <CardTitle className="flex items-center gap-2 text-lg">
                     {link.title}
+                    {link.highlight && (
+                      <Badge className="bg-primary/90 text-primary-foreground text-[10px] py-0">
+                        NOUVEAU
+                      </Badge>
+                    )}
                     {link.badge !== undefined && (
                       <Badge variant={link.badgeVariant}>{link.badge}</Badge>
                     )}

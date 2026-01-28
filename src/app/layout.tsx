@@ -4,6 +4,7 @@ import { Suspense } from 'react';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { SessionProvider } from '@/components/providers/session-provider';
 import { BadgeCelebrationProvider } from '@/components/providers/badge-celebration-provider';
+import { QueryProvider } from '@/components/providers/query-provider';
 import { I18nProvider } from '@/lib/i18n';
 import { Toaster } from '@/components/ui/toast';
 import { CookieBanner } from '@/components/cookie-banner';
@@ -105,17 +106,18 @@ export default function RootLayout({
     <html lang="fr" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
         <SessionProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <I18nProvider>
-              <BadgeCelebrationProvider>
-                {children}
-              </BadgeCelebrationProvider>
-            </I18nProvider>
+          <QueryProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              <I18nProvider>
+                <BadgeCelebrationProvider>
+                  {children}
+                </BadgeCelebrationProvider>
+              </I18nProvider>
             <Toaster />
             <CookieBanner />
             <PWAInstallPrompt />
@@ -132,6 +134,7 @@ export default function RootLayout({
               </Suspense>
             )}
           </ThemeProvider>
+          </QueryProvider>
         </SessionProvider>
       </body>
     </html>
