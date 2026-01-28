@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { getServerPlayer } from '@/lib/auth-helpers';
 import { SettingsContent } from '@/components/settings/settings-content';
 
@@ -11,11 +13,14 @@ export const metadata: Metadata = {
 };
 
 export default async function SettingsPage() {
-  const player = await getServerPlayer();
+  const [player, session] = await Promise.all([
+    getServerPlayer(),
+    getServerSession(authOptions),
+  ]);
 
-  if (!player) {
+  if (!player || !session?.user?.email) {
     redirect('/login');
   }
 
-  return <SettingsContent />;
+  return <SettingsContent userEmail={session.user.email} />;
 }

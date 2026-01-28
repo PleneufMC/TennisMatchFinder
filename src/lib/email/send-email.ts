@@ -438,6 +438,163 @@ export async function sendClubInvitationEmail({
   });
 }
 
+// Email de demande de suppression de compte (RGPD)
+export async function sendDeletionRequestEmail(
+  to: string,
+  userName: string,
+  scheduledDeletionAt: Date,
+  cancellationToken: string,
+  confirmationToken: string
+): Promise<boolean> {
+  const formattedDate = scheduledDeletionAt.toLocaleDateString('fr-FR', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tennismatchfinder.net';
+  const cancelUrl = `${baseUrl}/account/cancel-deletion?token=${cancellationToken}`;
+  const confirmUrl = `${baseUrl}/account/confirm-deletion?token=${confirmationToken}`;
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: #dc2626; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+    .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+    .warning-box { background: #fef2f2; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #dc2626; }
+    .info-box { background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0; }
+    .button { display: inline-block; padding: 15px 30px; margin: 10px 5px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px; }
+    .cancel-btn { background: #10b981; color: white; }
+    .confirm-btn { background: #dc2626; color: white; }
+    .buttons { text-align: center; margin: 30px 0; }
+    h1 { margin: 0; }
+    .countdown { font-size: 24px; font-weight: bold; color: #dc2626; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>⚠️ Demande de suppression de compte</h1>
+    </div>
+    <div class="content">
+      <p>Bonjour ${userName},</p>
+      
+      <p>Nous avons bien reçu votre demande de suppression de compte TennisMatchFinder.</p>
+
+      <div class="warning-box">
+        <p><strong>🗓️ Votre compte sera supprimé le :</strong></p>
+        <p class="countdown">${formattedDate}</p>
+        <p style="margin: 0; color: #6b7280;">Soit dans 7 jours à compter de maintenant.</p>
+      </div>
+
+      <div class="info-box">
+        <p><strong>Ce qui sera supprimé :</strong></p>
+        <ul style="margin: 10px 0; padding-left: 20px;">
+          <li>Votre profil et toutes vos données personnelles</li>
+          <li>Votre historique de matchs et statistiques</li>
+          <li>Vos badges et récompenses</li>
+          <li>Vos messages et publications</li>
+        </ul>
+        <p style="margin: 0; color: #6b7280; font-size: 14px;">
+          Note : Les résultats des matchs seront anonymisés mais conservés pour le classement.
+        </p>
+      </div>
+
+      <div class="buttons">
+        <a href="${cancelUrl}" class="button cancel-btn">❌ Annuler la suppression</a>
+        <a href="${confirmUrl}" class="button confirm-btn">✅ Supprimer immédiatement</a>
+      </div>
+
+      <p style="color: #6b7280; font-size: 14px; text-align: center;">
+        Si vous n'avez pas fait cette demande, cliquez sur "Annuler la suppression" immédiatement<br>
+        et changez votre mot de passe par mesure de sécurité.
+      </p>
+
+      <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+
+      <p style="color: #6b7280; font-size: 12px;">
+        Conformément au RGPD, vous avez le droit de demander la suppression de vos données personnelles.
+        Cette action est irréversible une fois le délai de 7 jours passé ou si vous confirmez immédiatement.
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+
+  return sendEmail({
+    to,
+    subject: `[TennisMatchFinder] ⚠️ Confirmation de suppression de compte`,
+    html,
+  });
+}
+
+// Email de confirmation d'annulation de suppression
+export async function sendDeletionCancelledEmail(
+  to: string,
+  userName: string
+): Promise<boolean> {
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+    .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+    .success-box { background: #d1fae5; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0; }
+    .button { display: inline-block; padding: 15px 30px; background: #10b981; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; }
+    h1 { margin: 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>✅ Suppression annulée</h1>
+    </div>
+    <div class="content">
+      <p>Bonjour ${userName},</p>
+      
+      <div class="success-box">
+        <h2 style="color: #059669; margin: 0;">Votre compte est conservé !</h2>
+        <p style="margin: 10px 0 0 0;">La demande de suppression a été annulée avec succès.</p>
+      </div>
+
+      <p>Votre compte TennisMatchFinder reste actif et toutes vos données sont préservées.</p>
+
+      <p>Si vous n'êtes pas à l'origine de cette demande de suppression, nous vous recommandons de :</p>
+      <ul>
+        <li>Changer votre mot de passe</li>
+        <li>Vérifier vos paramètres de sécurité</li>
+        <li>Activer l'authentification à deux facteurs (Passkeys)</li>
+      </ul>
+
+      <p style="text-align: center; margin: 30px 0;">
+        <a href="https://tennismatchfinder.net/dashboard" class="button">Accéder à mon compte</a>
+      </p>
+
+      <p>À bientôt sur les courts ! 🎾<br>L'équipe TennisMatchFinder</p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+
+  return sendEmail({
+    to,
+    subject: `[TennisMatchFinder] ✅ Demande de suppression annulée`,
+    html,
+  });
+}
+
 // Email magic link pour nouvel utilisateur invité
 export async function sendInvitationMagicLinkEmail({
   to,

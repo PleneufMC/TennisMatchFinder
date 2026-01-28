@@ -1408,8 +1408,63 @@ export const matchRatingsRelations = relations(matchRatings, ({ one }) => ({
 }));
 
 // ============================================
+// ACCOUNT DELETION (RGPD)
+// ============================================
+
+export const deletionStatusEnum = pgEnum('deletion_status', [
+  'pending',    // Demande en attente (délai de grâce 7 jours)
+  'confirmed',  // Confirmée, en attente d'exécution
+  'cancelled',  // Annulée par l'utilisateur
+  'completed',  // Suppression effectuée
+]);
+
+export const accountDeletionRequests = pgTable(
+  'account_deletion_requests',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    // Raison optionnelle (feedback)
+    reason: text('reason'),
+    reasonCategory: varchar('reason_category', { length: 50 }), // 'not_using', 'privacy', 'found_alternative', 'other'
+    // Statut de la demande
+    status: deletionStatusEnum('status').default('pending').notNull(),
+    // Token de confirmation/annulation (envoyé par email)
+    confirmationToken: varchar('confirmation_token', { length: 100 }),
+    cancellationToken: varchar('cancellation_token', { length: 100 }),
+    // Dates importantes
+    requestedAt: timestamp('requested_at', { mode: 'date' }).defaultNow().notNull(),
+    scheduledDeletionAt: timestamp('scheduled_deletion_at', { mode: 'date' }).notNull(), // requestedAt + 7 jours
+    confirmedAt: timestamp('confirmed_at', { mode: 'date' }),
+    cancelledAt: timestamp('cancelled_at', { mode: 'date' }),
+    completedAt: timestamp('completed_at', { mode: 'date' }),
+    // Métadonnées pour audit
+    ipAddress: varchar('ip_address', { length: 45 }), // IPv6 max length
+    userAgent: text('user_agent'),
+    // Données anonymisées conservées (pour statistiques)
+    anonymizedData: jsonb('anonymized_data'), // { matchCount, eloAtDeletion, memberSince, ... }
+  },
+  (table) => ({
+    userIdIdx: index('account_deletion_requests_user_id_idx').on(table.userId),
+    statusIdx: index('account_deletion_requests_status_idx').on(table.status),
+    scheduledIdx: index('account_deletion_requests_scheduled_idx').on(table.scheduledDeletionAt),
+  })
+);
+
+export const accountDeletionRequestsRelations = relations(accountDeletionRequests, ({ one }) => ({
+  user: one(users, {
+    fields: [accountDeletionRequests.userId],
+    references: [users.id],
+  }),
+}));
+
+// ============================================
 // TYPE EXPORTS
 // ============================================
+
+export type AccountDeletionRequest = typeof accountDeletionRequests.$inferSelect;
+export type NewAccountDeletionRequest = typeof accountDeletionRequests.$inferInsert;
 
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;

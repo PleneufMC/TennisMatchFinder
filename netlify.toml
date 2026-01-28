@@ -102,6 +102,10 @@
 [functions."box-league-start"]
   schedule = "30 * * * *"
 
+# Scheduled function for processing account deletions (daily at 3 AM)
+[functions."process-deletions"]
+  schedule = "0 3 * * *"
+
 # Configuration du contexte de déploiement
 [context.production]
   environment = { NODE_ENV = "production" }

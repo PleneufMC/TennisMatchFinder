@@ -1,19 +1,23 @@
 'use client';
 
-import { Settings, Bell, Shield, Palette, Globe, Trash2, Smartphone } from 'lucide-react';
+import { Settings, Bell, Shield, Palette, Globe, Smartphone } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { LocationSettings } from '@/components/profile/location-settings';
 import { PasskeyManager } from '@/components/auth/passkey-manager';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { PushNotificationToggle } from '@/components/push';
 import { WhatsAppSettings } from '@/components/settings/whatsapp-settings';
+import { DeleteAccountSection } from '@/components/settings/delete-account-section';
 import { useTranslations } from '@/lib/i18n';
 
-export function SettingsContent() {
+interface SettingsContentProps {
+  userEmail: string;
+}
+
+export function SettingsContent({ userEmail }: SettingsContentProps) {
   const { t, locale } = useTranslations('settings');
   const { t: tCommon } = useTranslations('common');
 
@@ -211,31 +215,8 @@ export function SettingsContent() {
           </CardContent>
         </Card>
 
-        {/* Zone dangereuse */}
-        <Card className="border-destructive/50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-destructive">
-              <Trash2 className="h-5 w-5" />
-              {t('dangerZone.title')}
-            </CardTitle>
-            <CardDescription>
-              {t('dangerZone.description')}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>{t('dangerZone.deleteAccount')}</Label>
-                <p className="text-sm text-muted-foreground">
-                  {t('dangerZone.deleteAccountDesc')}
-                </p>
-              </div>
-              <Button variant="destructive" size="sm" disabled>
-                {tCommon('delete')}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Zone dangereuse - Suppression de compte RGPD */}
+        <DeleteAccountSection userEmail={userEmail} />
       </div>
 
       {/* Note */}
