@@ -269,10 +269,8 @@ export function useGoogleAnalytics() {
       step_number: stepNumber,
       ...metadata,
     });
-    // Log en dev pour debug
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[GA4] signup_step: ${step} (step ${stepNumber})`, metadata);
-    }
+    // Log toujours pour debug (temporaire - à retirer après validation)
+    console.log(`[GA4] signup_step: ${step} (step ${stepNumber})`, metadata);
   };
 
   const trackSignupFieldFocus = (fieldName: string) => {
@@ -324,9 +322,8 @@ export function useGoogleAnalytics() {
       step_number: stepNumber,
       action,
     });
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[GA4] onboarding_step: ${step} (${action})`);
-    }
+    // Log toujours pour debug (temporaire)
+    console.log(`[GA4] onboarding_step: ${step} (${action})`);
   };
 
   const trackOnboardingCompleted = (totalTimeSeconds: number, skippedSteps: string[]) => {
