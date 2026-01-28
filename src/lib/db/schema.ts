@@ -1187,6 +1187,59 @@ export const tournamentMatches = pgTable(
 );
 
 // ============================================
+// SIGNUP ATTEMPTS (Capture abandons inscription)
+// ============================================
+
+export const signupAttemptStatusEnum = pgEnum('signup_attempt_status', [
+  'started',    // Formulaire ouvert
+  'in_progress', // En cours de remplissage
+  'abandoned',  // Abandonné (pas de soumission après X temps)
+  'completed',  // Inscription terminée avec succès
+]);
+
+// Table pour capturer les tentatives d'inscription (même abandonnées)
+export const signupAttempts = pgTable(
+  'signup_attempts',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    // Données capturées progressivement
+    email: varchar('email', { length: 255 }),
+    fullName: varchar('full_name', { length: 100 }),
+    city: varchar('city', { length: 100 }),
+    selfAssessedLevel: playerLevelEnum('self_assessed_level'),
+    wantsToJoinClub: boolean('wants_to_join_club'),
+    clubSlug: varchar('club_slug', { length: 50 }),
+    // Tracking de progression
+    lastStepReached: integer('last_step_reached').default(1).notNull(), // 1-6
+    lastStepName: varchar('last_step_name', { length: 50 }), // fullname, email, city, level, club_option, submit
+    // Status et conversion
+    status: signupAttemptStatusEnum('status').default('started').notNull(),
+    convertedUserId: uuid('converted_user_id').references(() => users.id, { onDelete: 'set null' }),
+    convertedAt: timestamp('converted_at', { mode: 'date' }),
+    // Analytics
+    source: varchar('source', { length: 50 }), // landing_hero, landing_cta, pricing_page, etc.
+    utmSource: varchar('utm_source', { length: 100 }),
+    utmMedium: varchar('utm_medium', { length: 100 }),
+    utmCampaign: varchar('utm_campaign', { length: 100 }),
+    userAgent: text('user_agent'),
+    // Identifiant session pour regrouper les tentatives
+    sessionId: varchar('session_id', { length: 100 }),
+    // Temps passé sur le formulaire (en secondes)
+    timeSpentSeconds: integer('time_spent_seconds'),
+    // Timestamps
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (table) => ({
+    emailIdx: index('signup_attempts_email_idx').on(table.email),
+    statusIdx: index('signup_attempts_status_idx').on(table.status),
+    createdAtIdx: index('signup_attempts_created_at_idx').on(table.createdAt),
+    sessionIdIdx: index('signup_attempts_session_id_idx').on(table.sessionId),
+    lastStepIdx: index('signup_attempts_last_step_idx').on(table.lastStepReached),
+  })
+);
+
+// ============================================
 // RELATIONS
 // ============================================
 

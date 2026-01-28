@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/select';
 import { useGoogleAnalytics } from '@/components/google-analytics';
 import { useMetaPixel } from '@/components/meta-pixel';
+import { useSignupAttempt } from '@/hooks/use-signup-attempt';
 
 // Schéma de validation avec ville
 const registerCitySchema = z.object({
@@ -66,6 +67,20 @@ export function RegisterCityForm({ clubs }: RegisterCityFormProps) {
     trackSignupAbandonment 
   } = useGoogleAnalytics();
   const { trackCompleteRegistration } = useMetaPixel();
+  
+  // ===== SIGNUP ATTEMPTS (Capture abandons) =====
+  const {
+    trackFullName: saveFullName,
+    trackEmail: saveEmail,
+    trackCity: saveCity,
+    trackLevel: saveLevel,
+    trackClubOption: saveClubOption,
+    trackSubmitAttempt: saveSubmitAttempt,
+    markAsConverted,
+  } = useSignupAttempt({
+    source: 'register_form',
+    // TODO: Récupérer UTM params depuis l'URL
+  });
   
   // Track des étapes complétées pour éviter les doublons
   const completedSteps = useRef<Set<string>>(new Set());
@@ -112,30 +127,41 @@ export function RegisterCityForm({ clubs }: RegisterCityFormProps) {
   // Watch les valeurs pour tracker les steps
   const watchedValues = form.watch();
   
-  // Track automatique quand les champs sont remplis
+  // Track automatique quand les champs sont remplis + SAUVEGARDE SERVEUR
   useEffect(() => {
     if (watchedValues.fullName && watchedValues.fullName.length >= 2) {
       trackStepOnce('fullname', 1);
+      // Sauvegarder côté serveur pour capture abandon
+      saveFullName(watchedValues.fullName);
     }
-  }, [watchedValues.fullName, trackStepOnce]);
+  }, [watchedValues.fullName, trackStepOnce, saveFullName]);
 
   useEffect(() => {
-    if (watchedValues.email && watchedValues.email.includes('@')) {
+    // EMAIL: Étape critique - sauvegarder dès que l'email semble valide
+    if (watchedValues.email && watchedValues.email.includes('@') && watchedValues.email.includes('.')) {
       trackStepOnce('email', 2);
+      // Sauvegarder l'email côté serveur (permet la relance)
+      saveEmail(watchedValues.email, watchedValues.fullName);
     }
-  }, [watchedValues.email, trackStepOnce]);
+  }, [watchedValues.email, watchedValues.fullName, trackStepOnce, saveEmail]);
 
   useEffect(() => {
     if (watchedValues.city && watchedValues.city.length >= 2) {
       trackStepOnce('city', 3);
+      saveCity(watchedValues.city, watchedValues.email, watchedValues.fullName);
     }
-  }, [watchedValues.city, trackStepOnce]);
+  }, [watchedValues.city, watchedValues.email, watchedValues.fullName, trackStepOnce, saveCity]);
 
   useEffect(() => {
     if (watchedValues.selfAssessedLevel) {
       trackStepOnce('level', 4);
+      saveLevel(watchedValues.selfAssessedLevel, {
+        fullName: watchedValues.fullName,
+        email: watchedValues.email,
+        city: watchedValues.city,
+      });
     }
-  }, [watchedValues.selfAssessedLevel, trackStepOnce]);
+  }, [watchedValues.selfAssessedLevel, watchedValues.fullName, watchedValues.email, watchedValues.city, trackStepOnce, saveLevel]);
 
   const handleSubmit = async (data: RegisterCityInput) => {
     setIsLoading(true);
@@ -144,6 +170,16 @@ export function RegisterCityForm({ clubs }: RegisterCityFormProps) {
     trackSignupStep('submit_attempt', 6, { 
       wants_club: wantsToJoinClub,
       level: data.selfAssessedLevel 
+    });
+    
+    // Sauvegarder la tentative de soumission côté serveur
+    saveSubmitAttempt({
+      fullName: data.fullName,
+      email: data.email,
+      city: data.city,
+      selfAssessedLevel: data.selfAssessedLevel,
+      wantsToJoinClub,
+      clubSlug: data.clubSlug,
     });
     
     try {
@@ -182,6 +218,11 @@ export function RegisterCityForm({ clubs }: RegisterCityFormProps) {
       
       // Meta Pixel - Complete Registration
       trackCompleteRegistration(data.city, wantsToJoinClub ? 'club_member' : 'independent');
+      
+      // ===== MARQUER LA TENTATIVE COMME CONVERTIE =====
+      if (result.playerId) {
+        markAsConverted(result.playerId);
+      }
       
       console.log(`[Analytics] signup_completed - Time: ${timeToComplete}s, Club: ${wantsToJoinClub ? data.clubSlug : 'independent'}`);
 
@@ -377,9 +418,14 @@ export function RegisterCityForm({ clubs }: RegisterCityFormProps) {
                   const isChecked = checked === true;
                   setWantsToJoinClub(isChecked);
                   // Track l'interaction avec l'option club
-                  if (isChecked) {
-                    trackStepOnce('club_option', 5);
-                  }
+                  trackStepOnce('club_option', 5);
+                  // Sauvegarder côté serveur
+                  saveClubOption(isChecked, undefined, {
+                    fullName: watchedValues.fullName,
+                    email: watchedValues.email,
+                    city: watchedValues.city,
+                    selfAssessedLevel: watchedValues.selfAssessedLevel,
+                  });
                 }}
               />
               <Label htmlFor="joinClub" className="text-sm font-normal cursor-pointer">
