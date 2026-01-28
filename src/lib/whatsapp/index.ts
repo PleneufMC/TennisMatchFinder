@@ -48,8 +48,14 @@ export function isWhatsAppConfigured(): boolean {
 
 /**
  * Formate un numéro de téléphone au format international WhatsApp
- * Enlève les espaces, tirets, et le + initial
- * Ex: "+33 6 12 34 56 78" -> "33612345678"
+ * Enlève les espaces, tirets, et convertit au format E.164 (sans le +)
+ * 
+ * Formats supportés:
+ * - "+33 6 12 34 56 78"  -> "33612345678" (international avec +)
+ * - "06 12 34 56 78"     -> "33612345678" (français local)
+ * - "0033612345678"      -> "33612345678" (international avec 00)
+ * - "0044712345678"      -> "44712345678" (UK avec 00)
+ * - "33612345678"        -> "33612345678" (déjà formaté)
  */
 export function formatPhoneNumber(phone: string): string {
   // Enlever tous les caractères non numériques sauf le +
@@ -60,9 +66,22 @@ export function formatPhoneNumber(phone: string): string {
     cleaned = cleaned.substring(1);
   }
   
-  // Si le numéro commence par 0 (format français), remplacer par 33
+  // Si le numéro commence par 00 (format international européen)
+  // Ex: 0033... -> 33..., 0044... -> 44...
+  if (cleaned.startsWith('00') && cleaned.length > 10) {
+    cleaned = cleaned.substring(2);
+  }
+  
+  // Si le numéro commence par 0 et fait 10 chiffres (format français local)
+  // Ex: 0612345678 -> 33612345678
   if (cleaned.startsWith('0') && cleaned.length === 10) {
     cleaned = '33' + cleaned.substring(1);
+  }
+  
+  // Si le numéro semble être un numéro français sans indicatif (9 chiffres, commence par 6 ou 7)
+  // Ex: 612345678 -> 33612345678
+  if (cleaned.length === 9 && (cleaned.startsWith('6') || cleaned.startsWith('7'))) {
+    cleaned = '33' + cleaned;
   }
   
   return cleaned;
