@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -24,6 +24,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useGoogleAnalytics } from '@/components/google-analytics';
+import { useMetaPixel } from '@/components/meta-pixel';
 
 // Schéma de validation avec ville
 const registerCitySchema = z.object({
@@ -55,6 +57,47 @@ export function RegisterCityForm({ clubs }: RegisterCityFormProps) {
   const [joinRequestCreated, setJoinRequestCreated] = useState(false);
   const [wantsToJoinClub, setWantsToJoinClub] = useState(false);
 
+  // ===== TRACKING ANALYTICS =====
+  const { 
+    trackSignupStep, 
+    trackSignupFieldComplete, 
+    trackSignupError,
+    trackSignupCompleted,
+    trackSignupAbandonment 
+  } = useGoogleAnalytics();
+  const { trackCompleteRegistration } = useMetaPixel();
+  
+  // Track des étapes complétées pour éviter les doublons
+  const completedSteps = useRef<Set<string>>(new Set());
+  const formStartTime = useRef<number>(Date.now());
+
+  // Track page view au montage
+  useEffect(() => {
+    trackSignupStep('fullname', 1, { form_loaded: true });
+    formStartTime.current = Date.now();
+    
+    // Track abandonment quand l'utilisateur quitte la page
+    const handleBeforeUnload = () => {
+      if (!registrationComplete && completedSteps.current.size > 0) {
+        const lastStep = Array.from(completedSteps.current).pop() || 'fullname';
+        const timeSpent = Math.round((Date.now() - formStartTime.current) / 1000);
+        trackSignupAbandonment(lastStep as 'fullname' | 'email' | 'city' | 'level' | 'club_option' | 'submit_attempt', timeSpent);
+      }
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [trackSignupStep, trackSignupAbandonment, registrationComplete]);
+
+  // Helper pour tracker une étape une seule fois
+  const trackStepOnce = useCallback((stepName: 'fullname' | 'email' | 'city' | 'level' | 'club_option', stepNumber: number) => {
+    if (!completedSteps.current.has(stepName)) {
+      completedSteps.current.add(stepName);
+      trackSignupStep(stepName, stepNumber);
+      trackSignupFieldComplete(stepName, true);
+    }
+  }, [trackSignupStep, trackSignupFieldComplete]);
+
   const form = useForm<RegisterCityInput>({
     resolver: zodResolver(registerCitySchema),
     defaultValues: {
@@ -66,8 +109,43 @@ export function RegisterCityForm({ clubs }: RegisterCityFormProps) {
     },
   });
 
+  // Watch les valeurs pour tracker les steps
+  const watchedValues = form.watch();
+  
+  // Track automatique quand les champs sont remplis
+  useEffect(() => {
+    if (watchedValues.fullName && watchedValues.fullName.length >= 2) {
+      trackStepOnce('fullname', 1);
+    }
+  }, [watchedValues.fullName, trackStepOnce]);
+
+  useEffect(() => {
+    if (watchedValues.email && watchedValues.email.includes('@')) {
+      trackStepOnce('email', 2);
+    }
+  }, [watchedValues.email, trackStepOnce]);
+
+  useEffect(() => {
+    if (watchedValues.city && watchedValues.city.length >= 2) {
+      trackStepOnce('city', 3);
+    }
+  }, [watchedValues.city, trackStepOnce]);
+
+  useEffect(() => {
+    if (watchedValues.selfAssessedLevel) {
+      trackStepOnce('level', 4);
+    }
+  }, [watchedValues.selfAssessedLevel, trackStepOnce]);
+
   const handleSubmit = async (data: RegisterCityInput) => {
     setIsLoading(true);
+    
+    // Track tentative de soumission
+    trackSignupStep('submit_attempt', 6, { 
+      wants_club: wantsToJoinClub,
+      level: data.selfAssessedLevel 
+    });
+    
     try {
       // Normaliser la ville (première lettre majuscule)
       const normalizedCity = data.city.trim()
@@ -90,8 +168,22 @@ export function RegisterCityForm({ clubs }: RegisterCityFormProps) {
       const result = await response.json();
 
       if (!response.ok) {
+        // Track erreur serveur
+        trackSignupError('submit', result.error || 'server_error');
         throw new Error(result.error || 'Erreur lors de l\'inscription');
       }
+
+      // ===== TRACK SIGNUP COMPLETED - CONVERSION PRINCIPALE =====
+      const timeToComplete = Math.round((Date.now() - formStartTime.current) / 1000);
+      trackSignupCompleted(
+        wantsToJoinClub && data.clubSlug ? data.clubSlug : 'independent',
+        'magic_link'
+      );
+      
+      // Meta Pixel - Complete Registration
+      trackCompleteRegistration(data.city, wantsToJoinClub ? 'club_member' : 'independent');
+      
+      console.log(`[Analytics] signup_completed - Time: ${timeToComplete}s, Club: ${wantsToJoinClub ? data.clubSlug : 'independent'}`);
 
       setRegisteredEmail(data.email);
       setJoinRequestCreated(result.joinRequestCreated || false);
@@ -104,6 +196,7 @@ export function RegisterCityForm({ clubs }: RegisterCityFormProps) {
       });
     } catch (error) {
       console.error('Registration error:', error);
+      trackSignupError('submit', error instanceof Error ? error.message : 'unknown_error');
       toast.error('Erreur lors de l\'inscription', {
         description: error instanceof Error ? error.message : 'Une erreur est survenue',
       });
@@ -280,7 +373,14 @@ export function RegisterCityForm({ clubs }: RegisterCityFormProps) {
               <Checkbox
                 id="joinClub"
                 checked={wantsToJoinClub}
-                onCheckedChange={(checked) => setWantsToJoinClub(checked === true)}
+                onCheckedChange={(checked) => {
+                  const isChecked = checked === true;
+                  setWantsToJoinClub(isChecked);
+                  // Track l'interaction avec l'option club
+                  if (isChecked) {
+                    trackStepOnce('club_option', 5);
+                  }
+                }}
               />
               <Label htmlFor="joinClub" className="text-sm font-normal cursor-pointer">
                 Je souhaite rejoindre un club existant
@@ -324,7 +424,18 @@ export function RegisterCityForm({ clubs }: RegisterCityFormProps) {
             )}
           </div>
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button 
+            type="submit" 
+            className="w-full" 
+            disabled={isLoading}
+            onClick={() => {
+              // Track les erreurs de validation avant submit
+              const errors = form.formState.errors;
+              if (errors.fullName) trackSignupError('fullname', errors.fullName.message || 'invalid');
+              if (errors.email) trackSignupError('email', errors.email.message || 'invalid');
+              if (errors.city) trackSignupError('city', errors.city.message || 'invalid');
+            }}
+          >
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

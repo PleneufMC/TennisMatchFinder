@@ -253,6 +253,91 @@ export function useGoogleAnalytics() {
     });
   };
 
+  // ===== ÉVÉNEMENTS FUNNEL INSCRIPTION (Step-by-step tracking) =====
+  // Pour identifier précisément où les users abandonnent
+  
+  type SignupStepName = 'fullname' | 'email' | 'city' | 'level' | 'club_option' | 'submit_attempt';
+  
+  const trackSignupStep = (
+    step: SignupStepName,
+    stepNumber: number,
+    metadata?: Record<string, unknown>
+  ) => {
+    trackEvent('signup_step', {
+      event_category: 'conversion_funnel',
+      step_name: step,
+      step_number: stepNumber,
+      ...metadata,
+    });
+    // Log en dev pour debug
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[GA4] signup_step: ${step} (step ${stepNumber})`, metadata);
+    }
+  };
+
+  const trackSignupFieldFocus = (fieldName: string) => {
+    trackEvent('signup_field_focus', {
+      event_category: 'conversion_funnel',
+      field_name: fieldName,
+    });
+  };
+
+  const trackSignupFieldComplete = (fieldName: string, isValid: boolean) => {
+    trackEvent('signup_field_complete', {
+      event_category: 'conversion_funnel',
+      field_name: fieldName,
+      is_valid: isValid,
+    });
+  };
+
+  const trackSignupError = (fieldName: string, errorMessage: string) => {
+    trackEvent('signup_error', {
+      event_category: 'conversion_funnel',
+      field_name: fieldName,
+      error_message: errorMessage,
+    });
+  };
+
+  const trackSignupAbandonment = (
+    lastStepCompleted: SignupStepName,
+    timeSpentSeconds: number
+  ) => {
+    trackEvent('signup_abandonment', {
+      event_category: 'conversion_funnel',
+      last_step: lastStepCompleted,
+      time_spent_seconds: timeSpentSeconds,
+    });
+  };
+
+  // ===== ÉVÉNEMENTS ONBOARDING (Post-inscription) =====
+  
+  type OnboardingStepName = 'welcome' | 'profile' | 'level' | 'availability' | 'first_match';
+  
+  const trackOnboardingStep = (
+    step: OnboardingStepName,
+    stepNumber: number,
+    action: 'view' | 'complete' | 'skip'
+  ) => {
+    trackEvent('onboarding_step', {
+      event_category: 'activation_funnel',
+      step_name: step,
+      step_number: stepNumber,
+      action,
+    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[GA4] onboarding_step: ${step} (${action})`);
+    }
+  };
+
+  const trackOnboardingCompleted = (totalTimeSeconds: number, skippedSteps: string[]) => {
+    trackEvent('onboarding_completed', {
+      event_category: 'activation_funnel',
+      total_time_seconds: totalTimeSeconds,
+      skipped_steps: skippedSteps.join(','),
+      value: 5,
+    });
+  };
+
   return {
     trackEvent,
     // Événements produit existants
@@ -272,5 +357,14 @@ export function useGoogleAnalytics() {
     trackLandingPageView,
     trackCtaClicked,
     trackPricingViewed,
+    // Funnel inscription step-by-step
+    trackSignupStep,
+    trackSignupFieldFocus,
+    trackSignupFieldComplete,
+    trackSignupError,
+    trackSignupAbandonment,
+    // Funnel onboarding
+    trackOnboardingStep,
+    trackOnboardingCompleted,
   };
 }

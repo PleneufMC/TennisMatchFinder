@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -10,6 +10,7 @@ import { ProfileStep } from './steps/ProfileStep';
 import { LevelStep } from './steps/LevelStep';
 import { AvailabilityStep } from './steps/AvailabilityStep';
 import { FirstMatchStep } from './steps/FirstMatchStep';
+import { useGoogleAnalytics } from '@/components/google-analytics';
 
 export interface OnboardingData {
   fullName: string;
@@ -43,6 +44,15 @@ const STEPS = [
   { id: 'first-match', title: 'Premier match', progress: 100 },
 ];
 
+// Mapping des step IDs vers les noms pour le tracking
+const STEP_NAMES: Record<string, 'welcome' | 'profile' | 'level' | 'availability' | 'first_match'> = {
+  'welcome': 'welcome',
+  'profile': 'profile',
+  'level': 'level',
+  'availability': 'availability',
+  'first-match': 'first_match',
+};
+
 export function OnboardingFlow({
   userId,
   userName,
@@ -53,6 +63,25 @@ export function OnboardingFlow({
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // ===== TRACKING ANALYTICS =====
+  const { trackOnboardingStep, trackOnboardingCompleted } = useGoogleAnalytics();
+  const onboardingStartTime = useRef<number>(Date.now());
+  const skippedSteps = useRef<string[]>([]);
+  const trackedSteps = useRef<Set<string>>(new Set());
+
+  // Track le step courant quand il change
+  useEffect(() => {
+    const stepData = STEPS[currentStep];
+    if (stepData && !trackedSteps.current.has(stepData.id)) {
+      const stepName = STEP_NAMES[stepData.id];
+      if (stepName) {
+        trackOnboardingStep(stepName, currentStep + 1, 'view');
+        trackedSteps.current.add(stepData.id);
+      }
+    }
+  }, [currentStep, trackOnboardingStep]);
+
   const [data, setData] = useState<OnboardingData>({
     fullName: userName || '',
     avatarUrl: userImage,
@@ -74,9 +103,17 @@ export function OnboardingFlow({
 
   const nextStep = useCallback(() => {
     if (currentStep < STEPS.length - 1) {
+      // Track completion du step courant
+      const stepData = STEPS[currentStep];
+      if (stepData) {
+        const stepName = STEP_NAMES[stepData.id];
+        if (stepName) {
+          trackOnboardingStep(stepName, currentStep + 1, 'complete');
+        }
+      }
       setCurrentStep(prev => prev + 1);
     }
-  }, [currentStep]);
+  }, [currentStep, trackOnboardingStep]);
 
   const prevStep = useCallback(() => {
     if (currentStep > 0) {
@@ -102,6 +139,11 @@ export function OnboardingFlow({
         throw new Error(result.error || 'Erreur lors de la création du profil');
       }
 
+      // ===== TRACK ONBOARDING COMPLETED =====
+      const totalTime = Math.round((Date.now() - onboardingStartTime.current) / 1000);
+      trackOnboardingCompleted(totalTime, skippedSteps.current);
+      console.log(`[Analytics] onboarding_completed - Time: ${totalTime}s, Skipped: ${skippedSteps.current.join(', ') || 'none'}`);
+      
       toast.success('Profil créé avec succès ! 🎾', {
         description: 'Bienvenue sur TennisMatchFinder',
       });
@@ -118,8 +160,21 @@ export function OnboardingFlow({
   }, [userId, data, onComplete]);
 
   const skipToEnd = useCallback(() => {
+    // Track les steps sautés
+    const skipped: string[] = [];
+    for (let i = currentStep; i < STEPS.length - 1; i++) {
+      const stepData = STEPS[i];
+      if (stepData) {
+        const stepName = STEP_NAMES[stepData.id];
+        if (stepName) {
+          trackOnboardingStep(stepName, i + 1, 'skip');
+          skipped.push(stepName);
+        }
+      }
+    }
+    skippedSteps.current = skipped;
     setCurrentStep(STEPS.length - 1);
-  }, []);
+  }, [currentStep, trackOnboardingStep]);
 
   const currentStepData = STEPS[currentStep];
   if (!currentStepData) return null;
