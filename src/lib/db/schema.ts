@@ -1450,6 +1450,88 @@ export const playerWeeklyActivityRelations = relations(playerWeeklyActivity, ({ 
 }));
 
 // ============================================
+// DIRECT MESSAGES (1-to-1 Chat)
+// ============================================
+
+export const directConversations = pgTable(
+  'direct_conversations',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    // Les deux participants (toujours stockés avec participant1Id < participant2Id pour unicité)
+    participant1Id: uuid('participant1_id')
+      .notNull()
+      .references(() => players.id, { onDelete: 'cascade' }),
+    participant2Id: uuid('participant2_id')
+      .notNull()
+      .references(() => players.id, { onDelete: 'cascade' }),
+    // Dernier message pour affichage dans la liste
+    lastMessageAt: timestamp('last_message_at', { mode: 'date' }),
+    lastMessagePreview: varchar('last_message_preview', { length: 100 }),
+    // Compteurs de messages non lus (par participant)
+    unreadCount1: integer('unread_count_1').default(0).notNull(), // Non lus pour participant1
+    unreadCount2: integer('unread_count_2').default(0).notNull(), // Non lus pour participant2
+    // Timestamps
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (table) => ({
+    participant1Idx: index('direct_conversations_participant1_idx').on(table.participant1Id),
+    participant2Idx: index('direct_conversations_participant2_idx').on(table.participant2Id),
+    // Contrainte unique sur la paire de participants
+    uniqueParticipants: index('direct_conversations_unique_participants').on(table.participant1Id, table.participant2Id),
+    lastMessageAtIdx: index('direct_conversations_last_message_at_idx').on(table.lastMessageAt),
+  })
+);
+
+export const directMessages = pgTable(
+  'direct_messages',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    conversationId: uuid('conversation_id')
+      .notNull()
+      .references(() => directConversations.id, { onDelete: 'cascade' }),
+    senderId: uuid('sender_id')
+      .notNull()
+      .references(() => players.id, { onDelete: 'cascade' }),
+    content: text('content').notNull(),
+    // Statut de lecture
+    readAt: timestamp('read_at', { mode: 'date' }),
+    // Timestamps
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (table) => ({
+    conversationIdIdx: index('direct_messages_conversation_id_idx').on(table.conversationId),
+    senderIdIdx: index('direct_messages_sender_id_idx').on(table.senderId),
+    createdAtIdx: index('direct_messages_created_at_idx').on(table.createdAt),
+  })
+);
+
+export const directConversationsRelations = relations(directConversations, ({ one, many }) => ({
+  participant1: one(players, {
+    fields: [directConversations.participant1Id],
+    references: [players.id],
+    relationName: 'conversationsAsParticipant1',
+  }),
+  participant2: one(players, {
+    fields: [directConversations.participant2Id],
+    references: [players.id],
+    relationName: 'conversationsAsParticipant2',
+  }),
+  messages: many(directMessages),
+}));
+
+export const directMessagesRelations = relations(directMessages, ({ one }) => ({
+  conversation: one(directConversations, {
+    fields: [directMessages.conversationId],
+    references: [directConversations.id],
+  }),
+  sender: one(players, {
+    fields: [directMessages.senderId],
+    references: [players.id],
+  }),
+}));
+
+// ============================================
 // ACCOUNT DELETION (RGPD)
 // ============================================
 
@@ -1585,3 +1667,9 @@ export type NewPushSubscription = typeof pushSubscriptions.$inferInsert;
 
 export type PlayerWeeklyActivity = typeof playerWeeklyActivity.$inferSelect;
 export type NewPlayerWeeklyActivity = typeof playerWeeklyActivity.$inferInsert;
+
+export type DirectConversation = typeof directConversations.$inferSelect;
+export type NewDirectConversation = typeof directConversations.$inferInsert;
+
+export type DirectMessage = typeof directMessages.$inferSelect;
+export type NewDirectMessage = typeof directMessages.$inferInsert;

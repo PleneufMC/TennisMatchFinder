@@ -14,6 +14,7 @@ import { formatEloDelta } from '@/lib/utils/format';
 import { getEloRankTitle } from '@/lib/elo';
 import { levelLabels, weekdayLabels, timeSlotLabels, surfaceLabels } from '@/lib/validations/profile';
 import { TrophyCase } from '@/components/gamification';
+import { StartConversationButton } from '@/components/messages/start-conversation-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -103,12 +104,7 @@ export default async function PlayerProfilePage({ params }: PageProps) {
         
         {/* Actions */}
         <div className="flex gap-2">
-          <Button variant="outline" asChild>
-            <Link href={`/chat?userId=${player.id}`}>
-              <MessageCircle className="h-4 w-4 mr-2" />
-              Message
-            </Link>
-          </Button>
+          <StartConversationButton playerId={player.id} />
           <Button asChild>
             <Link href={`/matchs/nouveau?opponent=${player.id}`}>
               <Zap className="h-4 w-4 mr-2" />

@@ -39,7 +39,7 @@ const navItems: NavItem[] = [
   { href: '/matchs', label: 'Mes matchs', icon: Swords },
   { href: '/suggestions', label: 'Trouver un adversaire', icon: Users },
   { href: '/achievements', label: 'Achievements', icon: Award },
-  { href: '/chat', label: 'Messages', icon: MessageCircle },
+  { href: '/messages', label: 'Messages', icon: MessageCircle },
   { href: '/forum', label: 'Forum', icon: MessageSquare },
   { href: '/profil', label: 'Mon profil', icon: User },
 ];
