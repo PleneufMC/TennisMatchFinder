@@ -94,14 +94,22 @@ export async function sendTextMessage(
   phoneNumber: string,
   text: string
 ): Promise<WhatsAppResult> {
+  console.log('[WhatsApp] sendTextMessage called');
+  console.log('[WhatsApp] Phone number input:', phoneNumber);
+  console.log('[WhatsApp] isConfigured:', isWhatsAppConfigured());
+  console.log('[WhatsApp] PHONE_NUMBER_ID exists:', !!process.env.WHATSAPP_PHONE_NUMBER_ID);
+  console.log('[WhatsApp] ACCESS_TOKEN exists:', !!process.env.WHATSAPP_ACCESS_TOKEN);
+  
   if (!isWhatsAppConfigured()) {
-    console.warn('WhatsApp not configured, skipping message');
+    console.warn('[WhatsApp] Not configured, skipping message');
     return { success: false, error: 'WhatsApp not configured' };
   }
 
   const formattedPhone = formatPhoneNumber(phoneNumber);
+  console.log('[WhatsApp] Formatted phone:', formattedPhone);
 
   try {
+    console.log('[WhatsApp] Sending to API...');
     const response = await fetch(WHATSAPP_API_URL, {
       method: 'POST',
       headers: {
@@ -121,10 +129,12 @@ export async function sendTextMessage(
     });
 
     const data = await response.json();
+    console.log('[WhatsApp] API Response status:', response.status);
+    console.log('[WhatsApp] API Response data:', JSON.stringify(data));
 
     if (!response.ok) {
       const errorData = data as WhatsAppError;
-      console.error('WhatsApp API error:', errorData);
+      console.error('[WhatsApp] API error:', JSON.stringify(errorData));
       return {
         success: false,
         error: errorData.error?.message || 'Unknown error',
@@ -133,6 +143,7 @@ export async function sendTextMessage(
     }
 
     const successData = data as WhatsAppMessageResponse;
+    console.log('[WhatsApp] Message sent successfully! ID:', successData.messages[0]?.id);
     return {
       success: true,
       messageId: successData.messages[0]?.id || '',
