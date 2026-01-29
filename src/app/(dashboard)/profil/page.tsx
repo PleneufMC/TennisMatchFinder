@@ -21,6 +21,7 @@ import { TrophyCase } from '@/components/gamification';
 import { RivalryCard } from '@/components/rivalries';
 import { ReputationBadge } from '@/components/reputation/reputation-badge';
 import { WeeklyStreakCard } from '@/components/challenges';
+import { ReferralSection } from '@/components/referrals';
 import { getPlayerStreakInfo, getPlayerWeeklyActivity } from '@/lib/challenges/weekly-activity';
 
 export const metadata: Metadata = {
@@ -314,6 +315,9 @@ export default async function ProfilPage() {
         matchesThisWeek={weeklyActivity?.matchesPlayed || 0}
         proposalsThisWeek={weeklyActivity?.proposalsSent || 0}
       />
+
+      {/* Parrainages */}
+      <ReferralSection />
 
       {/* Rivalités */}
       {rivalries.length > 0 && (
