@@ -1939,3 +1939,46 @@ export type PlayerReferralStats = typeof playerReferralStats.$inferSelect;
 export type NewPlayerReferralStats = typeof playerReferralStats.$inferInsert;
 
 export type ReferralStatus = 'pending' | 'completed' | 'rewarded';
+
+// ============================================
+// NPS SURVEYS (Net Promoter Score)
+// ============================================
+
+// Table des réponses NPS
+export const npsSurveys = pgTable(
+  'nps_surveys',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    playerId: uuid('player_id')
+      .notNull()
+      .references(() => players.id, { onDelete: 'cascade' }),
+    // Score NPS (0-10)
+    score: integer('score').notNull(),
+    // Feedback textuel optionnel
+    feedback: text('feedback'),
+    // Contexte du survey (quand il a été déclenché)
+    triggerReason: varchar('trigger_reason', { length: 50 }).notNull(), // 'matches_milestone', 'days_since_signup', 'manual'
+    triggerValue: integer('trigger_value'), // Ex: 5 (matchs) ou 30 (jours)
+    // Métadonnées
+    dismissed: boolean('dismissed').default(false).notNull(), // Si l'utilisateur a fermé sans répondre
+    // Timestamps
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (table) => ({
+    playerIdIdx: index('nps_surveys_player_id_idx').on(table.playerId),
+    scoreIdx: index('nps_surveys_score_idx').on(table.score),
+    createdAtIdx: index('nps_surveys_created_at_idx').on(table.createdAt),
+  })
+);
+
+// Relations
+export const npsSurveysRelations = relations(npsSurveys, ({ one }) => ({
+  player: one(players, {
+    fields: [npsSurveys.playerId],
+    references: [players.id],
+  }),
+}));
+
+// Types
+export type NpsSurvey = typeof npsSurveys.$inferSelect;
+export type NewNpsSurvey = typeof npsSurveys.$inferInsert;

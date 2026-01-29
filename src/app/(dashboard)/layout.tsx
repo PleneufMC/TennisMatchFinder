@@ -8,6 +8,7 @@ import { MobileNav } from '@/components/layout/mobile-nav';
 import { DashboardSkeleton } from '@/components/ui/skeleton';
 import { usePlayer } from '@/hooks/use-player';
 import { TSAFooter } from '@/components/partners';
+import { NpsSurveyTrigger } from '@/components/nps';
 
 export default function DashboardLayout({
   children,
@@ -120,6 +121,9 @@ export default function DashboardLayout({
         onClose={() => setMobileNavOpen(false)}
         isAdmin={player.isAdmin}
       />
+
+      {/* NPS Survey - vérifie et affiche si éligible */}
+      <NpsSurveyTrigger />
     </div>
   );
 }
