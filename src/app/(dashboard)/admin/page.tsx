@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 export const dynamic = 'force-dynamic';
 
 import Link from 'next/link';
-import { Settings, UserPlus, Users, BarChart3, Bell, Shield, Hash, Building2, Globe, MessageCircle, LayoutDashboard } from 'lucide-react';
+import { Settings, UserPlus, Users, BarChart3, Bell, Shield, Hash, Building2, Globe, MessageCircle, LayoutDashboard, HeartHandshake } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { getServerPlayer } from '@/lib/auth-helpers';
@@ -129,6 +129,13 @@ export default async function AdminPage() {
       title: 'Broadcast WhatsApp',
       description: 'Envoyer un message à tous les clubs',
       icon: MessageCircle,
+      badgeVariant: 'outline' as const,
+    },
+    {
+      href: '/admin/nps',
+      title: 'Dashboard NPS',
+      description: 'Satisfaction utilisateurs (Net Promoter Score)',
+      icon: HeartHandshake,
       badgeVariant: 'outline' as const,
     },
   ] : [];
