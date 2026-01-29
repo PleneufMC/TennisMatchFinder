@@ -48,9 +48,10 @@ interface Club {
 
 interface RegisterCityFormProps {
   clubs: Club[];
+  referrerId?: string; // ID du parrain (si inscription via lien de parrainage)
 }
 
-export function RegisterCityForm({ clubs }: RegisterCityFormProps) {
+export function RegisterCityForm({ clubs, referrerId }: RegisterCityFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [registrationComplete, setRegistrationComplete] = useState(false);
@@ -193,6 +194,7 @@ export function RegisterCityForm({ clubs }: RegisterCityFormProps) {
         ...data,
         city: normalizedCity,
         clubSlug: wantsToJoinClub && data.clubSlug ? data.clubSlug : undefined,
+        referrerId, // Ajouter le parrain si présent
       };
 
       const response = await fetch('/api/auth/register-city', {

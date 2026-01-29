@@ -4,6 +4,7 @@
  * 
  * Crée un joueur avec sa ville, optionnellement avec une demande d'adhésion à un club.
  * Si aucun club n'est choisi, le joueur est assigné à l'Open Club par défaut.
+ * Gère également le parrainage (referral) si un referrerId est fourni.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -13,6 +14,7 @@ import { eq, and } from 'drizzle-orm';
 import { createJoinRequest, hasUserPendingRequest } from '@/lib/db/queries';
 import { SPECIAL_CLUBS } from '@/lib/constants/admins';
 import { withRateLimit } from '@/lib/rate-limit';
+import { completeReferral } from '@/lib/referrals/service';
 
 // Slug du club par défaut pour les joueurs indépendants
 const OPEN_CLUB_SLUG = SPECIAL_CLUBS.OPEN_CLUB_SLUG;
@@ -24,7 +26,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { email, fullName, city, selfAssessedLevel, clubSlug } = body;
+    const { email, fullName, city, selfAssessedLevel, clubSlug, referrerId } = body;
 
     // Validation basique
     if (!email || !fullName || !city) {
@@ -145,6 +147,28 @@ export async function POST(request: NextRequest) {
         { error: 'Erreur lors de la création du profil joueur' },
         { status: 500 }
       );
+    }
+
+    // Gérer le parrainage si un referrerId est fourni
+    let referralCompleted = false;
+    if (referrerId) {
+      try {
+        // Vérifier que le parrain existe et n'est pas le même que le nouveau joueur
+        const [referrer] = await db
+          .select()
+          .from(players)
+          .where(eq(players.id, referrerId))
+          .limit(1);
+
+        if (referrer && referrer.id !== newPlayer.id) {
+          await completeReferral(referrerId, newPlayer.id, email.toLowerCase());
+          referralCompleted = true;
+          console.log(`[Register] Referral completed: ${referrer.fullName} -> ${fullName}`);
+        }
+      } catch (referralError) {
+        // Ne pas bloquer l'inscription si le parrainage échoue
+        console.error('[Register] Referral error (non-blocking):', referralError);
+      }
     }
 
     // Construire le message de retour

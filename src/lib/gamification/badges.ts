@@ -213,6 +213,32 @@ export const BADGE_DEFINITIONS: BadgeDefinition[] = [
     maxProgress: 5,
     checkFunction: 'checkWelcomeCommittee',
   },
+  {
+    id: 'ambassador',
+    name: 'Ambassador',
+    description: '3 filleuls inscrits',
+    criteria: 'Parrainez 3 nouveaux joueurs',
+    category: 'social',
+    tier: 'rare',
+    icon: 'UserPlus',
+    iconColor: '#3B82F6', // blue-500
+    sortOrder: 25,
+    maxProgress: 3,
+    checkFunction: 'checkAmbassador',
+  },
+  {
+    id: 'networker',
+    name: 'Networker',
+    description: '10 filleuls inscrits - Influenceur !',
+    criteria: 'Parrainez 10 nouveaux joueurs',
+    category: 'social',
+    tier: 'epic',
+    icon: 'Network',
+    iconColor: '#8B5CF6', // purple-500
+    sortOrder: 26,
+    maxProgress: 10,
+    checkFunction: 'checkNetworker',
+  },
 
   // ----------------------------------------
   // SPÉCIAL - 4 badges

@@ -1746,6 +1746,93 @@ export const accountDeletionRequestsRelations = relations(accountDeletionRequest
 }));
 
 // ============================================
+// REFERRALS (Programme de parrainage)
+// ============================================
+
+export const referralStatusEnum = pgEnum('referral_status', [
+  'pending',    // Lien cliqué mais inscription non terminée
+  'completed',  // Inscription terminée
+  'rewarded',   // Récompense attribuée au parrain
+]);
+
+// Table des parrainages
+export const referrals = pgTable(
+  'referrals',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    // Parrain (celui qui invite)
+    referrerId: uuid('referrer_id')
+      .notNull()
+      .references(() => players.id, { onDelete: 'cascade' }),
+    // Filleul (celui qui est invité)
+    referredId: uuid('referred_id')
+      .references(() => players.id, { onDelete: 'set null' }),
+    // Email du filleul (avant qu'il ait un compte)
+    referredEmail: varchar('referred_email', { length: 255 }),
+    // Status du parrainage
+    status: referralStatusEnum('status').default('pending').notNull(),
+    // Code unique de parrainage (optionnel, pour liens personnalisés)
+    referralCode: varchar('referral_code', { length: 20 }),
+    // Tracking
+    clickedAt: timestamp('clicked_at', { mode: 'date' }), // Quand le lien a été cliqué
+    completedAt: timestamp('completed_at', { mode: 'date' }), // Quand l'inscription est terminée
+    rewardedAt: timestamp('rewarded_at', { mode: 'date' }), // Quand la récompense a été donnée
+    // UTM tracking
+    utmSource: varchar('utm_source', { length: 100 }),
+    utmMedium: varchar('utm_medium', { length: 100 }),
+    utmCampaign: varchar('utm_campaign', { length: 100 }),
+    // Timestamps
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (table) => ({
+    referrerIdIdx: index('referrals_referrer_id_idx').on(table.referrerId),
+    referredIdIdx: index('referrals_referred_id_idx').on(table.referredId),
+    referredEmailIdx: index('referrals_referred_email_idx').on(table.referredEmail),
+    statusIdx: index('referrals_status_idx').on(table.status),
+    referralCodeIdx: index('referrals_referral_code_idx').on(table.referralCode),
+  })
+);
+
+// Stats de parrainage par joueur (dénormalisé pour performance)
+export const playerReferralStats = pgTable(
+  'player_referral_stats',
+  {
+    playerId: uuid('player_id')
+      .primaryKey()
+      .references(() => players.id, { onDelete: 'cascade' }),
+    // Compteurs
+    totalReferrals: integer('total_referrals').default(0).notNull(), // Total de liens partagés
+    completedReferrals: integer('completed_referrals').default(0).notNull(), // Inscriptions complétées
+    rewardedReferrals: integer('rewarded_referrals').default(0).notNull(), // Récompenses obtenues
+    // Timestamps
+    lastReferralAt: timestamp('last_referral_at', { mode: 'date' }),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
+  }
+);
+
+// Relations
+export const referralsRelations = relations(referrals, ({ one }) => ({
+  referrer: one(players, {
+    fields: [referrals.referrerId],
+    references: [players.id],
+    relationName: 'referralsMade',
+  }),
+  referred: one(players, {
+    fields: [referrals.referredId],
+    references: [players.id],
+    relationName: 'referredBy',
+  }),
+}));
+
+export const playerReferralStatsRelations = relations(playerReferralStats, ({ one }) => ({
+  player: one(players, {
+    fields: [playerReferralStats.playerId],
+    references: [players.id],
+  }),
+}));
+
+// ============================================
 // TYPE EXPORTS
 // ============================================
 
@@ -1844,3 +1931,11 @@ export type NewPlayerReport = typeof playerReports.$inferInsert;
 
 export type ReportCategory = 'spam' | 'harassment' | 'fake_profile' | 'cheating' | 'inappropriate' | 'other';
 export type ReportStatus = 'pending' | 'reviewing' | 'resolved' | 'dismissed';
+
+export type Referral = typeof referrals.$inferSelect;
+export type NewReferral = typeof referrals.$inferInsert;
+
+export type PlayerReferralStats = typeof playerReferralStats.$inferSelect;
+export type NewPlayerReferralStats = typeof playerReferralStats.$inferInsert;
+
+export type ReferralStatus = 'pending' | 'completed' | 'rewarded';
