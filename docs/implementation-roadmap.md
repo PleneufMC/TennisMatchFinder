@@ -348,6 +348,10 @@ POST /api/onboarding                      -- Créer profil joueur
 | 3.5 | Coefficient ELO par format fonctionnel | ✅ Complété |
 | 4 | Système de réputation post-match | ✅ Complété |
 | 5 | Infrastructure Stripe prête | ✅ Complété |
+| 6 | Box Leagues et Tournois | ✅ Complété |
+| 7 | Parrainage + NPS Survey (AARRR) | ✅ Complété |
+| - | Taux de parrainage >10% | ⏳ À mesurer |
+| - | NPS >40 | ⏳ À mesurer |
 | - | Conversion freemium >3% | ⏳ Post-Early Bird |
 
 ---
@@ -478,7 +482,44 @@ src/
 
 ---
 
+## 📣 Sprint 7 : AARRR - Referral & Retention ✅ COMPLÉTÉ (29 janvier 2026)
+
+### 7.1 Système de Parrainage ✅
+- [x] Page d'invitation personnalisée `/invite/[playerId]`
+- [x] Affichage infos parrain (nom, ELO, club, matchs, win rate)
+- [x] Capture paramètre `?ref=` à l'inscription
+- [x] Tracking conversions : pending → completed → rewarded
+- [x] Triggers PostgreSQL pour stats automatiques
+- [x] Badge **Ambassador** (3 filleuls) - Rare
+- [x] Badge **Networker** (10 filleuls) - Epic
+- [x] Section profil "Mes parrainages" avec stats
+- [x] Vue analytics `v_referral_analytics`
+- [x] Migration SQL : `migrations/referral-system.sql`
+- [x] **PR #5** mergée
+
+### 7.2 NPS Survey ✅
+- [x] Modal NPS (score 0-10 avec couleurs dynamiques)
+- [x] Feedback textuel optionnel
+- [x] Déclenchement auto après 5 matchs OU 30 jours
+- [x] Cooldown 90 jours entre surveys
+- [x] Dashboard admin `/admin/nps`
+  - Score NPS global (-100 à +100)
+  - Distribution Promoteurs/Passifs/Détracteurs
+  - Liste des réponses avec feedback
+  - Filtres par période
+- [x] Calcul NPS : Détracteurs (0-6), Passifs (7-8), Promoteurs (9-10)
+- [x] Vues analytics : `v_nps_analytics`, `v_nps_global`
+- [x] Migration SQL : `migrations/nps-survey.sql`
+- [x] **PR #6** mergée
+
+---
+
 ## 🔜 Prochaines étapes
+
+### Sprint 8 : Activation & Acquisition
+- [ ] OAuth Google/Apple (réduire friction inscription)
+- [ ] Tracking UTM amélioré (attribution marketing)
+- [ ] PWA + Push notifications
 
 ### Phase 2 : Post-Early Bird (Juillet 2026)
 1. **Activer le paywall** - Basculer `EARLY_BIRD_MODE = false`
@@ -506,4 +547,4 @@ src/
 
 ---
 
-*Dernière mise à jour : 15 janvier 2026 - Sprint 5 Monétisation complété*
+*Dernière mise à jour : 29 janvier 2026 - Sprint 7 AARRR (Parrainage + NPS) complété*

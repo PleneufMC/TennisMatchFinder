@@ -20,19 +20,23 @@ TMF possède un USP technique fort (ELO transparent) mais manque de fondations s
 3. **Mois 2-3** : Engagement avancé (challenges, chat)
 4. **Q2** : Activation paywall avec base solide
 
-### Top 5 Priorités Immédiates (Mise à jour 18/01/2026)
+### Top 5 Priorités Immédiates (Mise à jour 29/01/2026)
 
 | Rang | Feature | ICE Score | Statut |
 |------|---------|-----------|--------|
 | ~~1~~ | ~~Tests unitaires ELO~~ | ~~85~~ | ✅ **FAIT** - 59 tests (commit 4fe9dcc) |
 | ~~2~~ | ~~Notification badge unlock~~ | ~~80~~ | ✅ **FAIT** - BadgeCelebrationProvider (commit 42f20f1) |
-| 3 | PWA + Push notifications | 75 | ⏳ Priorité suivante |
-| ~~4~~ | ~~npm audit fix~~ | ~~75~~ | ✅ **Analysé** - devDependencies only, acceptable |
-| ~~5~~ | ~~Corriger 6 casts `as any`~~ | ~~60~~ | ✅ **FAIT** - Tous supprimés (commit 0b24af7) |
+| ~~3~~ | ~~Système de Parrainage~~ | ~~78~~ | ✅ **FAIT** - PR #5 mergée (29/01/2026) |
+| ~~4~~ | ~~NPS Survey~~ | ~~76~~ | ✅ **FAIT** - PR #6 mergée (29/01/2026) |
+| 5 | PWA + Push notifications | 75 | ⏳ Priorité suivante |
+| ~~6~~ | ~~npm audit fix~~ | ~~75~~ | ✅ **Analysé** - devDependencies only, acceptable |
+| ~~7~~ | ~~Corriger 6 casts `as any`~~ | ~~60~~ | ✅ **FAIT** - Tous supprimés (commit 0b24af7) |
 
 > ✅ **Déjà implémenté** :
 > - Banner cookies RGPD (`src/components/cookie-banner.tsx`)
 > - Multilingue FR/EN (`messages/fr.json`, `messages/en.json` — 286 lignes chacun)
+> - **Système de Parrainage** (29/01/2026) - `/invite/[playerId]`, badges Ambassador/Networker
+> - **NPS Survey** (29/01/2026) - Modal 0-10, Dashboard admin `/admin/nps`
 
 ---
 
@@ -468,7 +472,39 @@ CREATE TABLE user_reports (
 
 ---
 
-### 3.5 OAuth Google/Apple
+### 3.5 Système de Parrainage ✅ TERMINÉ (29/01/2026)
+
+**PR** : [#5](https://github.com/PleneufMC/TennisMatchFinder/pull/5)
+
+**Fonctionnalités** :
+- Page d'invitation personnalisée `/invite/[playerId]`
+- Tracking conversions (pending → completed → rewarded)
+- Badges Ambassador (3 filleuls) et Networker (10 filleuls)
+- Section profil "Mes parrainages"
+- Vue analytics `v_referral_analytics`
+- Triggers PostgreSQL automatiques
+
+**Migration** : `migrations/referral-system.sql` ✅ Appliquée
+
+---
+
+### 3.6 NPS Survey ✅ TERMINÉ (29/01/2026)
+
+**PR** : [#6](https://github.com/PleneufMC/TennisMatchFinder/pull/6)
+
+**Fonctionnalités** :
+- Modal NPS (score 0-10 avec couleurs)
+- Feedback textuel optionnel
+- Déclenchement auto (5 matchs OU 30 jours)
+- Cooldown 90 jours
+- Dashboard admin `/admin/nps`
+- Calcul NPS : Détracteurs (0-6), Passifs (7-8), Promoteurs (9-10)
+
+**Migration** : `migrations/nps-survey.sql` ✅ Appliquée
+
+---
+
+### 3.7 OAuth Google/Apple
 
 **ICE Score** : 42 (Impact: 5, Confidence: 9, Ease: 9)
 
@@ -556,7 +592,7 @@ providers: [
 | **Court terme** | PWA installs | 20% users | Analytics |
 | **Court terme** | Push opt-in rate | 50% | Pusher Beams |
 | **Moyen terme** | DAU/MAU ratio | 30% | Analytics |
-| **Moyen terme** | NPS | >40 | Survey |
+| **Moyen terme** | NPS | >40 | Survey (`/admin/nps`) ✅ Implémenté |
 | **30 juin** | Users actifs | 500 | DB count |
 | **30 juin** | Conversion Premium | 5% | Stripe |
 
@@ -701,5 +737,5 @@ SEO + OAuth ──────────────────────�
 ---
 
 *Document de roadmap — Révision recommandée : Bi-hebdomadaire*  
-*Dernière mise à jour : 18 janvier 2026*  
-*Prochaine révision : 1er février 2026*
+*Dernière mise à jour : 29 janvier 2026*  
+*Prochaine révision : 15 février 2026*
