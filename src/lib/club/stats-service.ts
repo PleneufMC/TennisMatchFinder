@@ -54,6 +54,7 @@ export interface TopActiveMember {
   fullName: string;
   avatarUrl: string | null;
   matchCount: number;
+  currentElo: number;
 }
 
 export interface NewMember {
@@ -250,6 +251,7 @@ export async function getClubStats(clubId: string): Promise<ClubStatsResponse> {
         p.id,
         p.full_name as "fullName",
         p.avatar_url as "avatarUrl",
+        p.current_elo as "currentElo",
         COUNT(m.id)::int as "matchCount"
       FROM players p
       INNER JOIN matches m ON (m.player1_id = p.id OR m.player2_id = p.id)
@@ -257,7 +259,7 @@ export async function getClubStats(clubId: string): Promise<ClubStatsResponse> {
         AND p.is_active = true
         AND m.played_at >= ${dates.startOfMonth}
         AND m.validated = true
-      GROUP BY p.id, p.full_name, p.avatar_url
+      GROUP BY p.id, p.full_name, p.avatar_url, p.current_elo
       ORDER BY COUNT(m.id) DESC
       LIMIT 5
     `),
@@ -348,11 +350,13 @@ export async function getClubStats(clubId: string): Promise<ClubStatsResponse> {
     id: string;
     fullName: string;
     avatarUrl: string | null;
+    currentElo: number;
     matchCount: number;
   }>).map((row) => ({
     id: row.id,
     fullName: row.fullName,
     avatarUrl: row.avatarUrl,
+    currentElo: row.currentElo,
     matchCount: row.matchCount,
   }));
 

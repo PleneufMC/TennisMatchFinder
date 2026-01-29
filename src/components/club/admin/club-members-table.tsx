@@ -88,12 +88,12 @@ export function ClubMembersTable({ clubId }: ClubMembersTableProps) {
   // For the table, we need all members - we'll fake it with the available data
   // In production, you'd want a dedicated /api/clubs/[clubId]/members endpoint
   const members: ClubMember[] = [
-    ...(stats?.topActive?.map((m: { id: string; fullName: string; avatarUrl: string | null; matchCount: number }) => ({
+    ...(stats?.topActive?.map((m: { id: string; fullName: string; avatarUrl: string | null; currentElo: number; matchCount: number }) => ({
       id: m.id,
       fullName: m.fullName,
       avatarUrl: m.avatarUrl,
       email: null,
-      currentElo: 1500,
+      currentElo: m.currentElo,
       matchesPlayed: m.matchCount,
       lastMatchDate: new Date().toISOString(),
       createdAt: new Date().toISOString(),
