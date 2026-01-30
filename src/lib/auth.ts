@@ -343,6 +343,16 @@ export const authOptions: NextAuthOptions = {
           // In development/misconfigured env, we log the URL but don't crash
           throw new Error('Email non configuré. Contactez l\'administrateur.');
         }
+        
+        // Extraire les paramètres de l'URL NextAuth
+        const urlObj = new URL(url);
+        const token = urlObj.searchParams.get('token');
+        const callbackUrl = urlObj.searchParams.get('callbackUrl') || '/dashboard';
+        
+        // Créer l'URL intermédiaire qui gère les WebViews
+        const baseUrl = process.env.NEXTAUTH_URL || 'https://tennismatchfinder.net';
+        const magicLinkUrl = `${baseUrl}/magic-link?token=${token}&email=${encodeURIComponent(identifier)}&callbackUrl=${encodeURIComponent(callbackUrl)}`;
+        
         // Use default email sending
         const { createTransport } = await import('nodemailer');
         const transport = createTransport(provider.server);
@@ -350,16 +360,22 @@ export const authOptions: NextAuthOptions = {
           to: identifier,
           from: provider.from,
           subject: 'Connexion à TennisMatchFinder',
-          text: `Cliquez sur ce lien pour vous connecter : ${url}`,
+          text: `Cliquez sur ce lien pour vous connecter : ${magicLinkUrl}\n\nSi le lien ne fonctionne pas, copiez-le et collez-le dans Safari ou Chrome.`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h2 style="color: #16a34a;">🎾 TennisMatchFinder</h2>
               <p>Cliquez sur le bouton ci-dessous pour vous connecter :</p>
-              <a href="${url}" style="display: inline-block; background-color: #16a34a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 16px 0;">
+              <a href="${magicLinkUrl}" style="display: inline-block; background-color: #16a34a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 16px 0;">
                 Se connecter
               </a>
               <p style="color: #666; font-size: 14px;">Ce lien expire dans 24 heures.</p>
               <p style="color: #999; font-size: 12px;">Si vous n'avez pas demandé ce lien, ignorez cet email.</p>
+              <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+              <p style="color: #999; font-size: 11px;">
+                <strong>Le bouton ne fonctionne pas ?</strong><br>
+                Copiez ce lien et collez-le dans Safari ou Chrome :<br>
+                <span style="word-break: break-all; color: #666;">${magicLinkUrl}</span>
+              </p>
             </div>
           `,
         });
