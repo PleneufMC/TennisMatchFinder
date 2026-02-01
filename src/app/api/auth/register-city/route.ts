@@ -112,20 +112,26 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Récupérer l'Open Club (club par défaut)
+    // BUG-003 FIX: L'Open Club DOIT exister pour que l'inscription fonctionne
+    // Si l'Open Club est manquant, l'inscription échoue explicitement au lieu de créer
+    // un joueur sans club qui ne pourrait pas accéder au dashboard
     const [openClub] = await db
       .select()
       .from(clubs)
       .where(eq(clubs.slug, OPEN_CLUB_SLUG))
       .limit(1);
 
-    if (openClub) {
-      clubId = openClub.id;
-      assignedToOpenClub = true;
-      console.log('[Register] Assigning player to Open Club:', openClub.id);
-    } else {
-      console.warn('[Register] Open Club not found! Player will have no club.');
+    if (!openClub) {
+      console.error('[Register] CRITICAL: Open Club not found in database! slug:', OPEN_CLUB_SLUG);
+      return NextResponse.json(
+        { error: 'Configuration système incorrecte. Veuillez contacter le support.' },
+        { status: 500 }
+      );
     }
+
+    clubId = openClub.id;
+    assignedToOpenClub = true;
+    console.log('[Register] Assigning player to Open Club:', openClub.id);
 
     // Créer le profil joueur (assigné à l'Open Club par défaut)
     const [newPlayer] = await db

@@ -2,13 +2,14 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { players, clubs, users, type Player, type Club } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, isNull } from 'drizzle-orm';
 
 /**
  * Player with club data type
+ * BUG-002 FIX: club can be null if player has no club yet
  */
 export type PlayerWithClub = Player & {
-  club: Club;
+  club: Club | null;
 };
 
 /**
@@ -35,19 +36,34 @@ export type PlayerProfile = typeof players.$inferSelect & {
 };
 
 /**
- * Get the current player profile with club data
+ * Player profile with optional club data
+ * BUG-002 FIX: club can be null
  */
-export async function getPlayerProfile(): Promise<PlayerProfile | null> {
+export type PlayerProfileWithOptionalClub = typeof players.$inferSelect & {
+  club: typeof clubs.$inferSelect | null;
+  user: typeof users.$inferSelect;
+};
+
+/**
+ * Get the current player profile with club data
+ * BUG-002 FIX: Use LEFT JOIN instead of INNER JOIN to handle players without a club
+ */
+export async function getPlayerProfile(): Promise<PlayerProfileWithOptionalClub | null> {
   const session = await getSession();
   
   if (!session?.user?.id) {
     return null;
   }
 
+  // Use LEFT JOIN to include players even if they don't have a club
   const result = await db
-    .select()
+    .select({
+      players: players,
+      clubs: clubs,
+      users: users,
+    })
     .from(players)
-    .innerJoin(clubs, eq(players.clubId, clubs.id))
+    .leftJoin(clubs, eq(players.clubId, clubs.id))
     .innerJoin(users, eq(players.id, users.id))
     .where(eq(players.id, session.user.id))
     .limit(1);
@@ -59,19 +75,24 @@ export async function getPlayerProfile(): Promise<PlayerProfile | null> {
 
   return {
     ...row.players,
-    club: row.clubs,
+    club: row.clubs,  // Can be null if player has no club
     user: row.users,
   };
 }
 
 /**
  * Get a player by ID with club data
+ * BUG-002 FIX: Use LEFT JOIN to handle players without a club
  */
-export async function getPlayerById(playerId: string): Promise<PlayerProfile | null> {
+export async function getPlayerById(playerId: string): Promise<PlayerProfileWithOptionalClub | null> {
   const result = await db
-    .select()
+    .select({
+      players: players,
+      clubs: clubs,
+      users: users,
+    })
     .from(players)
-    .innerJoin(clubs, eq(players.clubId, clubs.id))
+    .leftJoin(clubs, eq(players.clubId, clubs.id))
     .innerJoin(users, eq(players.id, users.id))
     .where(eq(players.id, playerId))
     .limit(1);
@@ -83,7 +104,7 @@ export async function getPlayerById(playerId: string): Promise<PlayerProfile | n
 
   return {
     ...row.players,
-    club: row.clubs,
+    club: row.clubs,  // Can be null if player has no club
     user: row.users,
   };
 }
@@ -118,6 +139,8 @@ export async function isClubAdmin(): Promise<boolean> {
 /**
  * Alias for getPlayerProfile - used in pages
  * Returns player with club data or null
+ * BUG-002 FIX: Use LEFT JOIN instead of INNER JOIN to handle players without a club
+ * This prevents authenticated users without a club from being treated as unauthenticated
  */
 export async function getServerPlayer(): Promise<PlayerWithClub | null> {
   const session = await getSession();
@@ -126,13 +149,14 @@ export async function getServerPlayer(): Promise<PlayerWithClub | null> {
     return null;
   }
 
+  // BUG-002 FIX: Use LEFT JOIN to include players even if clubId is null
   const result = await db
     .select({
       player: players,
       club: clubs,
     })
     .from(players)
-    .innerJoin(clubs, eq(players.clubId, clubs.id))
+    .leftJoin(clubs, eq(players.clubId, clubs.id))
     .where(eq(players.id, session.user.id))
     .limit(1);
 
@@ -143,6 +167,6 @@ export async function getServerPlayer(): Promise<PlayerWithClub | null> {
 
   return {
     ...row.player,
-    club: row.club,
+    club: row.club,  // Can be null if player has no club
   };
 }
