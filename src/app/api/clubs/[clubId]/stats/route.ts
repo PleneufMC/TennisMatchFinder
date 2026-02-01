@@ -14,7 +14,7 @@ import { getSession } from '@/lib/auth-helpers';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { clubId: string } }
+  { params }: { params: Promise<{ clubId: string }> }
 ) {
   try {
     const player = await getServerPlayer();
@@ -27,9 +27,12 @@ export async function GET(
       );
     }
 
+    // BUG-007 FIX: Next.js 15 requires awaiting params
+    const { clubId } = await params;
+
     // Vérifier que le joueur est admin de ce club OU super admin
     const isSuperAdmin = session?.user?.email && isSuperAdminEmail(session.user.email);
-    const isClubAdmin = player.clubId === params.clubId && player.isAdmin;
+    const isClubAdmin = player.clubId === clubId && player.isAdmin;
     
     if (!isClubAdmin && !isSuperAdmin) {
       return NextResponse.json(
@@ -38,7 +41,7 @@ export async function GET(
       );
     }
 
-    const stats = await getClubStats(params.clubId);
+    const stats = await getClubStats(clubId);
 
     return NextResponse.json(stats);
   } catch (error) {

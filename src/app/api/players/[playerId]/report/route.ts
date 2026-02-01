@@ -26,7 +26,7 @@ const REPORT_CATEGORIES = [
 // GET: Check if player has pending reports from current user
 export async function GET(
   request: NextRequest,
-  { params }: { params: { playerId: string } }
+  { params }: { params: Promise<{ playerId: string }> }
 ) {
   try {
     const player = await getServerPlayer();
@@ -34,7 +34,8 @@ export async function GET(
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
-    const { playerId } = params;
+    // BUG-007 FIX: Next.js 15 requires awaiting params
+    const { playerId } = await params;
 
     // Get pending reports from this user against the target
     const pendingReports = await db
@@ -76,7 +77,7 @@ const reportSchema = z.object({
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { playerId: string } }
+  { params }: { params: Promise<{ playerId: string }> }
 ) {
   try {
     const player = await getServerPlayer();
@@ -84,7 +85,8 @@ export async function POST(
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
-    const { playerId } = params;
+    // BUG-007 FIX: Next.js 15 requires awaiting params
+    const { playerId } = await params;
 
     // Can't report yourself
     if (playerId === player.id) {

@@ -15,6 +15,17 @@ import { createJoinRequest, hasUserPendingRequest } from '@/lib/db/queries';
 import { SPECIAL_CLUBS } from '@/lib/constants/admins';
 import { withRateLimit } from '@/lib/rate-limit';
 import { completeReferral } from '@/lib/referrals/service';
+import { z } from 'zod';
+
+// BUG-008 FIX: Validation Zod pour l'inscription
+const registerSchema = z.object({
+  email: z.string().email('Email invalide').max(255),
+  fullName: z.string().min(2, 'Nom trop court (min 2 caractères)').max(100, 'Nom trop long (max 100 caractères)'),
+  city: z.string().min(2, 'Ville trop courte (min 2 caractères)').max(100, 'Ville trop longue (max 100 caractères)'),
+  selfAssessedLevel: z.enum(['débutant', 'intermédiaire', 'avancé', 'expert']).optional(),
+  clubSlug: z.string().max(100).optional(),
+  referrerId: z.string().uuid().optional(),
+});
 
 // Slug du club par défaut pour les joueurs indépendants
 const OPEN_CLUB_SLUG = SPECIAL_CLUBS.OPEN_CLUB_SLUG;
@@ -26,15 +37,18 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { email, fullName, city, selfAssessedLevel, clubSlug, referrerId } = body;
-
-    // Validation basique
-    if (!email || !fullName || !city) {
+    
+    // BUG-008 FIX: Validation Zod complète
+    const validation = registerSchema.safeParse(body);
+    if (!validation.success) {
+      const firstError = validation.error.errors[0];
       return NextResponse.json(
-        { error: 'Email, nom complet et ville sont requis' },
+        { error: firstError?.message || 'Données invalides', details: validation.error.errors },
         { status: 400 }
       );
     }
+    
+    const { email, fullName, city, selfAssessedLevel, clubSlug, referrerId } = validation.data;
 
     // Vérifier si l'utilisateur existe déjà
     const [existingUser] = await db

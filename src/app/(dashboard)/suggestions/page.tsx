@@ -13,6 +13,7 @@ import { PlayerAvatar } from '@/components/ui/avatar';
 import { getServerPlayer } from '@/lib/auth-helpers';
 import { getPlayersByClub, getMatchesByPlayer, getNewMembersToWelcome } from '@/lib/db/queries';
 import { generateSuggestions } from '@/lib/matching';
+import { getAllBlockedRelationshipIds, filterBlockedPlayers } from '@/lib/moderation/block-service';
 import { formatTimeAgo } from '@/lib/utils/dates';
 import { getEloRankTitle } from '@/lib/elo';
 import { cn } from '@/lib/utils';
@@ -55,12 +56,18 @@ export default async function SuggestionsPage() {
     );
   }
 
-  // Récupérer tous les joueurs actifs du club, les nouveaux membres et l'historique des matchs
-  const [allPlayers, matchHistory, newMembers] = await Promise.all([
+  // Récupérer tous les joueurs actifs du club, les nouveaux membres, l'historique des matchs,
+  // et les joueurs bloqués (BUG-004 FIX: exclure les joueurs bloqués des suggestions)
+  const [allPlayersRaw, matchHistory, newMembersRaw, blockedIds] = await Promise.all([
     getPlayersByClub(player.clubId, { activeOnly: true }),
     getMatchesByPlayer(player.id),
     getNewMembersToWelcome(player.clubId, player.id),
+    getAllBlockedRelationshipIds(player.id),
   ]);
+
+  // Filtrer les joueurs bloqués (dans les deux sens)
+  const allPlayers = filterBlockedPlayers(allPlayersRaw, blockedIds);
+  const newMembers = filterBlockedPlayers(newMembersRaw, blockedIds);
 
   // Préparer les données pour le moteur de suggestions
   // Adapter les noms de champs pour correspondre au format attendu par generateSuggestions

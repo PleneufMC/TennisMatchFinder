@@ -29,7 +29,7 @@ const pusher = process.env.PUSHER_APP_ID ? new Pusher({
 // GET: Get messages for a conversation
 export async function GET(
   request: NextRequest,
-  { params }: { params: { conversationId: string } }
+  { params }: { params: Promise<{ conversationId: string }> }
 ) {
   try {
     const player = await getServerPlayer();
@@ -37,7 +37,8 @@ export async function GET(
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
-    const { conversationId } = params;
+    // BUG-007 FIX: Next.js 15 requires awaiting params
+    const { conversationId } = await params;
     const searchParams = request.nextUrl.searchParams;
     const before = searchParams.get('before'); // For pagination
     const limit = parseInt(searchParams.get('limit') || '50', 10);
@@ -163,7 +164,7 @@ const sendMessageSchema = z.object({
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { conversationId: string } }
+  { params }: { params: Promise<{ conversationId: string }> }
 ) {
   try {
     const player = await getServerPlayer();
@@ -171,7 +172,8 @@ export async function POST(
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
-    const { conversationId } = params;
+    // BUG-007 FIX: Next.js 15 requires awaiting params
+    const { conversationId } = await params;
     const body = await request.json();
     const validation = sendMessageSchema.safeParse(body);
 
