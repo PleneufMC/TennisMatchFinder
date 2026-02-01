@@ -6,7 +6,7 @@
 
 import { db } from '@/lib/db';
 import { playerBlocks } from '@/lib/db/schema';
-import { eq, or, inArray } from 'drizzle-orm';
+import { eq, or, and, inArray } from 'drizzle-orm';
 
 /**
  * Get all player IDs that a user has blocked
@@ -61,13 +61,18 @@ export async function getAllBlockedRelationshipIds(playerId: string): Promise<st
 
 /**
  * Check if player A has blocked player B
+ * BUG-005 FIX: Must check BOTH blockerId AND blockedId
+ * Previous bug: only checked blockerId, so returned true if blocker had blocked ANYONE
  */
 export async function hasBlocked(blockerId: string, blockedId: string): Promise<boolean> {
   const [block] = await db
     .select()
     .from(playerBlocks)
     .where(
-      eq(playerBlocks.blockerId, blockerId)
+      and(
+        eq(playerBlocks.blockerId, blockerId),
+        eq(playerBlocks.blockedId, blockedId)
+      )
     )
     .limit(1);
   
@@ -76,6 +81,8 @@ export async function hasBlocked(blockerId: string, blockedId: string): Promise<
 
 /**
  * Check if there's any block relationship between two players
+ * BUG-005 FIX: Query directly for the exact relationship instead of fetching all blocks
+ * and filtering in memory - more efficient and correct
  */
 export async function isBlocked(playerA: string, playerB: string): Promise<boolean> {
   const [block] = await db
@@ -83,16 +90,21 @@ export async function isBlocked(playerA: string, playerB: string): Promise<boole
     .from(playerBlocks)
     .where(
       or(
-        eq(playerBlocks.blockerId, playerA),
-        eq(playerBlocks.blockedId, playerA)
+        // A blocked B
+        and(
+          eq(playerBlocks.blockerId, playerA),
+          eq(playerBlocks.blockedId, playerB)
+        ),
+        // B blocked A
+        and(
+          eq(playerBlocks.blockerId, playerB),
+          eq(playerBlocks.blockedId, playerA)
+        )
       )
     )
     .limit(1);
   
-  if (!block) return false;
-  
-  return (block.blockerId === playerA && block.blockedId === playerB) ||
-         (block.blockerId === playerB && block.blockedId === playerA);
+  return !!block;
 }
 
 /**

@@ -25,7 +25,7 @@ interface Player {
   club: {
     name: string;
     bannerUrl: string | null;
-  };
+  } | null;
 }
 
 interface Match {
@@ -81,14 +81,16 @@ export function DashboardContent({
 
   return (
     <div className="space-y-6">
-      {/* Banner du club */}
+      {/* Banner du club (ou bannière par défaut si pas de club) */}
       <ClubBanner 
-        bannerUrl={player.club.bannerUrl} 
-        clubName={player.club.name}
+        bannerUrl={player.club?.bannerUrl ?? null} 
+        clubName={player.club?.name ?? 'TennisMatchFinder'}
         height="md"
       >
         <div className="text-white">
-          <p className="text-sm text-white/80 font-medium">{player.club.name}</p>
+          {player.club && (
+            <p className="text-sm text-white/80 font-medium">{player.club.name}</p>
+          )}
           <h1 className="text-2xl md:text-3xl font-bold drop-shadow-lg">
             {greeting}
           </h1>

@@ -52,10 +52,10 @@ export default async function DashboardPage() {
         uniqueOpponents: player.uniqueOpponents,
         winStreak: player.winStreak,
         bestWinStreak: player.bestWinStreak,
-        club: {
+        club: player.club ? {
           name: player.club.name,
           bannerUrl: player.club.bannerUrl,
-        },
+        } : null,
       }}
       recentMatches={recentMatches.map(m => ({
         id: m.id,

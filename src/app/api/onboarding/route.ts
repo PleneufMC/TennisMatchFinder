@@ -52,28 +52,21 @@ export async function POST(request: NextRequest) {
 
     const now = new Date();
 
-    if (existingPlayer) {
-      // Mettre à jour le profil existant
-      await db
-        .update(players)
-        .set({
-          fullName: data.fullName.trim(),
-          phone: data.phone?.trim() || null,
-          bio: data.bio?.trim() || null,
-          selfAssessedLevel: data.selfAssessedLevel,
-          availability: data.availability,
-          preferences: {
-            ...data.preferences,
-            preferredHand: data.preferredHand,
-          },
-          onboardingCompleted: true,
-          updatedAt: now,
-        })
-        .where(eq(players.id, session.user.id));
-    } else {
-      // Créer un nouveau profil
-      await db.insert(players).values({
-        id: session.user.id,
+    // BUG-001 FIX: Le profil joueur est créé à l'inscription (/api/auth/register-city)
+    // L'onboarding ne doit QUE mettre à jour le profil existant, jamais en créer un nouveau
+    // Cela évite les doublons et les erreurs de contrainte unique
+    if (!existingPlayer) {
+      console.error('[Onboarding] Player profile not found for user:', session.user.id);
+      return NextResponse.json(
+        { error: 'Profil joueur non trouvé. Veuillez vous réinscrire.' },
+        { status: 400 }
+      );
+    }
+
+    // Mettre à jour le profil existant avec les données d'onboarding
+    await db
+      .update(players)
+      .set({
         fullName: data.fullName.trim(),
         phone: data.phone?.trim() || null,
         bio: data.bio?.trim() || null,
@@ -83,21 +76,10 @@ export async function POST(request: NextRequest) {
           ...data.preferences,
           preferredHand: data.preferredHand,
         },
-        currentElo: 1200,
-        bestElo: 1200,
-        lowestElo: 1200,
-        matchesPlayed: 0,
-        wins: 0,
-        losses: 0,
-        winStreak: 0,
-        bestWinStreak: 0,
-        uniqueOpponents: 0,
-        isActive: true,
         onboardingCompleted: true,
-        createdAt: now,
         updatedAt: now,
-      });
-    }
+      })
+      .where(eq(players.id, session.user.id));
 
     // Vérifier et attribuer les badges passifs (Founding Member, etc.)
     const newBadges = await checkPassiveBadges(session.user.id);
