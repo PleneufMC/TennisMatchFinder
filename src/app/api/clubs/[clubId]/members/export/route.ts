@@ -16,7 +16,7 @@ import { eq } from 'drizzle-orm';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { clubId: string } }
+  { params }: { params: Promise<{ clubId: string }> }
 ) {
   try {
     const player = await getServerPlayer();
@@ -29,9 +29,12 @@ export async function GET(
       );
     }
 
+    // BUG-007 FIX: Next.js 15 requires awaiting params
+    const { clubId } = await params;
+
     // Vérifier que le joueur est admin de ce club OU super admin
     const isSuperAdmin = session?.user?.email && isSuperAdminEmail(session.user.email);
-    const isClubAdmin = player.clubId === params.clubId && player.isAdmin;
+    const isClubAdmin = player.clubId === clubId && player.isAdmin;
     
     if (!isClubAdmin && !isSuperAdmin) {
       return NextResponse.json(
@@ -44,7 +47,7 @@ export async function GET(
     const [club] = await db
       .select({ name: clubs.name, slug: clubs.slug })
       .from(clubs)
-      .where(eq(clubs.id, params.clubId))
+      .where(eq(clubs.id, clubId))
       .limit(1);
 
     if (!club) {
@@ -55,7 +58,7 @@ export async function GET(
     }
 
     // Générer le CSV
-    const csv = await getClubMembersForExport(params.clubId);
+    const csv = await getClubMembersForExport(clubId);
     
     // Créer le nom du fichier avec la date
     const date = new Date().toISOString().split('T')[0];

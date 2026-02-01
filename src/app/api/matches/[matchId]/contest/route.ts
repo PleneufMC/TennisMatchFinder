@@ -12,7 +12,7 @@ import { canContestMatch, MATCH_VALIDATION_CONFIG } from '@/lib/constants/valida
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { matchId: string } }
+  { params }: { params: Promise<{ matchId: string }> }
 ) {
   try {
     const player = await getServerPlayer();
@@ -20,7 +20,8 @@ export async function POST(
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
-    const { matchId } = params;
+    // BUG-007 FIX: Next.js 15 requires awaiting params
+    const { matchId } = await params;
     const body = await request.json();
     const { reason } = body;
 
@@ -165,7 +166,7 @@ export async function POST(
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { matchId: string } }
+  { params }: { params: Promise<{ matchId: string }> }
 ) {
   try {
     const player = await getServerPlayer();
@@ -173,7 +174,8 @@ export async function GET(
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
-    const { matchId } = params;
+    // BUG-007 FIX: Next.js 15 requires awaiting params
+    const { matchId } = await params;
 
     const [match] = await db
       .select({

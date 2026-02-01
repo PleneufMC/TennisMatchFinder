@@ -2,14 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { matches, players, notifications, eloHistory } from '@/lib/db/schema';
 import { getServerPlayer } from '@/lib/auth-helpers';
-import { eq, and, or } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { triggerBadgeCheckAfterMatch } from '@/lib/gamification/badge-checker';
 import { incrementWeeklyMatchCount } from '@/lib/challenges/weekly-activity';
 
 // POST: Confirmer ou rejeter un match
 export async function POST(
   request: NextRequest,
-  { params }: { params: { matchId: string } }
+  { params }: { params: Promise<{ matchId: string }> }
 ) {
   try {
     const player = await getServerPlayer();
@@ -17,7 +17,8 @@ export async function POST(
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
-    const { matchId } = params;
+    // BUG-007 FIX: Next.js 15 requires awaiting params
+    const { matchId } = await params;
     const body = await request.json();
     const { action } = body; // 'confirm' | 'reject'
 
@@ -100,57 +101,42 @@ export async function POST(
       })
       .where(eq(matches.id, matchId));
 
-    // 2. Mettre à jour les ELO des joueurs
+    // 2. Mettre à jour les ELO et stats des joueurs
+    // BUG-006 FIX: Utiliser des mises à jour atomiques SQL pour éviter race conditions
+    // BUG-010 FIX: Utiliser les paramètres Drizzle au lieu de template strings (injection SQL)
     const player1NewElo = match.player1EloAfter;
     const player2NewElo = match.player2EloAfter;
+    
+    const player1IsWinner = match.winnerId === match.player1Id;
+    const player2IsWinner = match.winnerId === match.player2Id;
 
+    // Mise à jour atomique pour player1: ELO + stats en une seule requête
     await db
       .update(players)
       .set({
         currentElo: player1NewElo,
-        matchesPlayed: player.id === match.player1Id
-          ? Number(player.matchesPlayed) + 1
-          : undefined,
-        wins: match.winnerId === match.player1Id
-          ? undefined // On met à jour ci-dessous
-          : undefined,
+        bestElo: sql`GREATEST(${players.bestElo}, ${player1NewElo})`,
+        lowestElo: sql`LEAST(${players.lowestElo}, ${player1NewElo})`,
+        matchesPlayed: sql`${players.matchesPlayed} + 1`,
+        wins: player1IsWinner ? sql`${players.wins} + 1` : players.wins,
+        losses: !player1IsWinner ? sql`${players.losses} + 1` : players.losses,
         updatedAt: new Date(),
       })
       .where(eq(players.id, match.player1Id));
 
+    // Mise à jour atomique pour player2: ELO + stats en une seule requête
     await db
       .update(players)
       .set({
         currentElo: player2NewElo,
+        bestElo: sql`GREATEST(${players.bestElo}, ${player2NewElo})`,
+        lowestElo: sql`LEAST(${players.lowestElo}, ${player2NewElo})`,
+        matchesPlayed: sql`${players.matchesPlayed} + 1`,
+        wins: player2IsWinner ? sql`${players.wins} + 1` : players.wins,
+        losses: !player2IsWinner ? sql`${players.losses} + 1` : players.losses,
         updatedAt: new Date(),
       })
       .where(eq(players.id, match.player2Id));
-
-    // Mettre à jour les stats (matchesPlayed, wins, losses)
-    // Pour player1
-    const player1Stats = match.winnerId === match.player1Id
-      ? { wins: 1, losses: 0 }
-      : { wins: 0, losses: 1 };
-    
-    const player2Stats = match.winnerId === match.player2Id
-      ? { wins: 1, losses: 0 }
-      : { wins: 0, losses: 1 };
-
-    await db.execute(
-      `UPDATE players SET 
-        matches_played = matches_played + 1, 
-        wins = wins + ${player1Stats.wins},
-        losses = losses + ${player1Stats.losses}
-      WHERE id = '${match.player1Id}'`
-    );
-
-    await db.execute(
-      `UPDATE players SET 
-        matches_played = matches_played + 1, 
-        wins = wins + ${player2Stats.wins},
-        losses = losses + ${player2Stats.losses}
-      WHERE id = '${match.player2Id}'`
-    );
 
     // 3. Enregistrer l'historique ELO
     const player1EloDelta = match.player1EloAfter - match.player1EloBefore;

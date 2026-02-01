@@ -55,7 +55,7 @@ interface PlayerBreakdown {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { matchId: string } }
+  { params }: { params: Promise<{ matchId: string }> }
 ) {
   try {
     // Vérifier l'authentification
@@ -68,7 +68,8 @@ export async function GET(
       );
     }
 
-    const matchId = params.matchId;
+    // BUG-007 FIX: Next.js 15 requires awaiting params
+    const { matchId } = await params;
 
     // Récupérer le match
     const [match] = await db

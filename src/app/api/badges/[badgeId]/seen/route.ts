@@ -11,7 +11,7 @@ import { markBadgeAsSeen } from '@/lib/gamification/badge-checker';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { badgeId: string } }
+  { params }: { params: Promise<{ badgeId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -20,7 +20,8 @@ export async function POST(
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
     }
     
-    const { badgeId } = params;
+    // BUG-007 FIX: Next.js 15 requires awaiting params
+    const { badgeId } = await params;
     
     await markBadgeAsSeen(session.user.id, badgeId);
     

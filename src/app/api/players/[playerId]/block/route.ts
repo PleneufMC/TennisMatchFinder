@@ -18,7 +18,7 @@ export const dynamic = 'force-dynamic';
 // GET: Check if player is blocked
 export async function GET(
   request: NextRequest,
-  { params }: { params: { playerId: string } }
+  { params }: { params: Promise<{ playerId: string }> }
 ) {
   try {
     const player = await getServerPlayer();
@@ -26,7 +26,8 @@ export async function GET(
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
-    const { playerId } = params;
+    // BUG-007 FIX: Next.js 15 requires awaiting params
+    const { playerId } = await params;
 
     // Check if blocked
     const [block] = await db
@@ -59,7 +60,7 @@ const blockSchema = z.object({
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { playerId: string } }
+  { params }: { params: Promise<{ playerId: string }> }
 ) {
   try {
     const player = await getServerPlayer();
@@ -67,7 +68,8 @@ export async function POST(
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
-    const { playerId } = params;
+    // BUG-007 FIX: Next.js 15 requires awaiting params
+    const { playerId } = await params;
 
     // Can't block yourself
     if (playerId === player.id) {
@@ -139,7 +141,7 @@ export async function POST(
 // DELETE: Unblock a player
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { playerId: string } }
+  { params }: { params: Promise<{ playerId: string }> }
 ) {
   try {
     const player = await getServerPlayer();
@@ -147,7 +149,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
-    const { playerId } = params;
+    // BUG-007 FIX: Next.js 15 requires awaiting params
+    const { playerId } = await params;
 
     // Get target player name for message
     const [targetPlayer] = await db
