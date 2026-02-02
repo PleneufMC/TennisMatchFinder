@@ -90,16 +90,17 @@ export default function BoxLeagueDetailPage({ params }: { params: PageParams }) 
   const [selectedMatch, setSelectedMatch] = useState<BoxLeagueMatch | null>(null);
   const [scoreDialogOpen, setScoreDialogOpen] = useState(false);
 
-  // Check if user is admin
+  // Check if user is admin and get player ID
   useEffect(() => {
-    async function checkAdmin() {
+    async function checkAdminAndGetPlayer() {
       try {
         const res = await fetch('/api/profile');
         if (res.ok) {
-          const data = await res.json();
-          setIsAdmin(data.player?.isAdmin || false);
-          if (data.player?.id) {
-            setCurrentPlayerId(data.player.id);
+          const player = await res.json();
+          // L'API /api/profile retourne le player directement, pas { player: ... }
+          setIsAdmin(player?.isAdmin || false);
+          if (player?.id) {
+            setCurrentPlayerId(player.id);
           }
         }
       } catch (err) {
@@ -107,7 +108,7 @@ export default function BoxLeagueDetailPage({ params }: { params: PageParams }) 
       }
     }
     if (session) {
-      checkAdmin();
+      checkAdminAndGetPlayer();
     }
   }, [session]);
 
