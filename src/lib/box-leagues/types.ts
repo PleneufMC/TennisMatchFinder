@@ -148,4 +148,7 @@ export interface RecordMatchResultParams {
   player1Games: number;
   player2Games: number;
   mainMatchId?: string;
+  // Forfait / WO
+  isForfeit?: boolean;
+  forfeitById?: string;
 }

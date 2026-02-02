@@ -26,12 +26,15 @@ interface RouteParams {
 // Schéma de validation pour l'enregistrement du score
 const recordScoreSchema = z.object({
   winnerId: z.string().uuid('ID du gagnant invalide'),
-  score: z.string().min(3, 'Score requis (ex: 6-4 6-3)'),
+  score: z.string().min(1, 'Score requis'),
   player1Sets: z.number().int().min(0).max(3),
   player2Sets: z.number().int().min(0).max(3),
   player1Games: z.number().int().min(0).optional(),
   player2Games: z.number().int().min(0).optional(),
   createMainMatch: z.boolean().optional().default(true), // Créer aussi un match "classique" pour l'ELO
+  // Forfait / WO
+  isForfeit: z.boolean().optional().default(false),
+  forfeitById: z.string().uuid().optional(),
 });
 
 /**
@@ -182,7 +185,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    const { winnerId, score, player1Sets, player2Sets, player1Games, player2Games, createMainMatch } = validation.data;
+    const { winnerId, score, player1Sets, player2Sets, player1Games, player2Games, createMainMatch, isForfeit, forfeitById } = validation.data;
 
     // Vérifier que le gagnant est bien l'un des deux joueurs
     if (winnerId !== match.player1Id && winnerId !== match.player2Id) {
@@ -192,19 +195,39 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    // Vérifier le forfait si déclaré
+    if (isForfeit && forfeitById) {
+      if (forfeitById !== match.player1Id && forfeitById !== match.player2Id) {
+        return NextResponse.json(
+          { error: 'Le joueur forfait doit être l\'un des deux joueurs du match' },
+          { status: 400 }
+        );
+      }
+      // Le gagnant doit être l'autre joueur
+      const expectedWinner = forfeitById === match.player1Id ? match.player2Id : match.player1Id;
+      if (winnerId !== expectedWinner) {
+        return NextResponse.json(
+          { error: 'Le gagnant doit être l\'adversaire du joueur forfait' },
+          { status: 400 }
+        );
+      }
+    }
+
     // Calculer les jeux si non fournis (estimation basée sur les sets)
-    const finalPlayer1Games = player1Games ?? (player1Sets * 6 + player2Sets * 4);
-    const finalPlayer2Games = player2Games ?? (player2Sets * 6 + player1Sets * 4);
+    const finalPlayer1Games = player1Games ?? (isForfeit ? 0 : (player1Sets * 6 + player2Sets * 4));
+    const finalPlayer2Games = player2Games ?? (isForfeit ? 0 : (player2Sets * 6 + player1Sets * 4));
 
     // Enregistrer le résultat dans la Box League
     await recordMatchResult({
       matchId,
       winnerId,
-      score,
+      score: isForfeit ? 'WO' : score,
       player1Sets,
       player2Sets,
       player1Games: finalPlayer1Games,
       player2Games: finalPlayer2Games,
+      isForfeit,
+      forfeitById,
     });
 
     // Optionnellement créer un match "classique" pour l'intégration ELO

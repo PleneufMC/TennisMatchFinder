@@ -441,6 +441,8 @@ export async function recordMatchResult(
     player1Games,
     player2Games,
     mainMatchId,
+    isForfeit,
+    forfeitById,
   } = params;
 
   // Récupérer le match
@@ -465,17 +467,21 @@ export async function recordMatchResult(
 
   const loserId = winnerId === match.player1Id ? match.player2Id : match.player1Id;
 
+  // Déterminer le statut du match
+  const matchStatus = isForfeit ? 'forfeit' : 'completed';
+
   // Mettre à jour le match
   await db
     .update(boxLeagueMatches)
     .set({
       winnerId,
-      score,
+      score: isForfeit ? 'WO' : score,
       player1Sets,
       player2Sets,
       player1Games,
       player2Games,
-      status: 'completed',
+      status: matchStatus,
+      forfeitBy: forfeitById || null,
       playedAt: new Date(),
       mainMatchId: mainMatchId || null,
       updatedAt: new Date(),
@@ -486,13 +492,17 @@ export async function recordMatchResult(
   const league = await getBoxLeagueById(match.leagueId);
   if (!league) return;
 
+  // Déterminer les points selon le type de résultat
+  const winnerPoints = isForfeit ? league.pointsWin : league.pointsWin;
+  const loserPoints = isForfeit ? league.pointsForfeit : league.pointsLoss;
+
   // Mettre à jour les stats du gagnant
   await db
     .update(boxLeagueParticipants)
     .set({
       matchesPlayed: sql`${boxLeagueParticipants.matchesPlayed} + 1`,
       matchesWon: sql`${boxLeagueParticipants.matchesWon} + 1`,
-      points: sql`${boxLeagueParticipants.points} + ${league.pointsWin}`,
+      points: sql`${boxLeagueParticipants.points} + ${winnerPoints}`,
       setsWon: sql`${boxLeagueParticipants.setsWon} + ${winnerId === match.player1Id ? player1Sets : player2Sets}`,
       setsLost: sql`${boxLeagueParticipants.setsLost} + ${winnerId === match.player1Id ? player2Sets : player1Sets}`,
       gamesWon: sql`${boxLeagueParticipants.gamesWon} + ${winnerId === match.player1Id ? player1Games : player2Games}`,
@@ -510,7 +520,7 @@ export async function recordMatchResult(
     .set({
       matchesPlayed: sql`${boxLeagueParticipants.matchesPlayed} + 1`,
       matchesLost: sql`${boxLeagueParticipants.matchesLost} + 1`,
-      points: sql`${boxLeagueParticipants.points} + ${league.pointsLoss}`,
+      points: sql`${boxLeagueParticipants.points} + ${loserPoints}`,
       setsWon: sql`${boxLeagueParticipants.setsWon} + ${loserId === match.player1Id ? player1Sets : player2Sets}`,
       setsLost: sql`${boxLeagueParticipants.setsLost} + ${loserId === match.player1Id ? player2Sets : player1Sets}`,
       gamesWon: sql`${boxLeagueParticipants.gamesWon} + ${loserId === match.player1Id ? player1Games : player2Games}`,
