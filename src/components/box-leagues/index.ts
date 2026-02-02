@@ -3,3 +3,4 @@ export { StandingsTable } from './standings-table';
 export { MatchList } from './match-list';
 export { CreateBoxLeagueDialog } from './create-box-league-dialog';
 export { DrawPoolsButton } from './draw-pools-button';
+export { RecordScoreDialog } from './record-score-dialog';

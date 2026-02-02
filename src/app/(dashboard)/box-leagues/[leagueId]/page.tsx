@@ -42,8 +42,9 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useSession } from 'next-auth/react';
-import { StandingsTable, MatchList, DrawPoolsButton } from '@/components/box-leagues';
+import { StandingsTable, MatchList, DrawPoolsButton, RecordScoreDialog } from '@/components/box-leagues';
 import type { BoxLeague, BoxLeagueStanding, BoxLeagueMatch } from '@/lib/box-leagues/types';
+import { toast } from 'sonner';
 import { format, formatDistanceToNow, isBefore } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import Link from 'next/link';
@@ -85,6 +86,9 @@ export default function BoxLeagueDetailPage({ params }: { params: PageParams }) 
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const { data: session } = useSession();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [currentPlayerId, setCurrentPlayerId] = useState<string | null>(null);
+  const [selectedMatch, setSelectedMatch] = useState<BoxLeagueMatch | null>(null);
+  const [scoreDialogOpen, setScoreDialogOpen] = useState(false);
 
   // Check if user is admin
   useEffect(() => {
@@ -94,6 +98,9 @@ export default function BoxLeagueDetailPage({ params }: { params: PageParams }) 
         if (res.ok) {
           const data = await res.json();
           setIsAdmin(data.player?.isAdmin || false);
+          if (data.player?.id) {
+            setCurrentPlayerId(data.player.id);
+          }
         }
       } catch (err) {
         console.error('Error checking admin status:', err);
@@ -613,6 +620,11 @@ export default function BoxLeagueDetailPage({ params }: { params: PageParams }) 
             <MatchList 
               matches={myMatches} 
               showActions={true}
+              currentPlayerId={currentPlayerId || undefined}
+              onRecordResult={(match) => {
+                setSelectedMatch(match);
+                setScoreDialogOpen(true);
+              }}
             />
           </TabsContent>
         )}
@@ -636,9 +648,37 @@ export default function BoxLeagueDetailPage({ params }: { params: PageParams }) 
 
         {/* All Matches */}
         <TabsContent value="all-matches">
-          <MatchList matches={matches} />
+          <MatchList 
+            matches={matches} 
+            currentPlayerId={currentPlayerId || undefined}
+            showActions={isRegistered}
+            onRecordResult={(match) => {
+              setSelectedMatch(match);
+              setScoreDialogOpen(true);
+            }}
+          />
         </TabsContent>
       </Tabs>
+
+      {/* Record Score Dialog */}
+      <RecordScoreDialog
+        match={selectedMatch}
+        leagueId={params.leagueId}
+        open={scoreDialogOpen}
+        onOpenChange={setScoreDialogOpen}
+        onSuccess={async () => {
+          // Recharger les données après enregistrement
+          const res = await fetch(`/api/box-leagues/${params.leagueId}`);
+          if (res.ok) {
+            const data = await res.json();
+            setLeague(data.league);
+            setStandings(data.standings || []);
+            setMatches(data.matches || []);
+            setMyMatches(data.myMatches || []);
+          }
+          toast.success('Résultat enregistré avec succès !');
+        }}
+      />
 
       {/* Points System Info */}
       <Card className="mt-6">
