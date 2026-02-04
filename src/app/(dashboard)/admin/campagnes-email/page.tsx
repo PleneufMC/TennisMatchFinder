@@ -276,24 +276,71 @@ export default function CampagnesEmailPage() {
             </div>
           )}
 
-          {/* Aperçu de l'email */}
-          <Card className="bg-muted/30">
-            <CardHeader>
-              <CardTitle className="text-base">📧 Aperçu de l'email envoyé</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2 text-sm">
-                <p><strong>Objet :</strong> 🎾 [Prénom], ton classement ELO t'attend !</p>
-                <p><strong>Contenu :</strong></p>
-                <ul className="list-disc list-inside text-muted-foreground ml-4 space-y-1">
-                  <li>Message personnalisé avec le prénom</li>
-                  <li>Explication des avantages d'enregistrer un match</li>
-                  <li>Bouton "Enregistrer mon premier match"</li>
-                  <li>Lien de désinscription (RGPD)</li>
-                </ul>
+          {/* Aperçu visuel de l'email */}
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              📧 Aperçu de l'email envoyé
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              <strong>Objet :</strong> 🎾 [Prénom], ton classement ELO t'attend !
+            </p>
+            
+            {/* Rendu visuel de l'email */}
+            <div className="border rounded-lg overflow-hidden shadow-sm">
+              <div style={{ 
+                background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)', 
+                padding: '24px', 
+                textAlign: 'center' 
+              }}>
+                <h2 style={{ color: '#ffffff', margin: 0, fontSize: '22px', fontWeight: 'bold' }}>
+                  🎾 TennisMatchFinder
+                </h2>
               </div>
-            </CardContent>
-          </Card>
+              
+              <div style={{ padding: '32px', backgroundColor: '#ffffff' }}>
+                <h3 style={{ color: '#1f2937', margin: '0 0 12px 0', fontSize: '20px' }}>
+                  Salut <span className="text-green-600">[Prénom]</span> !
+                </h3>
+                
+                <p style={{ color: '#4b5563', fontSize: '15px', lineHeight: 1.6 }}>
+                  Tu as rejoint TennisMatchFinder, mais tu n'as pas encore enregistré de match. 
+                  <strong> C'est dommage !</strong>
+                </p>
+                
+                <div style={{ 
+                  backgroundColor: '#f0fdf4', 
+                  borderLeft: '4px solid #16a34a', 
+                  padding: '12px 16px', 
+                  margin: '20px 0',
+                  borderRadius: '0 8px 8px 0'
+                }}>
+                  <p style={{ color: '#166534', margin: 0, fontSize: '14px' }}>
+                    <strong>Le savais-tu ?</strong><br/>
+                    En enregistrant ton premier match, tu obtiens immédiatement un classement ELO !
+                  </p>
+                </div>
+                
+                <div style={{ textAlign: 'center', margin: '28px 0' }}>
+                  <span style={{ 
+                    display: 'inline-block',
+                    background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)', 
+                    color: '#ffffff', 
+                    padding: '14px 32px', 
+                    borderRadius: '8px', 
+                    fontSize: '16px', 
+                    fontWeight: 600,
+                    boxShadow: '0 4px 12px rgba(22, 163, 74, 0.3)'
+                  }}>
+                    🎾 Enregistrer mon premier match
+                  </span>
+                </div>
+                
+                <p style={{ color: '#9ca3af', fontSize: '12px', textAlign: 'center', marginTop: '24px' }}>
+                  <a href="#" style={{ color: '#9ca3af' }}>Gérer mes préférences email</a>
+                </p>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
