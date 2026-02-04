@@ -12,6 +12,8 @@ import {
 } from '@/lib/db/queries';
 import { calculateEloTrend } from '@/lib/elo';
 import { DashboardContent } from '@/components/dashboard/dashboard-content';
+import { OnboardingChecklist } from '@/components/onboarding/OnboardingChecklist';
+import { QuickMatchFABResponsive } from '@/components/dashboard/QuickMatchFAB';
 
 export const metadata: Metadata = {
   title: 'Dashboard',
@@ -40,44 +42,74 @@ export default async function DashboardPage() {
     ? Math.round((player.wins / player.matchesPlayed) * 100)
     : 0;
 
+  // Prepare player data for onboarding checklist
+  const playerForOnboarding = {
+    id: player.id,
+    fullName: player.fullName,
+    avatarUrl: player.avatarUrl,
+    selfAssessedLevel: player.selfAssessedLevel,
+    availability: player.availability as Record<string, unknown> | null,
+    matchesPlayed: player.matchesPlayed,
+    createdAt: player.createdAt,
+    onboardingCompleted: player.onboardingCompleted,
+    // TODO: Track if user has viewed suggestions
+    hasViewedSuggestions: false,
+  };
+
+  // Show onboarding checklist for users with less than 5 matches
+  const showOnboarding = player.matchesPlayed < 5;
+
   return (
-    <DashboardContent
-      player={{
-        id: player.id,
-        fullName: player.fullName,
-        currentElo: player.currentElo,
-        matchesPlayed: player.matchesPlayed,
-        wins: player.wins,
-        losses: player.losses,
-        uniqueOpponents: player.uniqueOpponents,
-        winStreak: player.winStreak,
-        bestWinStreak: player.bestWinStreak,
-        club: player.club ? {
-          name: player.club.name,
-          bannerUrl: player.club.bannerUrl,
-        } : null,
-      }}
-      recentMatches={recentMatches.map(m => ({
-        id: m.id,
-        winnerId: m.winnerId,
-        player1Id: m.player1Id,
-        player2Id: m.player2Id,
-        player1: { fullName: m.player1.fullName },
-        player2: { fullName: m.player2.fullName },
-        player1EloAfter: m.player1EloAfter,
-        player1EloBefore: m.player1EloBefore,
-        player2EloAfter: m.player2EloAfter,
-        player2EloBefore: m.player2EloBefore,
-        score: m.score,
-        playedAt: m.playedAt,
-      }))}
-      pendingProposals={pendingProposals.map(p => ({
-        id: p.id,
-        fromPlayer: { fullName: p.fromPlayer.fullName },
-      }))}
-      trend={trend}
-      recentDelta={recentDelta}
-      winRate={winRate}
-    />
+    <>
+      {/* Onboarding Checklist for new users */}
+      {showOnboarding && (
+        <OnboardingChecklist 
+          player={playerForOnboarding} 
+          className="mb-6" 
+        />
+      )}
+
+      <DashboardContent
+        player={{
+          id: player.id,
+          fullName: player.fullName,
+          currentElo: player.currentElo,
+          matchesPlayed: player.matchesPlayed,
+          wins: player.wins,
+          losses: player.losses,
+          uniqueOpponents: player.uniqueOpponents,
+          winStreak: player.winStreak,
+          bestWinStreak: player.bestWinStreak,
+          club: player.club ? {
+            name: player.club.name,
+            bannerUrl: player.club.bannerUrl,
+          } : null,
+        }}
+        recentMatches={recentMatches.map(m => ({
+          id: m.id,
+          winnerId: m.winnerId,
+          player1Id: m.player1Id,
+          player2Id: m.player2Id,
+          player1: { fullName: m.player1.fullName },
+          player2: { fullName: m.player2.fullName },
+          player1EloAfter: m.player1EloAfter,
+          player1EloBefore: m.player1EloBefore,
+          player2EloAfter: m.player2EloAfter,
+          player2EloBefore: m.player2EloBefore,
+          score: m.score,
+          playedAt: m.playedAt,
+        }))}
+        pendingProposals={pendingProposals.map(p => ({
+          id: p.id,
+          fromPlayer: { fullName: p.fromPlayer.fullName },
+        }))}
+        trend={trend}
+        recentDelta={recentDelta}
+        winRate={winRate}
+      />
+
+      {/* Floating Action Button for quick match registration */}
+      <QuickMatchFABResponsive showPulse={player.matchesPlayed === 0} />
+    </>
   );
 }

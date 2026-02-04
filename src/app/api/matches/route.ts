@@ -17,6 +17,7 @@ import {
 import { getAutoValidateDate, VALIDATION_MESSAGES } from '@/lib/constants/validation';
 import { withRateLimit } from '@/lib/rate-limit';
 import { sendPushToUser, PushNotifications } from '@/lib/push';
+import { daysSince } from '@/lib/analytics';
 
 // GET: Liste des matchs du joueur
 export async function GET(request: NextRequest) {
@@ -312,6 +313,20 @@ export async function POST(request: NextRequest) {
       console.error('[Push] Error sending match notification:', pushError);
     }
 
+    // Check if this is the player's first match
+    const existingMatchCount = await db
+      .select({ count: count() })
+      .from(matches)
+      .where(
+        or(
+          eq(matches.player1Id, player.id),
+          eq(matches.player2Id, player.id)
+        )
+      );
+    
+    const isFirstMatch = existingMatchCount[0]?.count === 1; // 1 because we just created this match
+    const daysSinceSignup = daysSince(player.createdAt);
+
     return NextResponse.json({
       success: true,
       match: newMatch,
@@ -330,6 +345,12 @@ export async function POST(request: NextRequest) {
         },
         breakdown, // Breakdown complet pour affichage transparent
         matchFormat,
+      },
+      // Activation tracking data for client-side analytics
+      activation: {
+        isFirstMatch,
+        daysSinceSignup,
+        opponentType: 'manual' as const, // Will be updated when using suggestions
       },
       message: 'Match enregistré. En attente de confirmation par votre adversaire.',
     });

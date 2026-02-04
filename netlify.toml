@@ -114,6 +114,11 @@
 [functions."mark-abandoned-signups"]
   schedule = "15 * * * *"
 
+# Scheduled function for welcome email sequence (daily at 10 AM)
+# Sends J+1 "Ton premier match" emails to new users without matches
+[functions."welcome-sequence"]
+  schedule = "0 10 * * *"
+
 # Configuration du contexte de déploiement
 [context.production]
   environment = { NODE_ENV = "production" }
