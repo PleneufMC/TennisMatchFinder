@@ -17,6 +17,7 @@ import { getServerPlayer } from '@/lib/auth-helpers';
 import { isSuperAdminEmail } from '@/lib/constants/admins';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60; // Timeout de 60 secondes pour Netlify
 
 // Vérifier si l'utilisateur est super admin
 async function checkSuperAdmin(): Promise<boolean> {
@@ -182,13 +183,20 @@ Gérer mes préférences : ${unsubscribeUrl}
 
 // GET: Prévisualisation - Liste des joueurs qui recevraient l'email
 export async function GET(request: NextRequest) {
+  console.log('[EmailInactive] GET - Starting request');
+  
   try {
     // Vérifier l'authentification
-    if (!await isAuthorized(request)) {
+    console.log('[EmailInactive] Checking authorization...');
+    const authorized = await isAuthorized(request);
+    console.log('[EmailInactive] Authorization result:', authorized);
+    
+    if (!authorized) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
     // Récupérer tous les joueurs sans match
+    console.log('[EmailInactive] Fetching inactive players...');
     const inactivePlayers = await db
       .select({
         id: players.id,
@@ -200,6 +208,8 @@ export async function GET(request: NextRequest) {
       .from(players)
       .innerJoin(users, eq(players.id, users.id))
       .where(eq(players.matchesPlayed, 0));
+
+    console.log('[EmailInactive] Found', inactivePlayers.length, 'inactive players');
 
     return NextResponse.json({
       success: true,
@@ -215,7 +225,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('[Admin/EmailInactive] GET Error:', error);
     return NextResponse.json(
-      { error: 'Erreur serveur' },
+      { error: 'Erreur serveur', details: String(error) },
       { status: 500 }
     );
   }
