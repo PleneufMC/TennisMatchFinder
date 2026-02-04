@@ -255,8 +255,11 @@ export function useGoogleAnalytics() {
 
   // ===== ÉVÉNEMENTS FUNNEL INSCRIPTION (Step-by-step tracking) =====
   // Pour identifier précisément où les users abandonnent
+  // Updated Feb 2026: Added granular step tracking for funnel analysis
   
-  type SignupStepName = 'fullname' | 'email' | 'city' | 'level' | 'club_option' | 'submit_attempt';
+  type SignupStepName = 'fullname' | 'email' | 'city' | 'level' | 'club_option' | 'submit_attempt' | 
+    // New granular steps (Feb 2026)
+    'email_entered' | 'club_selected' | 'profile_started' | 'level_selected' | 'preferences_set' | 'completed';
   
   const trackSignupStep = (
     step: SignupStepName,
@@ -271,6 +274,21 @@ export function useGoogleAnalytics() {
     });
     // Log toujours pour debug (temporaire - à retirer après validation)
     console.log(`[GA4] signup_step: ${step} (step ${stepNumber})`, metadata);
+  };
+
+  // Track signup step with clubId (new Feb 2026)
+  const trackSignupStepWithClub = (
+    stepNumber: number,
+    stepName: SignupStepName,
+    clubId?: string
+  ) => {
+    trackEvent('signup_step', {
+      step_number: stepNumber,
+      step_name: stepName,
+      club_id: clubId || 'unknown',
+      event_category: 'conversion_funnel',
+    });
+    console.log(`[GA4] signup_step: ${stepName} (step ${stepNumber}), club: ${clubId || 'unknown'}`);
   };
 
   const trackSignupFieldFocus = (fieldName: string) => {
@@ -356,6 +374,7 @@ export function useGoogleAnalytics() {
     trackPricingViewed,
     // Funnel inscription step-by-step
     trackSignupStep,
+    trackSignupStepWithClub,
     trackSignupFieldFocus,
     trackSignupFieldComplete,
     trackSignupError,
