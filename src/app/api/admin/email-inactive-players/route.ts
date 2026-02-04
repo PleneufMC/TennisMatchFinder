@@ -5,24 +5,53 @@
  * qui n'ont jamais enregistré de match.
  * 
  * Usage: POST /api/admin/email-inactive-players
- * Auth: Requiert ADMIN_SECRET ou être super admin
+ * Auth: Requiert être super admin (via session) ou ADMIN_SECRET
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { players, users } from '@/lib/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { sendEmail } from '@/lib/email/send-email';
-
-// Liste des admins autorisés
-const ADMIN_EMAILS = ['pfermanian@gmail.com'];
+import { getServerPlayer } from '@/lib/auth-helpers';
+import { isSuperAdminEmail } from '@/lib/constants/admins';
 
 export const dynamic = 'force-dynamic';
+
+// Vérifier si l'utilisateur est super admin
+async function checkSuperAdmin(): Promise<boolean> {
+  try {
+    const player = await getServerPlayer();
+    if (!player) return false;
+    
+    const [result] = await db
+      .select({ email: users.email })
+      .from(users)
+      .where(eq(users.id, player.id))
+      .limit(1);
+    
+    return isSuperAdminEmail(result?.email);
+  } catch {
+    return false;
+  }
+}
+
+// Vérifier l'authentification (session super admin OU token ADMIN_SECRET)
+async function isAuthorized(request: NextRequest): Promise<boolean> {
+  // Méthode 1: Token ADMIN_SECRET (pour appels API externes/CRON)
+  const authHeader = request.headers.get('authorization');
+  const adminSecret = process.env.ADMIN_SECRET;
+  if (adminSecret && authHeader === `Bearer ${adminSecret}`) {
+    return true;
+  }
+  
+  // Méthode 2: Session super admin (pour dashboard)
+  return await checkSuperAdmin();
+}
 
 // Template email pour les joueurs sans match
 function generateInactivePlayerEmail(playerName: string): { subject: string; html: string; text: string } {
   const firstName = playerName?.split(' ')[0] || 'Joueur';
-  const dashboardUrl = 'https://tennismatchfinder.net/dashboard';
   const newMatchUrl = 'https://tennismatchfinder.net/matchs/nouveau';
   const unsubscribeUrl = 'https://tennismatchfinder.net/settings';
 
@@ -154,16 +183,12 @@ Gérer mes préférences : ${unsubscribeUrl}
 // GET: Prévisualisation - Liste des joueurs qui recevraient l'email
 export async function GET(request: NextRequest) {
   try {
-    // Vérifier l'authentification admin
-    const authHeader = request.headers.get('authorization');
-    const adminSecret = process.env.ADMIN_SECRET;
-
-    if (!adminSecret || authHeader !== `Bearer ${adminSecret}`) {
+    // Vérifier l'authentification
+    if (!await isAuthorized(request)) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
     // Récupérer tous les joueurs sans match
-    // Note: players.id = users.id (même clé primaire)
     const inactivePlayers = await db
       .select({
         id: players.id,
@@ -199,21 +224,17 @@ export async function GET(request: NextRequest) {
 // POST: Envoyer les emails
 export async function POST(request: NextRequest) {
   try {
-    // Vérifier l'authentification admin
-    const authHeader = request.headers.get('authorization');
-    const adminSecret = process.env.ADMIN_SECRET;
-
-    if (!adminSecret || authHeader !== `Bearer ${adminSecret}`) {
+    // Vérifier l'authentification
+    if (!await isAuthorized(request)) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
     // Options du body
     const body = await request.json().catch(() => ({}));
-    const dryRun = body.dryRun === true; // Mode test : n'envoie pas vraiment
-    const limit = body.limit || 1000; // Limite pour éviter les abus
+    const dryRun = body.dryRun === true;
+    const limit = body.limit || 1000;
 
     // Récupérer tous les joueurs sans match
-    // Note: players.id = users.id (même clé primaire)
     const inactivePlayers = await db
       .select({
         id: players.id,
