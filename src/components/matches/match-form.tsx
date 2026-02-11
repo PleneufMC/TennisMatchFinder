@@ -46,18 +46,24 @@ interface MatchFormProps {
   };
   opponents: Opponent[];
   clubId: string;
+  preselectedOpponentId?: string;
 }
 
 type FormStep = 'opponent' | 'score' | 'confirm';
 type WinnerType = 'me' | 'opponent';
 
-export function MatchForm({ currentPlayer, opponents, clubId }: MatchFormProps) {
+export function MatchForm({ currentPlayer, opponents, clubId, preselectedOpponentId }: MatchFormProps) {
   const router = useRouter();
   
+  // Pré-sélectionner l'adversaire si fourni via l'URL (?opponent=id)
+  const preselected = preselectedOpponentId
+    ? opponents.find(o => o.id === preselectedOpponentId) ?? null
+    : null;
+
   // État du formulaire
-  const [step, setStep] = useState<FormStep>('opponent');
+  const [step, setStep] = useState<FormStep>(preselected ? 'score' : 'opponent');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedOpponent, setSelectedOpponent] = useState<Opponent | null>(null);
+  const [selectedOpponent, setSelectedOpponent] = useState<Opponent | null>(preselected);
   const [showInviteForm, setShowInviteForm] = useState(false);
   
   // Données du match

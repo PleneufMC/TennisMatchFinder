@@ -17,7 +17,12 @@ export const metadata: Metadata = {
   description: 'Déclarez le résultat de votre match',
 };
 
-export default async function NouveauMatchPage() {
+interface PageProps {
+  searchParams: Promise<{ opponent?: string }>;
+}
+
+export default async function NouveauMatchPage({ searchParams }: PageProps) {
+  const { opponent: preselectedOpponentId } = await searchParams;
   const player = await getServerPlayer();
 
   if (!player) {
@@ -100,6 +105,7 @@ export default async function NouveauMatchPage() {
                   }))
                 }
                 clubId={player.clubId}
+                preselectedOpponentId={preselectedOpponentId}
               />
             </CardContent>
           </Card>
