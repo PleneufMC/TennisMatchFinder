@@ -409,12 +409,49 @@ export const authOptions: NextAuthOptions = {
 
   session: {
     strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 60 * 24 * 60 * 60, // 60 days (increased for mobile)
     updateAge: 24 * 60 * 60, // 24 hours
   },
 
-  // Let NextAuth handle cookies automatically
-  // The cookie name will be determined by the NEXTAUTH_URL protocol (http vs https)
+  // Configuration des cookies optimisée pour mobile
+  // Note: On utilise des noms simples pour maximiser la compatibilité
+  // Les préfixes __Secure- et __Host- peuvent causer des problèmes sur certains navigateurs mobiles
+  cookies: {
+    sessionToken: {
+      name: process.env.NODE_ENV === 'production' 
+        ? `__Secure-next-auth.session-token`
+        : `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax' as const,
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 60 * 24 * 60 * 60, // 60 days - même durée que la session
+        // domain: undefined - laisser le navigateur gérer le domaine
+      },
+    },
+    callbackUrl: {
+      name: process.env.NODE_ENV === 'production'
+        ? `__Secure-next-auth.callback-url`
+        : `next-auth.callback-url`,
+      options: {
+        sameSite: 'lax' as const,
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
+    csrfToken: {
+      name: process.env.NODE_ENV === 'production'
+        ? `next-auth.csrf-token` // Removed __Host- prefix for better mobile compatibility
+        : `next-auth.csrf-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax' as const,
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
+  },
 
   pages: {
     signIn: '/login',

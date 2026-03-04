@@ -18,6 +18,7 @@ import {
   Zap,
   Medal,
   Crown,
+  Send,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -33,6 +34,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
   { href: '/match-now', label: 'Match Now', icon: Zap },
+  { href: '/match-proposals', label: 'Propositions', icon: Send },
   { href: '/box-leagues', label: 'Box Leagues', icon: Medal },
   { href: '/tournaments', label: 'Tournois', icon: Crown },
   { href: '/classement', label: 'Classement', icon: Trophy },

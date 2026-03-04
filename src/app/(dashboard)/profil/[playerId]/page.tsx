@@ -16,6 +16,7 @@ import { levelLabels, weekdayLabels, timeSlotLabels, surfaceLabels } from '@/lib
 import { TrophyCase } from '@/components/gamification';
 import { StartConversationButton } from '@/components/messages/start-conversation-button';
 import { PlayerActionsMenu } from '@/components/moderation';
+import { ProposeMatchButton } from '@/components/match-proposals';
 
 export const dynamic = 'force-dynamic';
 
@@ -106,12 +107,14 @@ export default async function PlayerProfilePage({ params }: PageProps) {
         {/* Actions */}
         <div className="flex items-center gap-2">
           <StartConversationButton playerId={player.id} />
-          <Button asChild>
-            <Link href={`/matchs/nouveau?opponent=${player.id}`}>
-              <Zap className="h-4 w-4 mr-2" />
-              Proposer un match
-            </Link>
-          </Button>
+          <ProposeMatchButton 
+            player={{
+              id: player.id,
+              fullName: player.fullName,
+              avatarUrl: player.avatarUrl,
+              currentElo: player.currentElo,
+            }}
+          />
           <PlayerActionsMenu playerId={player.id} playerName={player.fullName} />
         </div>
       </div>
