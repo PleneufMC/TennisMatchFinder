@@ -218,7 +218,7 @@ export function DashboardContent({
                   <div key={proposal.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
                     <span className="text-sm">{proposal.fromPlayer.fullName}</span>
                     <Button size="sm" variant="outline" asChild>
-                      <Link href={`/matchs/propositions/${proposal.id}`}>
+                      <Link href="/match-proposals">
                         {locale === 'fr' ? 'Voir' : 'View'}
                       </Link>
                     </Button>

@@ -148,7 +148,7 @@ export default function CampagnesEmailPage() {
             Joueurs sans match enregistré
           </CardTitle>
           <CardDescription>
-            Ces joueurs se sont inscrits mais n'ont jamais enregistré de match.
+            Ces joueurs se sont inscrits mais n&apos;ont jamais enregistré de match.
             Envoyez-leur un email pour les encourager à utiliser la plateforme.
           </CardDescription>
         </CardHeader>
@@ -279,10 +279,10 @@ export default function CampagnesEmailPage() {
           {/* Aperçu visuel de l'email */}
           <div className="space-y-3">
             <h3 className="text-lg font-semibold flex items-center gap-2">
-              📧 Aperçu de l'email envoyé
+              📧 Aperçu de l&apos;email envoyé
             </h3>
             <p className="text-sm text-muted-foreground">
-              <strong>Objet :</strong> 🎾 [Prénom], ton classement ELO t'attend !
+              <strong>Objet :</strong> 🎾 [Prénom], ton classement ELO t&apos;attend !
             </p>
             
             {/* Rendu visuel de l'email */}
@@ -303,8 +303,8 @@ export default function CampagnesEmailPage() {
                 </h3>
                 
                 <p style={{ color: '#4b5563', fontSize: '15px', lineHeight: 1.6 }}>
-                  Tu as rejoint TennisMatchFinder, mais tu n'as pas encore enregistré de match. 
-                  <strong> C'est dommage !</strong>
+                  Tu as rejoint TennisMatchFinder, mais tu n&apos;as pas encore enregistré de match. 
+                  <strong> C&apos;est dommage !</strong>
                 </p>
                 
                 <div style={{ 
@@ -348,9 +348,9 @@ export default function CampagnesEmailPage() {
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirmer l'envoi</DialogTitle>
+            <DialogTitle>Confirmer l&apos;envoi</DialogTitle>
             <DialogDescription>
-              Vous êtes sur le point d'envoyer un email à <strong>{previewData?.count || 0} joueurs</strong>.
+              Vous êtes sur le point d&apos;envoyer un email à <strong>{previewData?.count || 0} joueurs</strong>.
               <br /><br />
               Cette action est irréversible. Les emails seront envoyés immédiatement.
             </DialogDescription>
@@ -364,7 +364,7 @@ export default function CampagnesEmailPage() {
               onClick={sendEmails}
             >
               <Send className="mr-2 h-4 w-4" />
-              Confirmer l'envoi
+              Confirmer l&apos;envoi
             </Button>
           </DialogFooter>
         </DialogContent>
