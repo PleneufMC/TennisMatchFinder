@@ -98,7 +98,7 @@ export default function MatchProposalsPage() {
   const handleRespond = async (proposalId: string, action: 'accept' | 'decline') => {
     setRespondingTo(proposalId);
     try {
-      const response = await fetch(`/api/match-proposals/${proposalId}/respond`, {
+      const response = await fetch(`/api/match-proposals/${proposalId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action }),
