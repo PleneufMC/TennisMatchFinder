@@ -335,15 +335,48 @@ export default async function SuggestionsPage() {
         <Card>
           <CardContent className="py-12 text-center">
             <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
-            <h3 className="text-lg font-semibold mb-2">Aucune suggestion disponible</h3>
-            <p className="text-muted-foreground mb-4">
-              {allPlayers.length <= 1
-                ? 'Invitez d\'autres joueurs à rejoindre le club !'
-                : 'Ajustez vos disponibilités dans votre profil pour trouver des adversaires.'}
-            </p>
-            <Button asChild variant="outline">
-              <Link href="/profil">Modifier mes disponibilités</Link>
-            </Button>
+            {allPlayers.length <= 1 ? (
+              <>
+                {/* Liquidité nulle : le club n'a pas encore d'autres joueurs.
+                    Inutile de renvoyer vers les disponibilités — il faut inviter. */}
+                <h3 className="text-lg font-semibold mb-2">
+                  Vous êtes le premier sur le court
+                </h3>
+                <p className="text-muted-foreground mb-4 max-w-md mx-auto">
+                  Aucun autre joueur n&apos;a encore rejoint votre club. Invitez un
+                  partenaire de jeu : dès votre premier match, votre ELO commence à évoluer.
+                </p>
+                <Button asChild>
+                  <Link href="/matchs/nouveau">
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Inviter un adversaire
+                  </Link>
+                </Button>
+              </>
+            ) : (
+              <>
+                {/* Le club a des joueurs, mais aucun ne matche les disponibilités. */}
+                <h3 className="text-lg font-semibold mb-2">
+                  Aucun adversaire compatible pour l&apos;instant
+                </h3>
+                <p className="text-muted-foreground mb-4 max-w-md mx-auto">
+                  Il y a d&apos;autres joueurs dans votre club, mais aucun ne correspond
+                  à vos critères actuels. Élargissez vos disponibilités pour voir plus
+                  d&apos;adversaires.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                  <Button asChild variant="outline">
+                    <Link href="/profil">Modifier mes disponibilités</Link>
+                  </Button>
+                  <Button asChild>
+                    <Link href="/matchs/nouveau">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Enregistrer un match
+                    </Link>
+                  </Button>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       )}

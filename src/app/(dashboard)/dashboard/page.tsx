@@ -108,8 +108,13 @@ export default async function DashboardPage() {
         winRate={winRate}
       />
 
-      {/* Floating Action Button for quick match registration */}
-      <QuickMatchFABResponsive showPulse={player.matchesPlayed === 0} />
+      {/* Floating Action Button for quick match registration.
+          UX-003 : pour un joueur sans match, le FAB invite d'abord à trouver
+          un adversaire (/suggestions) plutôt qu'à enregistrer un match. */}
+      <QuickMatchFABResponsive
+        showPulse={player.matchesPlayed === 0}
+        isFirstMatch={player.matchesPlayed === 0}
+      />
     </>
   );
 }

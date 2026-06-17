@@ -30,6 +30,9 @@ import {
 } from 'lucide-react';
 import { MatchFormatSelector } from '@/components/matches/match-format-selector';
 import { type MatchFormat, inferFormatFromScore, FORMAT_LABELS } from '@/lib/elo/format-coefficients';
+import { MatchResultModal } from '@/components/elo/match-result-modal';
+import { breakdownToModifiers } from '@/lib/elo/calculator';
+import type { ModifiersResult } from '@/lib/elo/types';
 
 interface Opponent {
   id: string;
@@ -83,6 +86,21 @@ export function MatchForm({ currentPlayer, opponents, clubId, preselectedOpponen
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  // Modal de résultat (confetti + breakdown ELO) — UX-002
+  interface MatchResultData {
+    isWinner: boolean;
+    opponentName: string;
+    opponentElo: number;
+    score: string;
+    eloBefore: number;
+    eloAfter: number;
+    delta: number;
+    kFactor: number;
+    expectedScore: number;
+    modifiers: ModifiersResult;
+  }
+  const [matchResult, setMatchResult] = useState<MatchResultData | null>(null);
 
   // Filtrer les adversaires
   const filteredOpponents = opponents.filter(
@@ -245,17 +263,45 @@ export function MatchForm({ currentPlayer, opponents, clubId, preselectedOpponen
       }
 
       setSuccess(true);
-      
-      // Rediriger après 2 secondes
-      setTimeout(() => {
-        router.push('/matchs');
-        router.refresh();
-      }, 2000);
+
+      // UX-002 : afficher le modal de résultat (confetti + breakdown ELO)
+      // au lieu d'une redirection muette. Le modal navigue vers /matchs à sa fermeture.
+      const eloChange = data?.eloChange;
+      const currentPlayerIsWinner = winnerId === currentPlayer.id;
+
+      if (eloChange?.breakdown) {
+        const playerSide = currentPlayerIsWinner ? eloChange.winner : eloChange.loser;
+        setMatchResult({
+          isWinner: currentPlayerIsWinner,
+          opponentName: selectedOpponent.fullName,
+          opponentElo: selectedOpponent.currentElo,
+          score,
+          eloBefore: playerSide.before,
+          eloAfter: playerSide.after,
+          delta: playerSide.delta,
+          kFactor: eloChange.breakdown.kFactor,
+          expectedScore: eloChange.breakdown.expectedScore,
+          modifiers: breakdownToModifiers(eloChange.breakdown),
+        });
+      } else {
+        // Fallback si la réponse n'inclut pas le breakdown (ex. ancien client)
+        setTimeout(() => {
+          router.push('/matchs');
+          router.refresh();
+        }, 2000);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Fermeture du modal de résultat → redirection vers la liste des matchs
+  const handleResultModalClose = () => {
+    setMatchResult(null);
+    router.push('/matchs');
+    router.refresh();
   };
 
   // Envoyer une invitation
@@ -299,8 +345,11 @@ export function MatchForm({ currentPlayer, opponents, clubId, preselectedOpponen
     }
   };
 
-  // Render success state
-  if (success) {
+  // Render success state.
+  // On n'affiche cet écran que lorsqu'aucun modal de résultat n'est en cours
+  // (ex. invitation envoyée, ou fallback sans breakdown ELO). Quand le modal
+  // de résultat est affiché, on laisse le formulaire monté pour le rendre.
+  if (success && !matchResult) {
     return (
       <div className="text-center py-8">
         <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
@@ -602,6 +651,25 @@ export function MatchForm({ currentPlayer, opponents, clubId, preselectedOpponen
             </AlertDescription>
           </Alert>
         </div>
+      )}
+
+      {/* UX-002 : Modal de résultat (confetti + breakdown ELO transparent) */}
+      {matchResult && (
+        <MatchResultModal
+          open={true}
+          onClose={handleResultModalClose}
+          isWinner={matchResult.isWinner}
+          playerName={currentPlayer.fullName}
+          opponentName={matchResult.opponentName}
+          opponentElo={matchResult.opponentElo}
+          score={matchResult.score}
+          eloBefore={matchResult.eloBefore}
+          eloAfter={matchResult.eloAfter}
+          delta={matchResult.delta}
+          kFactor={matchResult.kFactor}
+          expectedScore={matchResult.expectedScore}
+          modifiers={matchResult.modifiers}
+        />
       )}
     </div>
   );

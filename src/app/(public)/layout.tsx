@@ -91,16 +91,6 @@ export default function PublicLayout({
                     Tarifs
                   </Link>
                 </li>
-                <li>
-                  <Link href="/#testimonials" className="hover:text-foreground">
-                    Témoignages
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/strategie-digitale" className="hover:text-foreground">
-                    Stratégie Marketing
-                  </Link>
-                </li>
               </ul>
             </div>
 

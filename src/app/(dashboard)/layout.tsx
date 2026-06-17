@@ -21,11 +21,6 @@ export default function DashboardLayout({
   const hasRedirected = useRef(false);
   const initialLoadComplete = useRef(false);
 
-  // Debug logging
-  useEffect(() => {
-    console.log('[Dashboard Layout] State:', { isLoading, isAuthenticated, hasPlayer: !!player });
-  }, [isLoading, isAuthenticated, player]);
-
   // Handle redirections after render to avoid hydration issues
   // Only redirect after initial load is complete AND we're sure user is not authenticated
   useEffect(() => {
@@ -37,7 +32,6 @@ export default function DashboardLayout({
     // Mark initial load as complete
     if (!initialLoadComplete.current) {
       initialLoadComplete.current = true;
-      console.log('[Dashboard Layout] Initial load complete:', { isAuthenticated, hasPlayer: !!player });
     }
 
     // Only redirect once, and only after initial load
@@ -50,11 +44,9 @@ export default function DashboardLayout({
       if (hasRedirected.current) return;
       
       if (!isAuthenticated) {
-        console.log('[Dashboard] Not authenticated after delay, redirecting to login');
         hasRedirected.current = true;
         router.push('/login');
       } else if (!player) {
-        console.log('[Dashboard] Authenticated but no player after delay, redirecting to onboarding');
         hasRedirected.current = true;
         router.push('/onboarding');
       }
