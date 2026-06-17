@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Clock, MessageSquare, Zap, Send, MapPin } from 'lucide-react';
+import { Clock, MessageSquare, Zap, Send, MapPin, Trophy, Dumbbell, Wallet } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +17,8 @@ interface MatchNowAvailability {
   availableUntil: string | Date;
   message: string | null;
   gameTypes: string[];
+  sessionType?: 'match' | 'training';
+  courtPaidByOrganizer?: boolean;
   distance?: number; // Distance en km (mode proximity)
   player?: {
     id: string;
@@ -47,6 +49,8 @@ export function MatchNowCard({
 
   const player = availability.player;
   if (!player) return null;
+
+  const isTraining = availability.sessionType === 'training';
 
   const availableUntil = new Date(availability.availableUntil);
   const timeRemaining = formatDistanceToNow(availableUntil, { locale: fr, addSuffix: false });
@@ -109,13 +113,30 @@ export function MatchNowCard({
           </div>
         )}
 
-        {/* Types de jeu */}
-        <div className="flex items-center gap-2">
+        {/* Type de session + types de jeu */}
+        <div className="flex flex-wrap items-center gap-2">
+          {isTraining ? (
+            <Badge variant="outline" className="text-xs border-sky-400 text-sky-700 dark:text-sky-300">
+              <Dumbbell className="w-3 h-3 mr-1" />
+              Entraînement libre
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="text-xs border-amber-400 text-amber-700 dark:text-amber-300">
+              <Trophy className="w-3 h-3 mr-1" />
+              Match classé
+            </Badge>
+          )}
           {availability.gameTypes.map((type) => (
             <Badge key={type} variant="outline" className="text-xs">
               {type === 'simple' ? 'Simple' : 'Double'}
             </Badge>
           ))}
+          {availability.courtPaidByOrganizer && (
+            <Badge variant="outline" className="text-xs border-green-400 text-green-700 dark:text-green-300">
+              <Wallet className="w-3 h-3 mr-1" />
+              Court payé par l&apos;organisateur
+            </Badge>
+          )}
         </div>
 
         {/* Distance (mode proximity) */}
@@ -155,7 +176,7 @@ export function MatchNowCard({
             onClick={() => setShowMessageInput(true)}
           >
             <Zap className="w-4 h-4 mr-2" />
-            Je veux jouer !
+            {isTraining ? 'Je veux m\'entraîner !' : 'Je veux jouer !'}
           </Button>
         ) : (
           <div className="flex gap-2 w-full">

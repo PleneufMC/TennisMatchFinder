@@ -90,7 +90,21 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { durationMinutes, message, gameTypes, eloMin, eloMax, searchMode, radiusKm } = body;
+    const {
+      durationMinutes,
+      message,
+      gameTypes,
+      eloMin,
+      eloMax,
+      searchMode,
+      radiusKm,
+      sessionType,
+      courtPaidByOrganizer,
+    } = body;
+
+    // Validation du type de session
+    const normalizedSessionType =
+      sessionType === 'training' ? 'training' : 'match';
 
     // En mode proximité, pas besoin de club
     // En mode club, il faut avoir un club
@@ -123,12 +137,19 @@ export async function POST(request: NextRequest) {
       eloMax,
       searchMode: searchMode || 'club',
       radiusKm: radiusKm || 20,
+      sessionType: normalizedSessionType,
+      courtPaidByOrganizer: !!courtPaidByOrganizer,
     });
+
+    const successMessage =
+      normalizedSessionType === 'training'
+        ? 'Votre entraînement libre est publié — sans enjeu de classement !'
+        : 'Vous êtes maintenant visible comme disponible !';
 
     return NextResponse.json({
       success: true,
       availability,
-      message: 'Vous êtes maintenant visible comme disponible !',
+      message: successMessage,
     });
   } catch (error) {
     console.error('Error creating availability:', error);

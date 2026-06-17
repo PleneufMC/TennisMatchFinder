@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Zap, Clock, X, Users, MapPin, Building2 } from 'lucide-react';
+import { Zap, Clock, X, Users, MapPin, Building2, Trophy, Dumbbell, Wallet } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -28,12 +28,16 @@ import {
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 
+type SessionType = 'match' | 'training';
+
 interface MatchNowAvailability {
   id: string;
   availableUntil: string | Date;
   message: string | null;
   gameTypes: string[];
   isActive: boolean;
+  sessionType?: SessionType;
+  courtPaidByOrganizer?: boolean;
 }
 
 interface MatchNowToggleProps {
@@ -47,6 +51,8 @@ interface MatchNowToggleProps {
     gameTypes: string[];
     searchMode: 'club' | 'proximity';
     radiusKm?: number;
+    sessionType: SessionType;
+    courtPaidByOrganizer?: boolean;
   }) => Promise<void>;
   onDeactivate: () => Promise<void>;
 }
@@ -70,6 +76,8 @@ export function MatchNowToggle({
   const [gameTypes, setGameTypes] = useState<string[]>(['simple']);
   const [searchMode, setSearchMode] = useState<'club' | 'proximity'>(hasClub ? 'club' : 'proximity');
   const [radiusKm, setRadiusKm] = useState(20);
+  const [sessionType, setSessionType] = useState<SessionType>('match');
+  const [courtPaidByOrganizer, setCourtPaidByOrganizer] = useState(false);
 
   // Initialiser avec la disponibilité existante
   useEffect(() => {
@@ -106,6 +114,9 @@ export function MatchNowToggle({
         gameTypes,
         searchMode,
         radiusKm: searchMode === 'proximity' ? radiusKm : undefined,
+        sessionType,
+        // Le label "court payé par l'organisateur" n'a de sens qu'en cross-club (proximité)
+        courtPaidByOrganizer: searchMode === 'proximity' ? courtPaidByOrganizer : false,
       });
       setDialogOpen(false);
     } catch (error) {
@@ -184,12 +195,29 @@ export function MatchNowToggle({
               </p>
             )}
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
+              {availability.sessionType === 'training' ? (
+                <Badge variant="outline" className="border-sky-400 text-sky-700 dark:text-sky-300">
+                  <Dumbbell className="w-3 h-3 mr-1" />
+                  Entraînement libre
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="border-amber-400 text-amber-700 dark:text-amber-300">
+                  <Trophy className="w-3 h-3 mr-1" />
+                  Match classé
+                </Badge>
+              )}
               {availability.gameTypes.map((type) => (
                 <Badge key={type} variant="outline">
                   {type === 'simple' ? 'Simple' : 'Double'}
                 </Badge>
               ))}
+              {availability.courtPaidByOrganizer && (
+                <Badge variant="outline" className="border-green-400 text-green-700 dark:text-green-300">
+                  <Wallet className="w-3 h-3 mr-1" />
+                  Court payé par l&apos;organisateur
+                </Badge>
+              )}
             </div>
 
             <Button
@@ -221,14 +249,61 @@ export function MatchNowToggle({
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
                     <Zap className="w-5 h-5 text-green-500" />
-                    Activer Match Now
+                    {sessionType === 'training' ? 'Proposer un entraînement libre' : 'Activer Match Now'}
                   </DialogTitle>
                   <DialogDescription>
-                    Les membres avec un ELO similaire seront notifiés de votre disponibilité.
+                    {sessionType === 'training'
+                      ? 'Échange de balles sans enjeu de classement. Les membres compatibles seront notifiés.'
+                      : 'Les membres avec un ELO similaire seront notifiés de votre disponibilité.'}
                   </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-6 py-4">
+                  {/* Type de session : match classé ou entraînement libre */}
+                  <div className="space-y-3">
+                    <Label>Type de session</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setSessionType('match')}
+                        className={cn(
+                          'flex flex-col items-start gap-1 rounded-lg border p-3 text-left transition-all',
+                          sessionType === 'match'
+                            ? 'border-green-500 bg-green-50 dark:bg-green-900/20 ring-1 ring-green-500'
+                            : 'border-input hover:bg-accent'
+                        )}
+                        aria-pressed={sessionType === 'match'}
+                      >
+                        <span className="flex items-center gap-2 font-medium">
+                          <Trophy className="w-4 h-4 text-amber-500" />
+                          Match classé
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          Compte pour le classement ELO
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSessionType('training')}
+                        className={cn(
+                          'flex flex-col items-start gap-1 rounded-lg border p-3 text-left transition-all',
+                          sessionType === 'training'
+                            ? 'border-sky-500 bg-sky-50 dark:bg-sky-900/20 ring-1 ring-sky-500'
+                            : 'border-input hover:bg-accent'
+                        )}
+                        aria-pressed={sessionType === 'training'}
+                      >
+                        <span className="flex items-center gap-2 font-medium">
+                          <Dumbbell className="w-4 h-4 text-sky-500" />
+                          Entraînement libre
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          Échange de balles, sans enjeu de classement
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+
                   {/* Mode de recherche */}
                   <div className="space-y-3">
                     <Label>Rechercher des partenaires</Label>
@@ -284,6 +359,30 @@ export function MatchNowToggle({
                       <p className="text-xs text-muted-foreground">
                         Joueurs dans un rayon de {radiusKm} km autour de votre position
                       </p>
+
+                      {/* Cross-club : l'organisateur peut prendre en charge le court (paiement hors plateforme) */}
+                      <label
+                        htmlFor="court-paid-toggle"
+                        className="flex items-start gap-3 rounded-lg border border-input p-3 cursor-pointer hover:bg-accent transition-colors"
+                      >
+                        <input
+                          id="court-paid-toggle"
+                          type="checkbox"
+                          checked={courtPaidByOrganizer}
+                          onChange={(e) => setCourtPaidByOrganizer(e.target.checked)}
+                          className="mt-1 h-4 w-4 accent-green-600"
+                        />
+                        <span className="space-y-0.5">
+                          <span className="flex items-center gap-2 text-sm font-medium">
+                            <Wallet className="w-4 h-4 text-green-600" />
+                            Je prends en charge le court
+                          </span>
+                          <span className="block text-xs text-muted-foreground">
+                            Affiché aux autres joueurs comme « Court payé par l&apos;organisateur ».
+                            Le règlement se fait directement entre vous, hors de la plateforme.
+                          </span>
+                        </span>
+                      </label>
                     </div>
                   )}
 
