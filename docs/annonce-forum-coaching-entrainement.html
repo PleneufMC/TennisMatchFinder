@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nouveautés TennisMatchFinder — Entraînement libre & Coaching</title>
+<style>
+  :root {
+    --green: #16a34a;
+    --green-dark: #15803d;
+    --green-soft: #dcfce7;
+    --ink: #1f2937;
+    --muted: #6b7280;
+    --line: #e5e7eb;
+    --bg: #f8fafc;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.6;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 24px 16px 64px; }
+  .card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  }
+  .hero {
+    background: linear-gradient(135deg, var(--green) 0%, var(--green-dark) 100%);
+    color: #fff;
+    padding: 32px 28px;
+  }
+  .hero .badge {
+    display: inline-block;
+    background: rgba(255,255,255,.2);
+    border: 1px solid rgba(255,255,255,.35);
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .03em;
+    margin-bottom: 14px;
+  }
+  .hero h1 { margin: 0 0 8px; font-size: 26px; line-height: 1.25; }
+  .hero p { margin: 0; opacity: .95; font-size: 15px; }
+  .section { padding: 26px 28px; border-top: 1px solid var(--line); }
+  .section:first-of-type { border-top: none; }
+  .feature-title {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 20px; font-weight: 700; margin: 0 0 6px;
+  }
+  .feature-title .emoji { font-size: 24px; }
+  .lead { color: var(--muted); margin: 0 0 16px; }
+  ul.checks { list-style: none; padding: 0; margin: 0 0 4px; }
+  ul.checks li {
+    position: relative; padding-left: 28px; margin-bottom: 10px; font-size: 15px;
+  }
+  ul.checks li::before {
+    content: "✓";
+    position: absolute; left: 0; top: 0;
+    color: var(--green); font-weight: 800;
+    background: var(--green-soft);
+    width: 20px; height: 20px; border-radius: 50%;
+    display: grid; place-items: center; font-size: 12px;
+  }
+  .pricetag {
+    display: inline-flex; align-items: baseline; gap: 6px;
+    background: var(--green-soft); color: var(--green-dark);
+    padding: 8px 16px; border-radius: 12px; font-weight: 700; margin: 6px 0 14px;
+  }
+  .pricetag .big { font-size: 24px; }
+  .note {
+    background: #fffbeb; border: 1px solid #fde68a; color: #92400e;
+    padding: 12px 14px; border-radius: 10px; font-size: 14px; margin-top: 10px;
+  }
+  .steps { counter-reset: step; list-style: none; padding: 0; margin: 14px 0 0; }
+  .steps li {
+    position: relative; padding-left: 40px; margin-bottom: 14px; font-size: 15px;
+  }
+  .steps li::before {
+    counter-increment: step; content: counter(step);
+    position: absolute; left: 0; top: -2px;
+    background: var(--green); color: #fff; font-weight: 700;
+    width: 26px; height: 26px; border-radius: 50%;
+    display: grid; place-items: center; font-size: 14px;
+  }
+  .cta {
+    display: inline-block; background: var(--green); color: #fff;
+    text-decoration: none; font-weight: 700; padding: 14px 26px;
+    border-radius: 12px; font-size: 16px; margin-top: 8px;
+  }
+  .footer { text-align: center; color: var(--muted); font-size: 13px; padding: 24px 28px; }
+  .divider-emoji { text-align:center; font-size: 20px; margin: 6px 0; opacity:.6; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+
+      <!-- HERO -->
+      <div class="hero">
+        <span class="badge">🎾 NOUVEAU SUR TENNISMATCHFINDER</span>
+        <h1>Entraînement libre &amp; Coaching débarquent !</h1>
+        <p>Deux nouveautés pour jouer plus souvent, sans pression — et pour trouver un coach près de chez vous.</p>
+      </div>
+
+      <!-- FEATURE 1 -->
+      <div class="section">
+        <h2 class="feature-title"><span class="emoji">🏋️</span> L'Entraînement libre</h2>
+        <p class="lead">Vous voulez juste taper la balle, sans enjeu sur votre classement&nbsp;? C'est désormais possible.</p>
+        <ul class="checks">
+          <li>Activez votre dispo en mode <strong>« Entraînement libre »</strong> : <strong>aucun impact sur votre ELO</strong>. On joue pour le plaisir et la progression.</li>
+          <li>Toujours dispo aussi en mode <strong>« Match classé »</strong> pour ceux qui veulent l'enjeu.</li>
+          <li>Nouvelle option <strong>« Je prends en charge le court »</strong> (en recherche autour de moi) : indiquez que vous offrez le court, ça donne envie&nbsp;!</li>
+          <li>Des <strong>badges clairs</strong> sur chaque annonce : type de session + court offert.</li>
+        </ul>
+        <p class="lead" style="margin-top:14px;">👉 Parfait pour débuter, reprendre en douceur, ou simplement enchaîner les sessions sans calcul.</p>
+      </div>
+
+      <div class="divider-emoji">• • •</div>
+
+      <!-- FEATURE 2 -->
+      <div class="section">
+        <h2 class="feature-title"><span class="emoji">🎓</span> Le Coaching</h2>
+        <p class="lead">Un nouvel onglet <strong>« Coaching »</strong> dans le menu. Deux usages, une seule page qui s'adapte à vous.</p>
+
+        <h3 style="margin:18px 0 6px;font-size:16px;">👤 Vous êtes joueur ?</h3>
+        <ul class="checks">
+          <li>Parcourez les <strong>créneaux de coaching</strong> disponibles (coach, date, durée, tarif, lieu).</li>
+          <li><strong>Réservez en un clic</strong> le créneau qui vous convient.</li>
+          <li>Le tarif est affiché à titre indicatif — le règlement se fait <strong>en direct avec le coach</strong>.</li>
+        </ul>
+
+        <h3 style="margin:18px 0 6px;font-size:16px;">🏆 Vous êtes coach (ou souhaitez le devenir) ?</h3>
+        <ul class="checks">
+          <li>Publiez vos <strong>créneaux de 60 min</strong> et gagnez en visibilité auprès des joueurs.</li>
+          <li>Gérez vos réservations de bout en bout : <strong>réservé → confirmé → effectué</strong>.</li>
+          <li>Affichez votre tarif, votre bio et vos spécialités.</li>
+        </ul>
+        <div class="pricetag"><span class="big">15&nbsp;€</span><span>/ mois — sans engagement</span></div>
+        <div class="note">
+          💡 Vous payez pour <strong>l'outil</strong> (publier vos créneaux + votre visibilité), pas par élève.
+          Aucune commission sur vos cours : ce que vous facturez vous revient à 100&nbsp;%, réglé en direct.
+        </div>
+      </div>
+
+      <div class="divider-emoji">• • •</div>
+
+      <!-- HOW TO -->
+      <div class="section">
+        <h2 class="feature-title"><span class="emoji">🚀</span> Comment en profiter&nbsp;?</h2>
+        <ol class="steps">
+          <li>Ouvrez l'onglet <strong>« Match Now »</strong> et testez le mode <strong>Entraînement libre</strong>.</li>
+          <li>Ouvrez le nouvel onglet <strong>« Coaching »</strong> pour réserver un cours.</li>
+          <li>Coach&nbsp;? Cliquez sur <strong>« Devenir coach »</strong>, publiez vos créneaux, c'est parti&nbsp;!</li>
+        </ol>
+        <p style="margin-top:18px;">
+          <a class="cta" href="https://tennismatchfinder.net/coaching">Découvrir le Coaching →</a>
+        </p>
+      </div>
+
+      <div class="footer">
+        Des retours, des idées&nbsp;? Répondez ici, on lit tout. 💬<br />
+        Bon tennis à toutes et à tous&nbsp;! — L'équipe TennisMatchFinder 🎾
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>
