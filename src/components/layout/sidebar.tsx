@@ -19,6 +19,7 @@ import {
   Medal,
   Crown,
   Send,
+  GraduationCap,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -40,6 +41,7 @@ const navItems: NavItem[] = [
   { href: '/classement', label: 'Classement', icon: Trophy },
   { href: '/matchs', label: 'Mes matchs', icon: Swords },
   { href: '/suggestions', label: 'Trouver un adversaire', icon: Users },
+  { href: '/coaching', label: 'Coaching', icon: GraduationCap },
   { href: '/achievements', label: 'Achievements', icon: Award },
   { href: '/messages', label: 'Messages', icon: MessageCircle },
   { href: '/forum', label: 'Forum', icon: MessageSquare },
