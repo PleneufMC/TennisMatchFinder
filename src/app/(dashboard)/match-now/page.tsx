@@ -17,6 +17,8 @@ interface MatchNowAvailability {
   message: string | null;
   gameTypes: string[];
   isActive: boolean;
+  sessionType?: 'match' | 'training';
+  courtPaidByOrganizer?: boolean;
   searchMode?: 'club' | 'proximity';
   radiusKm?: number;
   distance?: number; // En mode proximity
@@ -87,6 +89,8 @@ export default function MatchNowPage() {
     gameTypes: string[];
     searchMode: 'club' | 'proximity';
     radiusKm?: number;
+    sessionType: 'match' | 'training';
+    courtPaidByOrganizer?: boolean;
   }) => {
     const response = await fetch('/api/match-now', {
       method: 'POST',

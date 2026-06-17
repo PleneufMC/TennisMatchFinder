@@ -277,6 +277,8 @@ export const players = pgTable(
     isAdmin: boolean('is_admin').default(false).notNull(),
     isVerified: boolean('is_verified').default(false).notNull(),
     isActive: boolean('is_active').default(true).notNull(),
+    // Un membre peut être à la fois joueur ET coach (marketplace profs, Lot 2). Réutilise NextAuth.
+    isCoach: boolean('is_coach').default(false).notNull(),
     onboardingCompleted: boolean('onboarding_completed').default(false).notNull(),
     // WhatsApp notifications
     whatsappNumber: varchar('whatsapp_number', { length: 20 }), // Format international: +33612345678
@@ -818,6 +820,11 @@ export const matchNowAvailability = pgTable(
     eloMax: integer('elo_max'), // Filtre optionnel ELO maximum
     searchMode: varchar('search_mode', { length: 20 }).default('club').notNull(), // 'club' ou 'proximity'
     radiusKm: integer('radius_km'), // Rayon de recherche en km (mode proximity)
+    // --- Entraînement libre (Lot 1) ---
+    // 'match' = rencontre classée (enjeu ELO) | 'training' = entraînement libre (échange de balles, AUCUN enjeu ELO)
+    sessionType: varchar('session_type', { length: 20 }).default('match').notNull(),
+    // En cross-club, l'organisateur paie le court. Paiement HORS plateforme : on affiche seulement le label.
+    courtPaidByOrganizer: boolean('court_paid_by_organizer').default(false).notNull(),
     isActive: boolean('is_active').default(true).notNull(),
     createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
@@ -826,6 +833,7 @@ export const matchNowAvailability = pgTable(
     playerIdIdx: index('match_now_player_id_idx').on(table.playerId),
     clubIdIdx: index('match_now_club_id_idx').on(table.clubId),
     activeUntilIdx: index('match_now_active_until_idx').on(table.isActive, table.availableUntil),
+    sessionTypeIdx: index('match_now_session_type_idx').on(table.sessionType, table.isActive),
   })
 );
 

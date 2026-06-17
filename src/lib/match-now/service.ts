@@ -20,6 +20,9 @@ const DEFAULT_ELO_RANGE = 100;
 // TYPES
 // ============================================
 
+/** Type de session : 'match' = rencontre classée (enjeu ELO), 'training' = entraînement libre (aucun enjeu ELO) */
+export type SessionType = 'match' | 'training';
+
 export interface MatchNowAvailability {
   id: string;
   playerId: string;
@@ -31,6 +34,10 @@ export interface MatchNowAvailability {
   eloMax: number | null;
   searchMode: 'club' | 'proximity' | null;
   radiusKm: number | null;
+  /** 'match' (classé) | 'training' (entraînement libre, aucun enjeu ELO) */
+  sessionType: SessionType;
+  /** Cross-club : organisateur paie le court HORS plateforme. Flag d'affichage uniquement. */
+  courtPaidByOrganizer: boolean;
   isActive: boolean;
   createdAt: Date;
   player?: {
@@ -67,6 +74,10 @@ export interface CreateAvailabilityParams {
   eloMax?: number;
   searchMode?: 'club' | 'proximity';
   radiusKm?: number;
+  /** Type de session (défaut 'match'). 'training' = entraînement libre, aucun enjeu ELO. */
+  sessionType?: SessionType;
+  /** Cross-club : l'organisateur paie le court (paiement off-platform). Label uniquement. */
+  courtPaidByOrganizer?: boolean;
 }
 
 // ============================================
@@ -89,6 +100,8 @@ export async function createMatchNowAvailability(
     eloMax,
     searchMode = 'club',
     radiusKm = 20,
+    sessionType = 'match',
+    courtPaidByOrganizer = false,
   } = params;
 
   // Désactiver les disponibilités précédentes du joueur
@@ -116,6 +129,9 @@ export async function createMatchNowAvailability(
       eloMax: eloMax || null,
       searchMode,
       radiusKm: searchMode === 'proximity' ? radiusKm : null,
+      sessionType,
+      // Le label "court payé par l'organisateur" n'a de sens qu'en cross-club (mode proximité)
+      courtPaidByOrganizer: searchMode === 'proximity' ? courtPaidByOrganizer : false,
       isActive: true,
     })
     .returning();
@@ -126,7 +142,7 @@ export async function createMatchNowAvailability(
 
   // Notifier les joueurs compatibles (seulement en mode club)
   if (searchMode === 'club' && clubId) {
-    await notifyCompatiblePlayers(newAvailability.id, playerId, clubId);
+    await notifyCompatiblePlayers(newAvailability.id, playerId, clubId, sessionType);
   }
   // TODO: En mode proximité, notifier par géolocalisation
 
@@ -515,7 +531,8 @@ export async function cleanupExpiredAvailabilities(): Promise<number> {
 async function notifyCompatiblePlayers(
   availabilityId: string,
   creatorId: string,
-  clubId: string
+  clubId: string,
+  sessionType: SessionType = 'match'
 ): Promise<void> {
   // Récupérer l'ELO du créateur
   const [creator] = await db
@@ -539,14 +556,21 @@ async function notifyCompatiblePlayers(
     ))
     .limit(20); // Limiter pour éviter trop de notifications
 
+  // Adapter le wording selon le type de session
+  const isTraining = sessionType === 'training';
+  const notifTitle = isTraining ? '🎾 Entraînement libre !' : '🎾 Match Now !';
+  const notifMessage = isTraining
+    ? `${creator.fullName} propose un entraînement libre (sans enjeu de classement) maintenant !`
+    : `${creator.fullName} cherche un partenaire maintenant !`;
+
   // Créer les notifications
   const notificationValues = compatiblePlayers.map((p) => ({
     userId: p.id,
-    type: 'match_now_available',
-    title: '🎾 Match Now !',
-    message: `${creator.fullName} cherche un partenaire maintenant !`,
+    type: isTraining ? 'training_available' : 'match_now_available',
+    title: notifTitle,
+    message: notifMessage,
     link: '/match-now',
-    data: { availabilityId, creatorId },
+    data: { availabilityId, creatorId, sessionType },
   }));
 
   if (notificationValues.length > 0) {
