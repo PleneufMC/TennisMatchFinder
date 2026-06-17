@@ -27,7 +27,7 @@ import { eq, and, desc, gte, sql, count, ne } from 'drizzle-orm';
 import { BADGE_DEFINITIONS, getBadgeById } from './badges';
 
 // Date limite Early Bird
-const EARLY_BIRD_DEADLINE = new Date('2026-06-30T23:59:59');
+const EARLY_BIRD_DEADLINE = new Date('2026-09-30T23:59:59');
 
 // ============================================
 // TYPES

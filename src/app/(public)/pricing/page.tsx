@@ -13,7 +13,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 
 // Mode Early Bird actif
 const EARLY_BIRD_MODE = true;
-const EARLY_BIRD_END_DATE = new Date('2026-06-30T23:59:59');
+const EARLY_BIRD_END_DATE = new Date('2026-09-30T23:59:59');
 
 // Real Stripe Price IDs
 const STRIPE_PRICES = {

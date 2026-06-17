@@ -203,7 +203,7 @@ export default async function InvitePage({ params }: InvitePageProps) {
                   Offre Early Bird
                 </h3>
                 <p className="text-sm text-amber-700 dark:text-amber-300">
-                  Gratuit jusqu&apos;au 30 juin 2026
+                  Gratuit jusqu&apos;au 30 septembre 2026
                 </p>
               </div>
             </div>

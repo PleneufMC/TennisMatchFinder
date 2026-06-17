@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
     const { players, playerBadges } = await import('@/lib/db/schema');
     const { and, eq: eqOp, lte, isNull, sql } = await import('drizzle-orm');
     
-    const EARLY_BIRD_DEADLINE = new Date('2026-06-30T23:59:59');
+    const EARLY_BIRD_DEADLINE = new Date('2026-09-30T23:59:59');
 
     // Total joueurs inscrits avant la deadline
     const [eligibleCount] = await db
