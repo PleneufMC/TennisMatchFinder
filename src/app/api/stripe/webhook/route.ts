@@ -6,6 +6,11 @@ import {
   handleSubscriptionDeleted,
   recordPayment,
 } from '@/lib/stripe/subscription';
+import {
+  handleCoachSubscriptionChange,
+  handleCoachSubscriptionDeleted,
+  COACH_SUBSCRIPTION_METADATA_TYPE,
+} from '@/lib/coaching';
 import { handleTournamentPaymentSuccess } from '@/lib/tournaments/payment';
 import type Stripe from 'stripe';
 
@@ -78,10 +83,26 @@ export async function POST(request: NextRequest) {
           trial_start: number | null;
           trial_end: number | null;
           items: { data: Array<{ price: { id: string } }> };
-          metadata: { userId?: string };
+          metadata: { userId?: string; type?: string; playerId?: string; coachProfileId?: string };
         };
         console.log(`Subscription ${event.type}:`, subscription.id);
-        
+
+        // Routage : abonnement COACH (15 €/mois) vs abonnement joueur (premium/pro)
+        if (subscription.metadata?.type === COACH_SUBSCRIPTION_METADATA_TYPE) {
+          await handleCoachSubscriptionChange({
+            id: subscription.id,
+            customer: subscription.customer,
+            status: subscription.status,
+            current_period_end: subscription.current_period_end,
+            cancel_at_period_end: subscription.cancel_at_period_end,
+            metadata: {
+              playerId: subscription.metadata.playerId,
+              coachProfileId: subscription.metadata.coachProfileId,
+            },
+          });
+          break;
+        }
+
         // Extract billing cycle anchor timestamps from subscription
         const currentPeriodStart = subscription.current_period_start ?? Math.floor(Date.now() / 1000);
         const currentPeriodEnd = subscription.current_period_end ?? Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60;
@@ -105,8 +126,13 @@ export async function POST(request: NextRequest) {
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription;
         console.log('Subscription deleted:', subscription.id);
-        
-        await handleSubscriptionDeleted(subscription.id);
+
+        // Routage coach vs joueur
+        if (subscription.metadata?.type === COACH_SUBSCRIPTION_METADATA_TYPE) {
+          await handleCoachSubscriptionDeleted(subscription.id);
+        } else {
+          await handleSubscriptionDeleted(subscription.id);
+        }
         break;
       }
 

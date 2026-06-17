@@ -34,7 +34,15 @@ export const stripe = {
 // ============================================
 // Premium Mensuel: prod_TkkGjS5zwAMEG0 / price_1SnEm8IkmQ7vFcvcvPLnGOT2 (9.99€/mois)
 // Premium Annuel:  prod_TkkIGodB2NEhoJ / price_1SnEnTIkmQ7vFcvcJdy5nWog (99€/an)
+// Abonnement Coach: prod_UiiiXqFaEuh6JN / price_1TjHGhIkmQ7vFcvcvBuLl7ft (15€/mois)
 // ============================================
+
+// Abonnement Coach (marketplace profs) — 15 €/mois.
+// Le Price ID peut être surchargé par variable d'env (utile pour basculer test/live).
+export const STRIPE_COACH_PRODUCT_ID = 'prod_UiiiXqFaEuh6JN';
+export const STRIPE_COACH_PRICE_ID =
+  process.env.STRIPE_PRICE_COACH_MONTHLY || 'price_1TjHGhIkmQ7vFcvcvBuLl7ft';
+export const COACH_SUBSCRIPTION_PRICE_EUR = 15;
 
 // Pricing configuration - Only FREE and PREMIUM (no Pro for now)
 export const STRIPE_PLANS = {
