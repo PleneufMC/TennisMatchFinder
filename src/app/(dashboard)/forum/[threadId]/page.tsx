@@ -13,6 +13,7 @@ import { eq, and, asc, sql } from 'drizzle-orm';
 import { formatTimeAgo } from '@/lib/utils/dates';
 import { FORUM_CATEGORIES } from '@/types/forum';
 import { ReplyForm } from './reply-form';
+import { RichContent } from '@/components/forum/rich-content';
 
 export const dynamic = 'force-dynamic';
 
@@ -163,9 +164,7 @@ export default async function ThreadPage({ params }: ThreadPageProps) {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap">
-            {thread.content}
-          </div>
+          <RichContent content={thread.content} />
         </CardContent>
       </Card>
 
@@ -207,9 +206,7 @@ export default async function ThreadPage({ params }: ThreadPageProps) {
                         {formatTimeAgo(reply.createdAt.toISOString())}
                       </span>
                     </div>
-                    <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap text-sm">
-                      {reply.content}
-                    </div>
+                    <RichContent content={reply.content} className="text-sm" />
                   </div>
                 </div>
               </CardContent>

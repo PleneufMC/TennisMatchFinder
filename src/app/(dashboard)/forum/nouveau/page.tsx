@@ -154,7 +154,13 @@ export default function NewThreadPage() {
                 required
               />
               <p className="text-sm text-muted-foreground">
-                Astuce : Soyez précis et détaillé pour obtenir de meilleures réponses
+                Astuce : soyez précis et détaillé pour obtenir de meilleures réponses.
+                Mise en forme possible avec le Markdown :
+                <code className="mx-1">**gras**</code>,
+                <code className="mx-1">*italique*</code>,
+                <code className="mx-1"># Titre</code>,
+                <code className="mx-1">- liste</code>,
+                <code className="mx-1">[lien](https://…)</code>.
               </p>
             </div>
 

@@ -68,6 +68,12 @@ export function ReplyForm({ threadId }: ReplyFormProps) {
             rows={4}
             className="resize-y min-h-[100px]"
           />
+          <p className="text-xs text-muted-foreground">
+            Markdown supporté : <code className="mx-0.5">**gras**</code>,
+            <code className="mx-0.5">*italique*</code>,
+            <code className="mx-0.5">- liste</code>,
+            <code className="mx-0.5">[lien](https://…)</code>.
+          </p>
           <div className="flex justify-end">
             <Button type="submit" disabled={isSubmitting || !content.trim()}>
               {isSubmitting ? (
