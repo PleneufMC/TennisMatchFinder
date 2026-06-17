@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="fr-FR" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Document de Cadrage Produit - Activation TennisMatchFinder</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
+    <style>
+      body {
+        max-width: 880px;
+        margin: 0 auto;
+        padding: 32px 80px;
+        position: relative;
+        box-sizing: border-box;
+        font-family: 'Times New Roman', Times, serif;
+        color: #000000;
+        background-color: #ffffff;
+        line-height: 1.5;
+        text-align: justify;
+        font-size: 12pt;
+      }
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        font-family: Arial, Helvetica, sans-serif;
+        color: #000000;
+        margin-top: 1.5em;
+        margin-bottom: 0.5em;
+        font-weight: bold;
+      }
+      h1 {
+        font-size: 20pt;
+        text-align: center;
+        border-bottom: 2px solid #000000;
+        padding-bottom: 10px;
+        margin-bottom: 30px;
+      }
+      h2 {
+        font-size: 16pt;
+        border-bottom: 1px solid #cccccc;
+        padding-bottom: 5px;
+        margin-top: 2em;
+      }
+      h3 {
+        font-size: 14pt;
+        margin-top: 1.5em;
+      }
+      h4 {
+        font-size: 12pt;
+        margin-top: 1.2em;
+        text-decoration: underline;
+      }
+      p {
+        margin-bottom: 1em;
+      }
+      ul,
+      ol {
+        margin-bottom: 1em;
+        padding-left: 40px;
+      }
+      li {
+        margin-bottom: 0.5em;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 1.5em;
+        font-size: 11pt;
+        font-family: Arial, Helvetica, sans-serif;
+      }
+      th,
+      td {
+        border: 1px solid #000000;
+        padding: 8px 12px;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+      }
+      .partner-box {
+        border: 2px solid #000000;
+        background-color: #fcfcfc;
+        padding: 15px 20px;
+        margin: 20px 0;
+      }
+      .partner-box-title {
+        font-weight: bold;
+        font-family: Arial, Helvetica, sans-serif;
+        margin-top: 0;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        font-size: 11pt;
+      }
+      .meta-info {
+        text-align: right;
+        font-size: 11pt;
+        font-family: Arial, Helvetica, sans-serif;
+        margin-bottom: 40px;
+      }
+      strong {
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="meta-info">
+      <p>
+        <strong>Date :</strong> 17 juin 2026<br />
+        <strong>Statut :</strong> Validé pour développement<br />
+        <strong>Projet :</strong> TennisMatchFinder
+      </p>
+    </div>
+
+    <h1>Document de Cadrage Produit<br />Activation & Expérience Premier Match</h1>
+
+    <h2>Résumé Exécutif</h2>
+    <p>
+      Ce document définit les spécifications pour le développement et le déploiement de deux nouvelles fonctionnalités
+      prioritaires sur la plateforme TennisMatchFinder. Notre analyse produit récente a mis en évidence un point de
+      friction critique : la rétention en première semaine s'élève actuellement à 0 %. Les utilisateurs s'inscrivent
+      mais abandonnent l'application avant même d'avoir disputé leur premier match.
+    </p>
+    <p>
+      Pour lever ce frein à l'activation, nous mettons en œuvre des améliorations concrètes et rapides à déployer («
+      quick wins »). Les actions correctives s'articulent autour de deux axes : une orientation proactive des nouveaux
+      joueurs vers la recherche de partenaires, et une gamification transparente du résultat post-match. Ces évolutions
+      visent à transformer une expérience initiale perçue comme complexe en un parcours fluide et gratifiant, en
+      capitalisant sur notre avantage concurrentiel majeur : la clarté de notre système de classement ELO.
+    </p>
+
+    <div class="partner-box">
+      <p class="partner-box-title">Message à un club partenaire</p>
+      <p>
+        Pour vous, gérants de clubs, l'enjeu principal est de dynamiser la vie de votre structure, de voir vos courts
+        remplis et vos membres engagés. Nous avons constaté que les nouveaux inscrits n'osent pas toujours faire le
+        premier pas pour solliciter d'autres joueurs.
+      </p>
+      <p>
+        Avec cette nouvelle mise à jour, notre application prend vos membres par la main. Dès leur arrivée, elle leur
+        suggère activement des partenaires de leur niveau. Ensuite, à la fin de leur partie, un écran de résultat
+        célèbre leur match et leur explique très simplement l'évolution de leur classement interne. Résultat direct pour
+        votre club : des membres qui se rencontrent plus facilement, qui comprennent comment progresser, et qui ont
+        immédiatement envie de réserver un nouveau court chez vous.
+      </p>
+    </div>
+
+    <h2>Contexte et Enjeu</h2>
+    <p>
+      TennisMatchFinder opère comme une plateforme SaaS B2B2C de mise en relation de joueurs, avec l'ambition d'être «
+      le Strava du Tennis ». Notre différenciateur principal sur le marché, notamment face à des concurrents comme
+      Playtomic, réside dans la transparence totale de notre système ELO. Toutefois, cette proposition de valeur ne
+      s'exprime que lorsqu'un utilisateur saisit son premier résultat. L'enjeu prioritaire est donc de l'amener à
+      franchir ce cap décisif.
+    </p>
+    <p>
+      <strong>Contraintes transverses et périmètre technique :</strong>
+    </p>
+    <ul>
+      <li>
+        <strong>Architecture front-end :</strong> L'application s'appuie sur le framework Next.js 14. Les évolutions
+        doivent s'intégrer nativement dans cette architecture de navigation moderne.
+      </li>
+      <li>
+        <strong>Séparation stricte (Multi-club) :</strong> L'étanchéité des données par club demeure une règle absolue.
+        Les suggestions de joueurs et les calculs ELO restent strictement circonscrits au club de l'utilisateur.
+      </li>
+      <li>
+        <strong>Modération :</strong> Le respect intégral du filtrage des joueurs bloqués est maintenu dans tous les
+        nouveaux écrans et suggestions.
+      </li>
+      <li>
+        <strong>Moteur ELO inchangé :</strong> La logique mathématique de calcul ELO ne subit aucune modification.
+        L'intervention se concentre exclusivement sur une meilleure exposition produit de ces calculs.
+      </li>
+      <li>
+        <strong>Périmètre maîtrisé :</strong> Il n'y aura pas de refonte lourde du tableau de bord global ni de
+        restructuration du parcours d'inscription initial dans le cadre de ce document. L'approche privilégie des
+        itérations chirurgicales à fort impact.
+      </li>
+    </ul>
+
+    <h2>Vision d'ensemble des 2 fonctionnalités</h2>
+    <p>
+      L'expérience cible redessine les premiers pas de l'utilisateur. Plutôt que d'imposer à un nouvel inscrit l'action
+      d'enregistrer un score — ce qui suppose qu'il ait déjà trouvé un partenaire par ses propres moyens — nous
+      inversons la proposition en l'aidant d'abord à « Trouver un adversaire ».
+    </p>
+    <p>
+      Une fois ce contact établi et la rencontre terminée, l'utilisateur enregistre son résultat et est immédiatement
+      récompensé par une modale de célébration. Celle-ci lui démontre la valeur de son effort sportif en lui expliquant
+      clairement l'évolution de son classement ELO.
+    </p>
+
+    <h2>Fonctionnalité 1 : Parcours « Trouver un adversaire » pour le premier match</h2>
+
+    <h4>1. Problème utilisateur</h4>
+    <p>
+      L'appel à l'action principal du tableau de bord invite systématiquement à enregistrer un résultat de match. Pour
+      un joueur n'ayant aucun historique et ne connaissant personne dans le club, cette demande est bloquante et génère
+      de la frustration.
+    </p>
+
+    <h4>2. Objectif produit</h4>
+    <p>
+      Réduire la friction à l'activation en accompagnant l'utilisateur dans sa recherche de partenaires avant d'exiger
+      de lui la saisie d'une performance sportive.
+    </p>
+
+    <h4>3. Promesse de valeur</h4>
+    <p>« Nous vous aidons à trouver rapidement votre premier adversaire idéal pour lancer votre saison. »</p>
+
+    <h4>4. Parcours cible</h4>
+    <p>
+      Lorsqu'un nouvel inscrit accède à son tableau de bord, le bouton d'action principal le dirige vers la page des
+      suggestions de partenaires. Les espaces habituellement vides de données (historique inexistant) affichent des
+      invitations visuelles expliquant l'intérêt de jouer un premier match pour obtenir un classement. Sur la page des
+      suggestions, l'affichage s'adapte intelligemment à la situation démographique du club.
+    </p>
+
+    <h4>5. Règles métier / Logique de déclenchement</h4>
+    <p>
+      La substitution du parcours classique par le parcours d'activation se déclenche exclusivement si le compteur de
+      matchs joués par l'utilisateur est strictement égal à zéro.
+    </p>
+    <ul>
+      <li>
+        La redirection du bouton principal cible la page de suggestions de partenaires plutôt que le formulaire de
+        création de match.
+      </li>
+      <li>
+        La page de suggestions identifie deux cas d'indisponibilité :
+        <ul>
+          <li>
+            <strong>Cas A (Manque de liquidité) :</strong> Le club ne compte pas assez de joueurs inscrits au total.
+          </li>
+          <li>
+            <strong>Cas B (Incompatibilité ponctuelle) :</strong> Le club possède des joueurs, mais aucun ne correspond
+            aux critères ou aux disponibilités actuelles du nouvel arrivant.
+          </li>
+        </ul>
+      </li>
+    </ul>
+
+    <h4>6. Contenu UX / Microcopy recommandé</h4>
+    <ul>
+      <li><strong>Bouton principal (si 0 match) :</strong> « Trouver un adversaire »</li>
+      <li>
+        <strong>État vide du tableau de bord (Teasing ELO) :</strong> « Votre classement ELO n'attend que vous. Jouez
+        votre premier match pour obtenir votre évaluation initiale et rejoindre le classement de votre club. »
+      </li>
+      <li>
+        <strong>État vide des suggestions (Cas A) :</strong> « Vous êtes le premier sur le court ! Invitez d'autres
+        membres à rejoindre l'application pour lancer la compétition. »
+      </li>
+      <li>
+        <strong>État vide des suggestions (Cas B) :</strong> « Aucun adversaire compatible pour le moment. Ajustez vos
+        disponibilités dans votre profil pour maximiser vos chances. »
+      </li>
+    </ul>
+
+    <h4>7. Impact business attendu</h4>
+    <p>
+      Déblocage de l'usage initial : augmentation significative de la prise de contact pour organiser un premier match,
+      entraînant mécaniquement une amélioration de la rétention lors de la première semaine.
+    </p>
+
+    <h4>8. Instrumentation analytics recommandée</h4>
+    <p>
+      Suivi du taux de clic sur le nouveau bouton principal d'activation. Mesure de la progression dans l'entonnoir :
+      clics sur les profils suggérés et envoi de messages ou de propositions de match.
+    </p>
+
+    <h4>9. Critères d'acceptation</h4>
+    <table>
+      <thead>
+        <tr>
+          <th>Scénario</th>
+          <th>Comportement Attendu</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Un utilisateur avec 0 match se connecte.</td>
+          <td>
+            Le bouton principal indique « Trouver un adversaire » et mène aux suggestions. L'état vide fait la promotion
+            du classement ELO.
+          </td>
+        </tr>
+        <tr>
+          <td>Un utilisateur avec au moins 1 match se connecte.</td>
+          <td>
+            Le bouton principal reprend son comportement standard (« Enregistrer un match ») et mène au formulaire
+            classique.
+          </td>
+        </tr>
+        <tr>
+          <td>La page de suggestions est consultée dans un club presque vide.</td>
+          <td>L'interface affiche le message d'invitation à recruter de nouveaux membres (Cas A).</td>
+        </tr>
+        <tr>
+          <td>La page de suggestions ne trouve pas d'adversaire compatible malgré un club peuplé.</td>
+          <td>L'interface affiche le message incitant à modifier ses disponibilités (Cas B).</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4>10. Risques / Points d'attention</h4>
+    <p>
+      Le risque principal est la déception si l'utilisateur clique sur « Trouver un adversaire » et atterrit sur une
+      page vide. D'où l'importance capitale d'une communication (microcopy) adaptée et contextualisée selon la densité
+      du club.
+    </p>
+
+    <h4>11. Périmètre inclus / Hors périmètre</h4>
+    <p>
+      <strong>Inclus :</strong> Modification conditionnelle des boutons d'appel à l'action et enrichissement des états
+      vides sur le tableau de bord et les suggestions.<br />
+      <strong>Hors périmètre :</strong> Refonte du flux d'inscription, ajout de nouvelles logiques de notifications push
+      pour les invitations.
+    </p>
+
+    <h2>Fonctionnalité 2 : Modale de résultat post-match avec célébration et transparence ELO</h2>
+
+    <h4>1. Problème utilisateur</h4>
+    <p>
+      À l'issue de la saisie d'un résultat, l'utilisateur est simplement renvoyé vers une liste de matchs. L'évolution
+      de son classement est calculée en arrière-plan comme une boîte noire, ce qui génère un manque de lisibilité et
+      prive l'application d'un effet de gratification indispensable à la fidélisation.
+    </p>
+
+    <h4>2. Objectif produit</h4>
+    <p>
+      Valoriser notre positionnement unique sur la transparence de l'algorithme ELO et créer une boucle d'engagement
+      positive grâce à une récompense psychologique immédiate (gamification).
+    </p>
+
+    <h4>3. Promesse de valeur</h4>
+    <p>
+      « Comprenez de manière limpide comment vous progressez et pourquoi votre classement évolue après chaque rencontre.
+      »
+    </p>
+
+    <h4>4. Parcours cible</h4>
+    <p>
+      Dès la validation du formulaire de résultat d'un match, l'écran ne change pas brusquement. Une modale s'ouvre en
+      superposition. Elle célèbre visuellement la performance (si l'utilisateur a gagné) et détaille l'impact du match
+      sur le classement. L'utilisateur prend le temps de lire ces données, puis ferme la modale pour être redirigé vers
+      son historique.
+    </p>
+
+    <h4>5. Règles métier / Logique de déclenchement</h4>
+    <p>
+      Le système intercepte la réponse du serveur après la validation du match. Cette réponse contient déjà le détail
+      des calculs. La modale s'affiche et présente obligatoirement :
+    </p>
+    <ul>
+      <li>Le score final et le nom de l'adversaire.</li>
+      <li>Le delta ELO (points gagnés ou perdus).</li>
+      <li>Le nouveau classement ELO.</li>
+      <li>
+        Le détail explicatif : probabilité de victoire initiale, facteurs multiplicateurs appliqués (ex: écart de
+        niveau).
+      </li>
+    </ul>
+
+    <h4>6. Contenu UX / Microcopy recommandé</h4>
+    <ul>
+      <li><strong>Titre de la modale :</strong> « Match enregistré avec succès ! »</li>
+      <li>
+        <strong>Indicateurs visuels :</strong> Couleurs marquées pour le Delta ELO (vert vif pour une hausse, gris ou
+        rouge atténué pour une baisse).
+      </li>
+      <li><strong>Bouton de fermeture :</strong> « Voir mon historique de matchs »</li>
+    </ul>
+
+    <h4>7. Impact business attendu</h4>
+    <p>
+      Augmentation de la fréquence d'enregistrement des matchs due au renforcement positif. Valorisation immédiate de
+      l'avantage concurrentiel de la plateforme face aux solutions tierces opaques.
+    </p>
+
+    <h4>8. Instrumentation analytics recommandée</h4>
+    <p>
+      Suivi du taux d'affichage de la modale. Mesure du temps passé sur cet écran avant sa fermeture (indicateur clé de
+      la valeur perçue de l'explication ELO).
+    </p>
+
+    <h4>9. Critères d'acceptation</h4>
+    <table>
+      <thead>
+        <tr>
+          <th>Scénario</th>
+          <th>Comportement Attendu</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Le joueur enregistre une victoire.</td>
+          <td>
+            La modale s'ouvre, une animation de célébration (ex: confettis) s'affiche, le delta ELO est mis en valeur
+            positivement.
+          </td>
+        </tr>
+        <tr>
+          <td>Le joueur enregistre une défaite.</td>
+          <td>
+            La modale s'ouvre sans animation de célébration. Le delta est affiché de façon neutre ou factuelle, le ton
+            reste sportif et encourageant.
+          </td>
+        </tr>
+        <tr>
+          <td>Contrôle de transparence ELO.</td>
+          <td>
+            La modale ventile correctement les modificateurs et la probabilité, en stricte conformité avec les données
+            fournies par le serveur.
+          </td>
+        </tr>
+        <tr>
+          <td>L'utilisateur ferme la modale.</td>
+          <td>L'utilisateur est correctement redirigé vers la page listant ses matchs récents.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4>10. Risques / Points d'attention</h4>
+    <p>
+      Il est impératif que les données mathématiques affichées soient simples à comprendre. Une surcharge d'informations
+      complexes pourrait brouiller le message. La présentation doit rester visuelle (icônes, pourcentages clairs).
+    </p>
+
+    <h4>11. Périmètre inclus / Hors périmètre</h4>
+    <p>
+      <strong>Inclus :</strong> Création de la modale superposée au formulaire, intégration des animations visuelles de
+      célébration, présentation des données de la réponse serveur.<br />
+      <strong>Hors périmètre :</strong> Toute modification ou ajustement des formules mathématiques de calcul de
+      l'algorithme ELO sur le serveur.
+    </p>
+
+    <h2>Plan de mesure / KPIs</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Indicateur de Performance (KPI)</th>
+          <th>Objectif de la mesure</th>
+          <th>Cible estimée</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Taux de conversion au premier match</strong></td>
+          <td>Mesurer l'impact direct sur la rétention globale en première semaine.</td>
+          <td>Passage de 0 % à une cible supérieure à 15 %.</td>
+        </tr>
+        <tr>
+          <td><strong>Taux de clic sur l'action « Trouver un adversaire »</strong></td>
+          <td>Valider l'attractivité du nouveau bouton d'appel à l'action pour les nouveaux inscrits.</td>
+          <td>Supérieur à 40 % chez les utilisateurs à 0 match.</td>
+        </tr>
+        <tr>
+          <td><strong>Engagement sur la modale de résultat</strong></td>
+          <td>Vérifier que la transparence de l'algorithme intéresse les joueurs.</td>
+          <td>Temps de lecture moyen supérieur à 5 secondes.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Plan de déploiement recommandé</h2>
+    <p>
+      Ces fonctionnalités présentent un risque de régression technique extrêmement faible, dans la mesure où elles
+      interviennent exclusivement sur la couche de présentation et les règles d'affichage conditionnel, sans toucher aux
+      fondations de la base de données ni à l'intégrité des requêtes serveur.
+    </p>
+    <p>
+      Nous recommandons un déploiement direct en production à l'issue de la phase de validation qualité. Une brève
+      communication de mise à jour adressée aux gérants de clubs permettra de valoriser la réactivité de la plateforme
+      quant à l'amélioration continue de l'engagement des membres.
+    </p>
+
+    <h2>Conclusion</h2>
+    <p>
+      En supprimant un parcours initial perçu comme une impasse et en le remplaçant par une véritable assistance à la
+      mise en relation sportive, couplée à une transparence algorithmique ludique et gratifiante, TennisMatchFinder
+      résout frontalement son enjeu prioritaire. Ce document de cadrage garantit un alignement parfait des équipes sur
+      des améliorations ciblées, maîtrisées et taillées pour relancer l'activation des nouveaux utilisateurs dès leur
+      première semaine.
+    </p>
+  </body>
+</html>
