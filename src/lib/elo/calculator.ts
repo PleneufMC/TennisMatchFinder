@@ -79,6 +79,67 @@ export interface EloCalculationResult {
   breakdown: EloBreakdown;
 }
 
+/**
+ * Convertit un EloBreakdown (champs plats renvoyés par l'API /api/matches)
+ * en ModifiersResult ({ totalModifier, details[] }) attendu par les
+ * composants d'affichage (EloBreakdown UI / MatchResultModal).
+ *
+ * Chaque modificateur est un multiplicateur (×). On ne liste dans `details`
+ * que ceux qui dévient de 1.0 (i.e. ceux réellement appliqués au calcul).
+ */
+export function breakdownToModifiers(
+  breakdown: EloBreakdown
+): import('./types').ModifiersResult {
+  const details: import('./types').ModifierDetail[] = [];
+
+  if (breakdown.newOpponentBonus !== 1.0) {
+    details.push({
+      type: 'new_opponent',
+      value: breakdown.newOpponentBonus,
+      description: 'Nouvel adversaire',
+    });
+  }
+
+  if (breakdown.upsetBonus !== 1.0) {
+    details.push({
+      type: 'upset',
+      value: breakdown.upsetBonus,
+      description: 'Victoire face à un joueur mieux classé',
+    });
+  }
+
+  if (breakdown.repetitionMalus !== 1.0) {
+    details.push({
+      type: 'repetition',
+      value: breakdown.repetitionMalus,
+      description: 'Adversaire affronté récemment',
+    });
+  }
+
+  if (breakdown.diversityBonus !== 1.0) {
+    details.push({
+      type: 'weekly_diversity',
+      value: breakdown.diversityBonus,
+      description: 'Diversité des adversaires cette semaine',
+    });
+  }
+
+  // totalModifier = produit de tous les multiplicateurs (y.c. format & marge,
+  // qui ne sont pas typés comme ModifierType mais entrent dans le calcul).
+  const totalModifier =
+    breakdown.formatCoefficient *
+    breakdown.marginModifier *
+    breakdown.newOpponentBonus *
+    breakdown.upsetBonus *
+    breakdown.repetitionMalus *
+    breakdown.diversityBonus;
+
+  return {
+    totalModifier: totalModifier === 0 ? 1 : totalModifier,
+    details,
+  };
+}
+
 // ============================================
 // FONCTIONS UTILITAIRES
 // ============================================

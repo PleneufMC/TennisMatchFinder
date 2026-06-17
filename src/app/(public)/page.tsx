@@ -1,40 +1,11 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, Trophy, Users, TrendingUp, MessageSquare, Zap, Shield, Clock, Gift } from 'lucide-react';
+import { ArrowRight, Trophy, Users, TrendingUp, MessageSquare, Zap, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { SignupCtaButton } from '@/components/tracking/cta-button';
-
-// Configuration Early Bird
-const EARLY_BIRD_END_DATE = new Date('2026-06-30T23:59:59');
-
-function EarlyBirdCountdown() {
-  const now = new Date();
-  const timeLeft = EARLY_BIRD_END_DATE.getTime() - now.getTime();
-  const daysLeft = Math.max(0, Math.ceil(timeLeft / (1000 * 60 * 60 * 24)));
-  
-  return (
-    <div className="flex flex-col sm:flex-row items-center gap-3 justify-center mb-6">
-      {/* Badge principale */}
-      <div className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full px-5 py-2.5 shadow-lg shadow-amber-500/30">
-        <Gift className="h-5 w-5" />
-        <span className="font-bold">Offre Early Bird</span>
-      </div>
-      
-      {/* Compte à rebours */}
-      <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur border border-white/20 rounded-full px-4 py-2">
-        <Clock className="h-4 w-4 text-amber-300" />
-        <span className="text-white font-medium">
-          Gratuit jusqu&apos;au <span className="text-amber-300 font-bold">30 juin 2026</span>
-        </span>
-        <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-          {daysLeft}j
-        </span>
-      </div>
-    </div>
-  );
-}
+import { EarlyBirdCountdown } from '@/components/landing/early-bird-countdown';
 
 export default function HomePage() {
   return (

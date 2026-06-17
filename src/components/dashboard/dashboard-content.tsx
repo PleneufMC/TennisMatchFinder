@@ -226,9 +226,19 @@ export function DashboardContent({
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">
-                {locale === 'fr' ? 'Aucune proposition en attente' : 'No pending proposals'}
-              </p>
+              <div className="text-center py-2">
+                <p className="text-sm text-muted-foreground mb-3">
+                  {locale === 'fr'
+                    ? 'Aucune proposition pour le moment.'
+                    : 'No proposals yet.'}
+                </p>
+                <Button size="sm" variant="outline" asChild>
+                  <Link href="/suggestions">
+                    <Users className="h-4 w-4 mr-2" />
+                    {locale === 'fr' ? 'Trouver un adversaire' : 'Find an opponent'}
+                  </Link>
+                </Button>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -274,11 +284,27 @@ export function DashboardContent({
               })}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              {t('noMatches')}. <Link href="/matchs/nouveau" className="text-primary hover:underline">
-                {locale === 'fr' ? 'Enregistrez votre premier match !' : 'Record your first match!'}
-              </Link>
-            </p>
+            <div className="text-center py-6 px-4">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mb-3">
+                <Swords className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="font-semibold mb-1">
+                {locale === 'fr'
+                  ? 'Votre ELO attend votre premier match'
+                  : 'Your ELO is waiting for your first match'}
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4 max-w-sm mx-auto">
+                {locale === 'fr'
+                  ? `Vous démarrez à ${player.currentElo} points. Chaque match fait évoluer votre classement de façon transparente — vous verrez exactement pourquoi.`
+                  : `You start at ${player.currentElo} points. Every match moves your ranking transparently — you'll see exactly why.`}
+              </p>
+              <Button asChild>
+                <Link href="/suggestions">
+                  <Users className="h-4 w-4 mr-2" />
+                  {locale === 'fr' ? 'Trouver mon premier adversaire' : 'Find my first opponent'}
+                </Link>
+              </Button>
+            </div>
           )}
         </CardContent>
       </Card>
