@@ -860,6 +860,116 @@ export const matchNowResponses = pgTable(
 );
 
 // ============================================
+// MARKETPLACE PROFS (Coachs)
+// ============================================
+//
+// Modèle économique : abonnement SaaS 15 €/mois (PAS de commission par lead).
+// Le coach paie pour l'OUTIL (publication de créneaux + visibilité), ce qui rend
+// le modèle insensible à la désintermédiation. Réutilise Stripe Subscriptions
+// existant (PAS de Stripe Connect). Le paiement du cours joueur->coach se fait
+// HORS plateforme (le tarif est affiché à titre indicatif).
+
+// Statut de l'abonnement coach (miroir simplifié de Stripe)
+export const coachSubscriptionStatusEnum = pgEnum('coach_subscription_status', [
+  'active',
+  'past_due',
+  'canceled',
+  'incomplete',
+]);
+
+// Cycle de vie d'un créneau de coaching
+// open      = publié, libre, réservable
+// booked    = réservé par un joueur (réservé)
+// confirmed = confirmé par le coach (confirmé)
+// completed = cours effectué (effectué) — base pour stats/avis
+// cancelled = annulé (par le coach ou le joueur)
+export const coachSlotStatusEnum = pgEnum('coach_slot_status', [
+  'open',
+  'booked',
+  'confirmed',
+  'completed',
+  'cancelled',
+]);
+
+// Profil coach : 1 ligne par membre ayant activé le rôle coach.
+// Porte les infos publiques (bio, tarif, spécialités) + l'état de l'abonnement Stripe.
+export const coachProfiles = pgTable(
+  'coach_profiles',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    // Un membre = au plus un profil coach. Réutilise NextAuth via players.
+    playerId: uuid('player_id')
+      .notNull()
+      .unique()
+      .references(() => players.id, { onDelete: 'cascade' }),
+    // Club de rattachement principal (les créneaux peuvent être ouverts cross-club)
+    clubId: uuid('club_id').references(() => clubs.id, { onDelete: 'set null' }),
+    // Infos publiques affichées aux joueurs
+    bio: text('bio'),
+    // Tarif horaire indicatif en centimes (ex: 4000 = 40 €/h). Affiché au joueur.
+    hourlyRateCents: integer('hourly_rate_cents'),
+    // Spécialités libres (ex: ['compétition', 'enfants', 'service'])
+    specialties: jsonb('specialties').default([]).notNull(),
+    // --- Abonnement coach (Stripe Subscriptions, 15 €/mois) ---
+    stripeCustomerId: varchar('stripe_customer_id', { length: 255 }),
+    stripeSubscriptionId: varchar('stripe_subscription_id', { length: 255 }),
+    subscriptionStatus: coachSubscriptionStatusEnum('subscription_status'),
+    currentPeriodEnd: timestamp('current_period_end', { mode: 'date' }),
+    cancelAtPeriodEnd: boolean('cancel_at_period_end').default(false).notNull(),
+    // Visibilité publique (le coach peut se masquer temporairement)
+    isPublished: boolean('is_published').default(false).notNull(),
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (table) => ({
+    playerIdIdx: index('coach_profiles_player_id_idx').on(table.playerId),
+    clubIdIdx: index('coach_profiles_club_id_idx').on(table.clubId),
+    stripeCustomerIdIdx: index('coach_profiles_stripe_customer_id_idx').on(table.stripeCustomerId),
+    statusIdx: index('coach_profiles_status_idx').on(table.subscriptionStatus),
+  })
+);
+
+// Créneaux de coaching publiés par un coach. Durée fixe 60 min.
+export const coachSlots = pgTable(
+  'coach_slots',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    coachProfileId: uuid('coach_profile_id')
+      .notNull()
+      .references(() => coachProfiles.id, { onDelete: 'cascade' }),
+    // Dénormalisé pour requêtes simples (le coach reste un player)
+    coachPlayerId: uuid('coach_player_id')
+      .notNull()
+      .references(() => players.id, { onDelete: 'cascade' }),
+    // Club où se déroule le créneau (peut différer du club du coach : cross-club)
+    clubId: uuid('club_id').references(() => clubs.id, { onDelete: 'set null' }),
+    // Début du créneau. Durée fixe = 60 min (pas stockée, conventionnelle).
+    startTime: timestamp('start_time', { mode: 'date' }).notNull(),
+    durationMinutes: integer('duration_minutes').default(60).notNull(),
+    // Prix du cours en centimes, affiché au joueur (paiement HORS plateforme)
+    priceCents: integer('price_cents'),
+    // Lieu / court (texte libre, ex: "Court 3" ou adresse pour cross-club)
+    location: varchar('location', { length: 200 }),
+    notes: varchar('notes', { length: 300 }),
+    status: coachSlotStatusEnum('status').default('open').notNull(),
+    // Joueur ayant réservé (attribution "rempli par joueur Y", tracée par construction)
+    bookedByPlayerId: uuid('booked_by_player_id').references(() => players.id, { onDelete: 'set null' }),
+    bookedAt: timestamp('booked_at', { mode: 'date' }),
+    completedAt: timestamp('completed_at', { mode: 'date' }),
+    cancelledAt: timestamp('cancelled_at', { mode: 'date' }),
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (table) => ({
+    coachProfileIdIdx: index('coach_slots_coach_profile_id_idx').on(table.coachProfileId),
+    coachPlayerIdIdx: index('coach_slots_coach_player_id_idx').on(table.coachPlayerId),
+    clubIdIdx: index('coach_slots_club_id_idx').on(table.clubId),
+    statusStartIdx: index('coach_slots_status_start_idx').on(table.status, table.startTime),
+    bookedByIdx: index('coach_slots_booked_by_idx').on(table.bookedByPlayerId),
+  })
+);
+
+// ============================================
 // MATCH RATINGS (Évaluations post-match)
 // ============================================
 
